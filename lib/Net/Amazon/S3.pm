@@ -214,7 +214,7 @@ sub BUILD {
     my $self = shift;
 
     if (!$self->use_iam_role) {
-        if (!defined($self->aws_secret_access_key) || !defoned($self->aws_access_key_id)) {
+        if (!defined($self->aws_secret_access_key) || !defined($self->aws_access_key_id)) {
             die("Must specify aws_secret_access_key and aws_access_key_id");
         }
     }
