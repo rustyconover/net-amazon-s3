@@ -83,7 +83,7 @@ sub _send_request {
     my ( $self, $http_request, $filename ) = @_;
 
     my $http_response = $self->_send_request_raw( $http_request, $filename );
-
+    
     my $content      = $http_response->content;
     my $content_type = $http_response->content_type;
     my $code         = $http_response->code;

@@ -3,11 +3,14 @@ use warnings;
 use strict;
 use lib 'lib';
 use Digest::MD5::File qw(file_md5_hex);
-use Test::More;
+use Test::Most;
+
+bail_on_fail;
 
 unless ( $ENV{'AMAZON_S3_EXPENSIVE_TESTS'} ) {
     plan skip_all => 'Testing this module for real costs money.';
 } else {
+    
     plan tests => 71 * 2 + 4;
 }
 
@@ -28,26 +31,28 @@ my $s3 = Net::Amazon::S3->new(
 # list all buckets that i own
 my $response = $s3->buckets;
 
+
+
 $OWNER_ID          = $response->{owner_id};
 $OWNER_DISPLAYNAME = $response->{owner_displayname};
 
 TODO: {
     local $TODO = "These tests only work if you're pedro";
 
-    like( $response->{owner_id}, qr/^c7483d612ac7f0c0/ );
-    is( $response->{owner_displayname},   'pedro_figueiredo' );
-    is( scalar @{ $response->{buckets} }, 6 );
+    is(defined($response->{owner_id}), "owner_id is defined");
+    is(defined($response->{owner_displayname}),   'owner_displayname is defined' );
+    ok(defined($response->{buckets}), "buckets is defined");
+    ok(ref($response->{buckets}) eq 'ARRAY', "buckets is an array ref");
 }
 
 for my $location ( undef, 'EU' ) {
 
   # create a bucket
-  # make sure it's a valid hostname for EU testing
-    my $bucketname = 'net-amazon-s3-test-' . lc($aws_access_key_id) . '-' . time;
+    # make sure it's a valid hostname for EU testing
 
+    my $bucketname = 'net-amazon-s3-test-' . lc($aws_access_key_id) . '-' . time;
     # for testing
     # my $bucket = $s3->bucket($bucketname); $bucket->delete_bucket; exit;
-
     my $bucket_obj = $s3->add_bucket(
         {   bucket              => $bucketname,
             acl_short           => 'public-read',
@@ -59,7 +64,7 @@ for my $location ( undef, 'EU' ) {
     is( $bucket_obj->get_location_constraint, $location );
 
     like_acl_allusers_read($bucket_obj);
-    ok( $bucket_obj->set_acl( { acl_short => 'private' } ) );
+    ok( $bucket_obj->set_acl( { acl_short => 'private' } ), "Able to set ACL to private");
     unlike_acl_allusers_read($bucket_obj);
 
     # another way to get a bucket object (does no network I/O,
@@ -244,14 +249,14 @@ for my $location ( undef, 'EU' ) {
     my $readme_md5  = file_md5_hex('README.md');
     my $readme_size = -s 'README.md';
     $keyname .= "2";
-    $bucket_obj->add_key_filename(
+    ok($bucket_obj->add_key_filename(
         $keyname, 'README.md',
         {   content_type        => 'text/plain',
             'x-amz-meta-colour' => 'orangy',
         }
-    );
-
+    ), "Error uploading file: " . $s3->err);
     $response = $bucket_obj->get_key($keyname);
+    
     is( $response->{content_type}, 'text/plain' );
     like( $response->{value}, qr/Amazon Digital Services/ );
     is( $response->{etag},                $readme_md5 );
@@ -322,7 +327,8 @@ sub is_request_response_code {
 sub like_acl_allusers_read {
     my ( $bucketobj, $keyname ) = @_;
     my $message = acl_allusers_read_message( 'like', @_ );
-    like( $bucketobj->get_acl($keyname), qr(AllUsers.+READ), $message );
+    my $acl = $bucketobj->get_acl($keyname);
+    like($acl, qr(AllUsers.+READ), $message );
 }
 
 sub unlike_acl_allusers_read {

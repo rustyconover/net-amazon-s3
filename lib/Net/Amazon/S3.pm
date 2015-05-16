@@ -106,8 +106,6 @@ Development of this code happens here: https://github.com/rustyconover/net-amazo
 =cut
 
 use Carp;
-use Digest::HMAC_SHA1;
-
 use Net::Amazon::S3::Bucket;
 use Net::Amazon::S3::Client;
 use Net::Amazon::S3::Client::Bucket;
@@ -698,7 +696,6 @@ sub _send_request {
 
     my $response = $self->_do_http($http_request);
     my $content  = $response->content;
-
     return $content unless $response->content_type eq 'application/xml';
     return unless $content;
     return $self->_xpc_of_content($content);

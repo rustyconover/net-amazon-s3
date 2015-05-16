@@ -308,6 +308,7 @@ sub get_key {
 
     my $response = $acct->_do_http( $http_request, $filename );
 
+    print $response->as_string() . "\n";
     if ( $response->code == 404 ) {
         return undef;
     }
@@ -462,7 +463,6 @@ sub get_acl {
     if ( $response->code == 404 ) {
         return undef;
     }
-
     $account->_croak_if_response_error($response);
 
     return $response->content;
