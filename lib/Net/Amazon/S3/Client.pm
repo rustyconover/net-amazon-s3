@@ -89,7 +89,7 @@ sub _send_request {
     my $code         = $http_response->code;
 
     if ( is_error($code) ) {
-        if ( $content_type eq 'application/xml' ) {
+        if ( $content_type eq 'application/xml' and length $content ) {
             my $doc = $self->s3->libxml->parse_string($content);
             my $xpc = XML::LibXML::XPathContext->new($doc);
             $xpc->registerNs( 's3',

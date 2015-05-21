@@ -111,6 +111,20 @@ sub _get {
     return $http_response;
 }
 
+sub head {
+    my $self = shift;
+    my $http_request = Net::Amazon::S3::Request::GetObject->new(
+        s3     => $self->client->s3,
+        bucket => $self->bucket->name,
+        key    => $self->key,
+        method => 'HEAD',
+    )->http_request;
+
+    my $http_response = $self->client->_send_request($http_request);
+    $self->_load_user_metadata($http_response);
+    return;
+}
+
 sub get {
     my $self = shift;
     return $self->_get->content;
@@ -426,8 +440,12 @@ no strict 'vars'
   my $object = $bucket->object( key => 'this is the key' );
   $object->put('this is the value');
 
-  # to get the vaue of an object
+  # to get the value of an object
   my $value = $object->get;
+
+  # to fetch just the user metadata of an object
+  $object->head;
+  my $user_metadata = $object->user_metadata;
 
   # to see if an object exists
   if ($object->exists) { ... }
@@ -520,6 +538,13 @@ This module represents objects in buckets.
   # download the value of the object into a file
   my $object = $bucket->object( key => 'images/my_hat.jpg' );
   $object->get_filename('hat_backup.jpg');
+
+=head2 head
+
+  # download just the metadata (including user metadata) without the actual data
+  my $object = $bucket->object( key => 'images/my_hat.jpg' );
+  $object->head;
+  my $user_metadata = $object->user_metadata;
 
 =head2 last_modified, last_modified_raw
 
