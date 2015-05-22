@@ -609,8 +609,19 @@ List all keys in this bucket without having to worry about
 'marker'. This is a convenience method, but may make multiple requests
 to S3 under the hood.
 
-Takes the same arguments as list_bucket.
+Takes the same arguments as list_bucket, plus one, optional, 'callback' as argument, 
+so, instead of get a long array on the end, you can the keys while the bucket is traversed.
 
+    $bucket->list_all(
+    {
+        callback => sub {
+          my %who = @_;
+          foreach my $key ( @{ $who{keys} } ) {
+              my $key_name = $key->{key};
+          } 
+        }
+    })
+          
 =cut
 
 sub list_bucket_all {
@@ -629,7 +640,11 @@ sub list_bucket_all {
         $conf->{marker} = $next_marker;
         $conf->{bucket} = $bucket;
         $response       = $self->list_bucket($conf);
-        push @{ $all->{keys} }, @{ $response->{keys} };
+        if (exists $conf->{callback}){
+            $conf->{callback}->( keys => $response->{keys} );
+        }else{
+            push @{ $all->{keys} }, @{ $response->{keys} };
+        }
         last unless $response->{is_truncated};
     }
 
