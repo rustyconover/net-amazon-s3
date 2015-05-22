@@ -137,6 +137,34 @@ sub list {
     );
 }
 
+sub list_uploads {
+    my ( $self, $conf ) = @_;
+    $conf ||= {};
+
+    my $http_request = Net::Amazon::S3::Request::ListAllParts->new(
+        s3     => $self->client->s3,
+        bucket => $self->name,
+        marker => $conf->{marker},
+        prefix => $conf->{prefix},
+        delimiter => $conf->{delimiter},
+    )->http_request;
+
+    my $xpc = $self->client->_send_request_xpc($http_request);
+    my @objects;
+    foreach my $node ( $xpc->findnodes('/s3:ListMultipartUploadsResult/s3:Upload') ) {
+        my $key = $xpc->findvalue( "./s3:Key", $node );
+        push @objects,
+            {
+                key       => $xpc->findvalue( './s3:Key', $node ),
+                uploadID  => $xpc->findvalue( './s3:UploadId', $node ),
+                initiated => $xpc->findvalue( './s3:Initiated', $node ),
+                # storageclass => $xpc->findvalue( './s3:StorageClass', $node ),
+            }
+    }
+
+    return @objects;
+}
+
 sub delete_multi_object {
     my $self = shift;
     my @objects = @_;

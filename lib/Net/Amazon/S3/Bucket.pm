@@ -423,6 +423,32 @@ sub list_all {
     return $self->account->list_bucket_all($conf);
 }
 
+=head2 list_uploads
+
+List all unfinished multi-part uploads, e.g. to clear out stale ones.
+
+=cut
+
+sub list_uploads {
+    my ($self) = shift;
+    my $conf = shift || {};
+    $conf->{bucket} = $self->bucket;
+    return $self->account->list_uploads($conf);
+}
+
+=head2 abort_multipart_upload
+
+Remove a pending upload, thus freeing the storage
+
+=cut
+
+sub abort_multipart_upload {
+    my ($self) = shift;
+    my $conf = shift || {};
+    $conf->{bucket} = $self->bucket;
+    return $self->account->abort_multipart_upload($conf);
+}
+
 =head2 get_acl
 
 Takes one optional positional parameter

@@ -126,6 +126,7 @@ use Net::Amazon::S3::Request::GetObject;
 use Net::Amazon::S3::Request::GetObjectAccessControl;
 use Net::Amazon::S3::Request::InitiateMultipartUpload;
 use Net::Amazon::S3::Request::ListAllMyBuckets;
+use Net::Amazon::S3::Request::ListMultipartUploads;
 use Net::Amazon::S3::Request::ListBucket;
 use Net::Amazon::S3::Request::ListParts;
 use Net::Amazon::S3::Request::PutObject;
@@ -642,6 +643,124 @@ sub _compat_bucket {
     my ( $self, $conf ) = @_;
     return Net::Amazon::S3::Bucket->new(
         { account => $self, bucket => delete $conf->{bucket} } );
+}
+
+=head2 list_uploads
+
+List all pending uploads in this bucket. Takes a hashref of arguments:
+
+MANDATORY
+
+=over
+
+=item bucket
+
+The name of the bucket you want to find pending uploads for.
+
+=back
+
+OPTIONAL
+
+=over
+
+=item prefix
+
+Restricts the response to only contain results that begin with the
+specified prefix.
+
+=item delimiter
+
+=item max-keys
+
+=item marker
+
+=back
+
+
+Returns undef on error and a list of hashrefs of data on success:
+
+Each hashref looks like this:
+
+  {
+    key => $key,
+    upload_id => $upload_id,
+    iniated => $timestamp,
+  }
+
+You can then use the upload_id to abort the upload and free the storage space,
+for which you are charged for otherwise.
+
+=cut
+
+sub list_uploads {
+    my ($self, $conf) = @_;
+    $conf ||= {};
+    
+    my $http_request = Net::Amazon::S3::Request::ListMultipartUploads->new(
+        s3        => $self,
+        bucket    => $conf->{bucket},
+        delimiter => $conf->{delimiter},
+        max_keys  => $conf->{max_keys},
+        marker    => $conf->{marker},
+        prefix    => $conf->{prefix},
+    )->http_request;
+
+    my $xpc = $self->_send_request($http_request);
+
+    return unless $xpc && !$self->_remember_errors($xpc);
+    my @objects;
+    foreach my $node ( $xpc->findnodes('/s3:ListMultipartUploadsResult/s3:Upload') ) {
+        my $key = $xpc->findvalue( "./s3:Key", $node );
+        push @objects,
+            {
+                key       => $xpc->findvalue( './s3:Key', $node ),
+                upload_id  => $xpc->findvalue( './s3:UploadId', $node ),
+                initiated => $xpc->findvalue( './s3:Initiated', $node ),
+                # storageclass => $xpc->findvalue( './s3:StorageClass', $node ),
+            }
+    }
+    return @objects;
+}
+
+
+=head2 abort_multipart_upload
+
+Abort a pending upload, freeing the storage space.
+
+MANDATORY
+
+=over
+
+=item key
+
+Key of the object.
+
+=item upload_id
+
+The ID of the upload, either returned by list_uploads or returned when you create
+the multipart upload using Net::Amazon::S3::Client::Object.
+
+=back
+
+
+Returns undef on error or true value for success.
+
+=cut
+
+sub abort_multipart_upload {
+    my ($self, $conf) = @_;
+    $conf ||= {};
+
+    my $http_request = Net::Amazon::S3::Request::AbortMultipartUpload->new(
+        s3        => $self,
+        bucket    => $conf->{bucket},
+        upload_id => $conf->{upload_id},
+        key       => $conf->{key},
+    )->http_request;
+
+    my $xpc = $self->_send_request($http_request);
+    return unless $xpc && !$self->_remember_errors($xpc);
+    return 1; 
 }
 
 =head2 add_key
