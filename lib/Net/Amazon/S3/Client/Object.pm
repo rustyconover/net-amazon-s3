@@ -661,6 +661,14 @@ C<user_metadata>.
   The etag and part_numbers parameters are ordered lists specifying the part
   numbers and ETags for each individual part of the multipart upload.
 
+=head2 abort_multipart_upload
+
+  #abort pending upload to free storage space
+  #you should check for such stale uploads to avoid unnecessary cost frequently
+  $object->abort_multipart_upload(
+    upload_id => $upload_id
+  );
+
 =head2 user_metadata
 
   my $object = $bucket->object(key => $key);
