@@ -269,11 +269,15 @@ sub delete {
 
 sub initiate_multipart_upload {
     my $self = shift;
+    my $conf;
+    $conf->{"x-amz-meta-\L$_"} = $self->user_metadata->{$_}
+        for keys %{ $self->user_metadata };
     my $http_request = Net::Amazon::S3::Request::InitiateMultipartUpload->new(
         s3     => $self->client->s3,
         bucket => $self->bucket->name,
         key    => $self->key,
         encryption => $self->encryption,
+        headers => $conf,
     )->http_request;
     my $xpc = $self->client->_send_request_xpc($http_request);
     my $upload_id = $xpc->findvalue('//s3:UploadId');
