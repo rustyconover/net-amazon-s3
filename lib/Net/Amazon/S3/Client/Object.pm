@@ -422,6 +422,16 @@ sub _is_multipart_etag {
     return 1 if($etag =~ /\-\d+$/);
 }
 
+sub versions {
+    my ( $self ) = @_;
+    my @list;
+    my $stream = $self->bucket->versions( { prefix => $self->key } );
+    until ($stream->is_done) {
+        push @list, $stream->items;
+    }
+    return @list;
+}
+
 1;
 
 __END__
