@@ -129,6 +129,7 @@ use Net::Amazon::S3::Request::ListAllMyBuckets;
 use Net::Amazon::S3::Request::ListMultipartUploads;
 use Net::Amazon::S3::Request::ListBucket;
 use Net::Amazon::S3::Request::ListParts;
+use Net::Amazon::S3::Request::ListVersions;
 use Net::Amazon::S3::Request::PutObject;
 use Net::Amazon::S3::Request::PutPart;
 use Net::Amazon::S3::Request::SetBucketAccessControl;
