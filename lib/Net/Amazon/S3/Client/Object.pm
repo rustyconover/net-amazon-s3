@@ -24,8 +24,8 @@ has 'client' =>
 has 'bucket' =>
     ( is => 'ro', isa => 'Net::Amazon::S3::Client::Bucket', required => 1 );
 has 'key'  => ( is => 'ro', isa => 'Str',  required => 1 );
-has 'etag' => ( is => 'ro', isa => 'Etag', required => 0 );
-has 'size' => ( is => 'ro', isa => 'Int',  required => 0 );
+has 'etag' => ( is => 'rw', isa => 'Etag', required => 0 );
+has 'size' => ( is => 'rw', isa => 'Int',  required => 0 );
 has 'last_modified' =>
     ( is => 'ro', isa => DateTime, coerce => 1, required => 0, default => sub { shift->last_modified_raw }, lazy => 1 );
 has 'last_modified_raw' =>
@@ -238,6 +238,8 @@ sub _put {
         if $http_response->code != 200;
 
     my $etag = $self->_etag($http_response);
+    $self->etag( $etag );
+    $self->size( $size );
 
     confess "Corrupted upload got $etag expected $md5_hex" if $etag ne $md5_hex;
 }
