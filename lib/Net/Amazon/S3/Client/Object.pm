@@ -169,7 +169,7 @@ sub get_filename {
     my $etag = $self->etag || $self->_etag($http_response);
     unless ($self->_is_multipart_etag($etag)) {
         my $md5_hex = file_md5_hex($filename);
-        confess 'Corrupted download' if $etag ne $md5_hex;
+        confess "Corrupted download: $filename ($etag/$md5_hex)" if $etag ne $md5_hex;
     }
 }
 
