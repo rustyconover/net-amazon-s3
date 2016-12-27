@@ -8,7 +8,6 @@ use Moose::Util::TypeConstraints;
 use URI::Escape qw( uri_escape_utf8 );
 use URI::QueryParam;
 use URI;
-use VM::EC2::Security::CredentialCache;
 
 # ABSTRACT: Create a signed HTTP::Request
 
@@ -99,6 +98,7 @@ sub _add_auth_header {
     my ( $self, $headers, $method, $path ) = @_;
 
     if ($self->s3->use_iam_role) {
+        require VM::EC2::Security::CredentialCache;
         my $creds = VM::EC2::Security::CredentialCache->get();
         defined($creds) || die("Unable to retrieve IAM role credentials");
         $self->s3->aws_access_key_id($creds->accessKeyId);
@@ -169,7 +169,7 @@ sub _canonical_string {
     $buf .= "/$1";
 
     # ...unless there any parameters we're interested in...
-    if ( $path =~ /[&?](acl|torrent|location|uploads|delete)($|=|&)/ ) {
+    if ( $path =~ /[&?](acl|torrent|location|uploads|delete|versions)($|=|&)/ ) {
         $buf .= "?$1";
     } elsif ( my %query_params = URI->new($path)->query_form ){
         my @interesting_keys = grep {

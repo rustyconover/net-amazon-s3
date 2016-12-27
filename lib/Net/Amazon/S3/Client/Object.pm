@@ -24,8 +24,8 @@ has 'client' =>
 has 'bucket' =>
     ( is => 'ro', isa => 'Net::Amazon::S3::Client::Bucket', required => 1 );
 has 'key'  => ( is => 'ro', isa => 'Str',  required => 1 );
-has 'etag' => ( is => 'ro', isa => 'Etag', required => 0 );
-has 'size' => ( is => 'ro', isa => 'Int',  required => 0 );
+has 'etag' => ( is => 'rw', isa => 'Etag', required => 0 );
+has 'size' => ( is => 'rw', isa => 'Int',  required => 0 );
 has 'last_modified' =>
     ( is => 'ro', isa => DateTime, coerce => 1, required => 0, default => sub { shift->last_modified_raw }, lazy => 1 );
 has 'last_modified_raw' =>
@@ -111,6 +111,20 @@ sub _get {
     return $http_response;
 }
 
+sub head {
+    my $self = shift;
+    my $http_request = Net::Amazon::S3::Request::GetObject->new(
+        s3     => $self->client->s3,
+        bucket => $self->bucket->name,
+        key    => $self->key,
+        method => 'HEAD',
+    )->http_request;
+
+    my $http_response = $self->client->_send_request($http_request);
+    $self->_load_user_metadata($http_response);
+    return;
+}
+
 sub get {
     my $self = shift;
     return $self->_get->content;
@@ -155,7 +169,7 @@ sub get_filename {
     my $etag = $self->etag || $self->_etag($http_response);
     unless ($self->_is_multipart_etag($etag)) {
         my $md5_hex = file_md5_hex($filename);
-        confess 'Corrupted download' if $etag ne $md5_hex;
+        confess "Corrupted download: $filename ($etag/$md5_hex)" if $etag ne $md5_hex;
     }
 }
 
@@ -224,6 +238,8 @@ sub _put {
         if $http_response->code != 200;
 
     my $etag = $self->_etag($http_response);
+    $self->etag( $etag );
+    $self->size( $size );
 
     confess "Corrupted upload got $etag expected $md5_hex" if $etag ne $md5_hex;
 }
@@ -255,11 +271,15 @@ sub delete {
 
 sub initiate_multipart_upload {
     my $self = shift;
+    my $conf;
+    $conf->{"x-amz-meta-\L$_"} = $self->user_metadata->{$_}
+        for keys %{ $self->user_metadata };
     my $http_request = Net::Amazon::S3::Request::InitiateMultipartUpload->new(
         s3     => $self->client->s3,
         bucket => $self->bucket->name,
         key    => $self->key,
         encryption => $self->encryption,
+        headers => $conf,
     )->http_request;
     my $xpc = $self->client->_send_request_xpc($http_request);
     my $upload_id = $xpc->findvalue('//s3:UploadId');
@@ -402,6 +422,16 @@ sub _is_multipart_etag {
     return 1 if($etag =~ /\-\d+$/);
 }
 
+sub versions {
+    my ( $self ) = @_;
+    my @list;
+    my $stream = $self->bucket->versions( { prefix => $self->key } );
+    until ($stream->is_done) {
+        push @list, $stream->items;
+    }
+    return @list;
+}
+
 1;
 
 __END__
@@ -426,8 +456,12 @@ no strict 'vars'
   my $object = $bucket->object( key => 'this is the key' );
   $object->put('this is the value');
 
-  # to get the vaue of an object
+  # to get the value of an object
   my $value = $object->get;
+
+  # to fetch just the user metadata of an object
+  $object->head;
+  my $user_metadata = $object->user_metadata;
 
   # to see if an object exists
   if ($object->exists) { ... }
@@ -520,6 +554,13 @@ This module represents objects in buckets.
   # download the value of the object into a file
   my $object = $bucket->object( key => 'images/my_hat.jpg' );
   $object->get_filename('hat_backup.jpg');
+
+=head2 head
+
+  # download just the metadata (including user metadata) without the actual data
+  my $object = $bucket->object( key => 'images/my_hat.jpg' );
+  $object->head;
+  my $user_metadata = $object->user_metadata;
 
 =head2 last_modified, last_modified_raw
 
@@ -637,6 +678,14 @@ C<user_metadata>.
 
   The etag and part_numbers parameters are ordered lists specifying the part
   numbers and ETags for each individual part of the multipart upload.
+
+=head2 abort_multipart_upload
+
+  #abort pending upload to free storage space
+  #you should check for such stale uploads to avoid unnecessary cost frequently
+  $object->abort_multipart_upload(
+    upload_id => $upload_id
+  );
 
 =head2 user_metadata
 

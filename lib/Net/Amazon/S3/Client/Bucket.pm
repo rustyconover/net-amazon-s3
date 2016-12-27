@@ -137,6 +137,118 @@ sub list {
     );
 }
 
+sub versions {
+    my ( $self, $conf ) = @_;
+    $conf ||= {};
+    my $prefix = $conf->{prefix};
+    my $delimiter = $conf->{delimiter};
+
+    my $marker = undef;
+    my $end    = 0;
+
+    return Data::Stream::Bulk::Callback->new(
+        callback => sub {
+
+            return undef if $end;
+
+            my $http_request = Net::Amazon::S3::Request::ListVersions->new(
+                s3     => $self->client->s3,
+                bucket => $self->name,
+                marker => $marker,
+                prefix => $prefix,
+                delimiter => $delimiter,
+            )->http_request;
+            
+            my $xpc = $self->client->_send_request_xpc($http_request);
+
+            my @objects;
+            foreach my $node (
+                $xpc->findnodes('/s3:ListVersionsResult/s3:Version') ) {
+                my $etag = $xpc->findvalue( "./s3:ETag", $node );
+                $etag =~ s/^"//;
+                $etag =~ s/"$//;
+
+                my $obj =
+                    $self->object_class->new(
+                    client => $self->client,
+                    bucket => $self,
+                    key    => $xpc->findvalue( './s3:Key', $node ),
+                    last_modified_raw =>
+                        $xpc->findvalue( './s3:LastModified', $node ),
+                    etag => $etag,
+                    size => $xpc->findvalue( './s3:Size', $node ),
+                    );
+                $obj->user_metadata->{version_id} = $xpc->findvalue('./s3:VersionId', $node);
+                $obj->user_metadata->{is_latest} = $xpc->findvalue('./s3:IsLatest', $node);
+                push @objects, $obj;
+            }
+            foreach my $node (
+                $xpc->findnodes('/s3:ListVersionResult/s3:DeleteMarker') ) {
+                my $etag = $xpc->findvalue( "./s3:ETag", $node );
+                $etag =~ s/^"//;
+                $etag =~ s/"$//;
+
+                my $obj =
+                    $self->object_class->new(
+                    client => $self->client,
+                    bucket => $self,
+                    key    => $xpc->findvalue( './s3:Key', $node ),
+                    last_modified_raw =>
+                        $xpc->findvalue( './s3:LastModified', $node ),
+                    etag => '',
+                    size => -1,
+                    );
+                $obj->user_metadata->{version_id} = $xpc->findvalue('./s3:VersionId', $node);
+                $obj->user_metadata->{is_latest} = $xpc->findvalue('./s3:IsLatest', $node);
+                $obj->user_metadata->{delete_marker} = 1;
+                push @objects, $obj;
+            }
+
+            return undef unless @objects;
+
+            my $is_truncated
+                = scalar $xpc->findvalue(
+                '/s3:ListBucketResult/s3:IsTruncated') eq 'true'
+                ? 1
+                : 0;
+            $end = 1 unless $is_truncated;
+
+            $marker = $xpc->findvalue('/s3:ListBucketResult/s3:NextMarker')
+                || $objects[-1]->key;
+
+            return \@objects;
+        }
+    );
+}
+
+sub list_uploads {
+    my ( $self, $conf ) = @_;
+    $conf ||= {};
+
+    my $http_request = Net::Amazon::S3::Request::ListAllParts->new(
+        s3     => $self->client->s3,
+        bucket => $self->name,
+        marker => $conf->{marker},
+        prefix => $conf->{prefix},
+        delimiter => $conf->{delimiter},
+    )->http_request;
+
+    my $xpc = $self->client->_send_request_xpc($http_request);
+    my @objects;
+    foreach my $node ( $xpc->findnodes('/s3:ListMultipartUploadsResult/s3:Upload') ) {
+        my $key = $xpc->findvalue( "./s3:Key", $node );
+        push @objects,
+            {
+                key       => $xpc->findvalue( './s3:Key', $node ),
+                uploadID  => $xpc->findvalue( './s3:UploadId', $node ),
+                initiated => $xpc->findvalue( './s3:Initiated', $node ),
+                # storageclass => $xpc->findvalue( './s3:StorageClass', $node ),
+            }
+    }
+
+    return @objects;
+}
+
 sub delete_multi_object {
     my $self = shift;
     my @objects = @_;
