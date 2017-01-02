@@ -22,6 +22,7 @@ my $s3 = Net::Amazon::S3->new(
     {   aws_access_key_id     => $aws_access_key_id,
         aws_secret_access_key => $aws_secret_access_key,
         retry                 => 1,
+		use_virtual_host		=> 1,
     }
 );
 

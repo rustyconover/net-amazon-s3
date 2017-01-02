@@ -132,6 +132,7 @@ use Net::Amazon::S3::Request::PutObject;
 use Net::Amazon::S3::Request::PutPart;
 use Net::Amazon::S3::Request::SetBucketAccessControl;
 use Net::Amazon::S3::Request::SetObjectAccessControl;
+use Net::Amazon::S3::Signature4;
 use LWP::UserAgent::Determined;
 use URI::Escape qw(uri_escape_utf8);
 use XML::LibXML;
@@ -147,6 +148,7 @@ has 'host'    => ( is => 'ro', isa => 'Str',  required => 0, default => 's3.amaz
 has 'use_virtual_host' => ( is => 'rw', isa => 'Bool', required => 0, default => 0 );
 has 'libxml' => ( is => 'rw', isa => 'XML::LibXML',    required => 0 );
 has 'ua'     => ( is => 'rw', isa => 'LWP::UserAgent', required => 0 );
+has 'signer'     => ( is => 'rw', isa => 'Net::Amazon::S3::Signature4', required => 0 );
 has 'err'    => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
 has 'errstr' => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
 has 'aws_session_token' => ( is => 'rw', isa => 'Str', required => 0 );
@@ -246,7 +248,6 @@ sub BUILD {
         }
     }
 
-
     my $ua;
     if ( $self->retry ) {
         $ua = LWP::UserAgent::Determined->new(
@@ -264,8 +265,17 @@ sub BUILD {
     $ua->timeout( $self->timeout );
     $ua->env_proxy;
 
+	$ua->add_handler( response_redirect => \&_response_redirect_handler, m_code => 307, s3 => $self );
+
     $self->ua($ua);
     $self->libxml( XML::LibXML->new );
+
+	$self->signer(
+		Net::Amazon::S3::Signature4->new(
+			-access_key => $self->aws_access_key_id,
+			-secret_key => $self->aws_secret_access_key
+		)
+	);
 }
 
 =head2 buckets
@@ -798,6 +808,20 @@ sub _remember_errors {
 sub _urlencode {
     my ( $self, $unencoded ) = @_;
     return uri_escape_utf8( $unencoded, '^A-Za-z0-9_\-\.' );
+}
+
+# UA callbacks
+sub _response_redirect_handler {
+	my ($response, $ua, $h) = @_;
+	my $region = $response->header('x-amz-bucket-region') or return;
+		# change the bucket region
+		my $request = $response->request;
+		$request->uri($response->header('location'));
+		### sign the request again
+		$request->headers->remove_header('Authorization');
+		$request->headers->remove_header('x-amz-date');
+		$h->{s3}->signer->sign( $request, $region );
+		return $request;
 }
 
 1;

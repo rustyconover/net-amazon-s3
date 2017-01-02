@@ -9,6 +9,7 @@ use URI::Escape qw( uri_escape_utf8 );
 use URI::QueryParam;
 use URI;
 use VM::EC2::Security::CredentialCache;
+use Net::Amazon::S3::Signature4;
 
 # ABSTRACT: Create a signed HTTP::Request
 
@@ -48,12 +49,14 @@ sub http_request {
         # use https://bucketname.s3.amazonaws.com instead of https://s3.amazonaws.com/bucketname
         # see http://docs.aws.amazon.com/AmazonS3/latest/dev/VirtualHosting.html
         $path =~ s{(.*?)/}{} and my $bucket = $1;
-        $host = "$bucket.$host";
+        $host = "$bucket.$host" if $bucket;
     }
     my $uri = "$protocol://$host/$path";
 
     my $request
         = HTTP::Request->new( $method, $uri, $http_headers, $content );
+
+    $self->s3->signer->sign( $request );
 
     # my $req_as = $request->as_string;
     # $req_as =~ s/[^\n\r\x20-\x7f]/?/g;
@@ -106,8 +109,6 @@ sub _add_auth_header {
         $self->s3->aws_session_token($creds->sessionToken);
     }
 
-    my $aws_access_key_id     = $self->s3->aws_access_key_id;
-    my $aws_secret_access_key = $self->s3->aws_secret_access_key;
     my $aws_session_token     = $self->s3->aws_session_token;
 
     if ( not $headers->header('Date') ) {
@@ -118,13 +119,6 @@ sub _add_auth_header {
          defined $aws_session_token ) {
         $headers->header( 'x-amz-security-token' => $aws_session_token );
     }
-
-    my $canonical_string
-        = $self->_canonical_string( $method, $path, $headers );
-    my $encoded_canonical
-        = $self->_encode( $aws_secret_access_key, $canonical_string );
-    $headers->header(
-        Authorization => "AWS $aws_access_key_id:$encoded_canonical" );
 }
 
 # generate a canonical string for the given parameters.  expires is optional and is
