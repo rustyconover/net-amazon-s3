@@ -127,6 +127,10 @@ sub add_key {
 
     if ( ref($value) eq 'SCALAR' ) {
         $conf->{'Content-Length'} ||= -s $$value;
+		# Digest::SHA can't calculate sha256 checksum for the coderef, so calc it here now
+		my $sha = Digest::SHA->new('256');
+		$sha->addfile($$value);
+		$conf->{'x-amz-content-sha256'} = $sha->hexdigest;
         $value = _content_sub($$value);
     } else {
         $conf->{'Content-Length'} ||= length $value;
