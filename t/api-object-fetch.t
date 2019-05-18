@@ -40,6 +40,7 @@ expect_api_object_fetch 'fetch existing object' => (
         'x-amz-metadata-foo'    => 'foo-1',
         'content-type'          => 'text/plain',
         'content-length'        => 10,
+        'client-date'           => ignore,
     },
 );
 

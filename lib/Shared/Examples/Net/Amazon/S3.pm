@@ -13,6 +13,7 @@ use Ref::Util (
 
 use Test::Deep;
 use Test::More;
+use Test::LWP::UserAgent;
 
 use Net::Amazon::S3;
 
@@ -30,8 +31,40 @@ our @EXPORT_OK = (
     qw[ expect_operation_bucket_delete ],
 );
 
+sub s3_api {
+    my $api = Net::Amazon::S3->new (@_);
+
+    $api->ua (Test::LWP::UserAgent->new);
+
+    $api;
+}
+
+sub s3_api_mock_http_response {
+    my ($self, $api, %params) = @_;
+
+    $params{with_response_code} ||= HTTP::Status::HTTP_OK;
+
+    my %headers = (
+        content_type => 'application/xml',
+        %{ $params{with_response_headers} || {} },
+    );
+
+    $api->ua->map_response (
+        sub {
+            ${ $params{into} } = $_[0];
+            1;
+        },
+        HTTP::Response->new (
+            $params{with_response_code},
+            HTTP::Status::status_message ($params{with_response_code}),
+            [ %headers ],
+            $params{with_response_data},
+        ),
+    );
+}
+
 sub s3_api_with_signature_4 {
-    Net::Amazon::S3->new (
+    s3_api (
         @_,
         aws_access_key_id     => 'AKIDEXAMPLE',
         aws_secret_access_key => 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
@@ -42,7 +75,7 @@ sub s3_api_with_signature_4 {
 }
 
 sub s3_api_with_signature_2 {
-    Net::Amazon::S3->new (
+    s3_api (
         @_,
         aws_access_key_id     => 'AKIDEXAMPLE',
         aws_secret_access_key => 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
@@ -175,7 +208,7 @@ sub _expect_operation {
     my $operation = delete $params{-operation};
 
     my $api = $class->_default_with_api (\%params);
-    my $guard = $class->_mock_http_response (%params, into => \ (my $request));
+    $class->_mock_http_response ($api, %params, into => \ (my $request));
 
     if (my $code = $class->can ($operation)) {
         subtest $title => sub {
