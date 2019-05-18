@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 4; # Test::Warnings + our tests
+use Test::More tests => 5;
 use Test::Deep;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use Shared::Examples::Net::Amazon::S3::Client (
     qw[ expect_client_object_delete ],
@@ -47,3 +47,4 @@ expect_client_object_delete 'error no such key' => (
     throws                  => qr/^NoSuchKey: No such key error message/,
 );
 
+had_no_warnings;

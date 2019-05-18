@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 5;
+use Test::More tests => 6;
 use Test::Deep;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use Shared::Examples::Net::Amazon::S3::API (
     qw[ expect_api_object_create ],
@@ -94,3 +94,5 @@ expect_api_object_create 'error no such bucket' => (
     expect_s3_err           => 'NoSuchBucket',
     expect_s3_errstr        => 'No such bucket error message',
 );
+
+had_no_warnings;

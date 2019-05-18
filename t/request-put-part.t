@@ -2,8 +2,8 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 2;
-use Test::Warnings;
+use Test::More tests => 3;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use Shared::Examples::Net::Amazon::S3::Request (
     qw[ behaves_like_net_amazon_s3_request ],
@@ -36,3 +36,4 @@ behaves_like_net_amazon_s3_request 'put object with acl' => (
     expect_request_headers  => { 'x-amz-acl' => 'private' },
 );
 
+had_no_warnings;

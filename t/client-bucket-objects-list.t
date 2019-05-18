@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 6;
+use Test::More tests => 7;
 use Test::Deep;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use Shared::Examples::Net::Amazon::S3::Client (
     qw[ expect_client_bucket_objects_list ],
@@ -127,3 +127,4 @@ expect_client_bucket_objects_list 'error no such bucket' => (
     }),
 );
 
+had_no_warnings;

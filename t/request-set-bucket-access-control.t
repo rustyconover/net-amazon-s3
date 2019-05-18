@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 4;
+use Test::More tests => 5;
 use Test::Deep;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use Shared::Examples::Net::Amazon::S3::Request (
     qw[ behaves_like_net_amazon_s3_request ],
@@ -46,3 +46,4 @@ behaves_like_net_amazon_s3_request 'set bucket access control with both body and
     throws          => re( qr/can not provide both acl_xml and acl_short/ ),
 );
 
+had_no_warnings;

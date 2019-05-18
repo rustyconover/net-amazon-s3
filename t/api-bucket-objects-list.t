@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 7;
+use Test::More tests => 8;
 use Test::Deep;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use Shared::Examples::Net::Amazon::S3 (
     qw[ s3_api_with_signature_2 ],
@@ -189,3 +189,5 @@ expect_api_bucket_objects_list 'list objects (version 1) on Google Cloud Storage
         } ],
     },
 );
+
+had_no_warnings;

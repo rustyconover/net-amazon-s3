@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 6;
+use Test::More tests => 7;
 use Test::Deep;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use Shared::Examples::Net::Amazon::S3::API (
     qw[ expect_api_bucket_create ],
@@ -83,3 +83,4 @@ expect_api_bucket_create 'error invalid bucket name' => (
     expect_s3_errstr        => 'Invalid bucket name error message',
 );
 
+had_no_warnings;

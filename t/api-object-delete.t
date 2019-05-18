@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 4; # Test::Warnings + our tests
+use Test::More tests => 5;
 use Test::Deep;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use Shared::Examples::Net::Amazon::S3::API (
     qw[ expect_api_object_delete ],
@@ -53,3 +53,4 @@ expect_api_object_delete 'error no such key' => (
     expect_s3_errstr        => 'No such key error message',
 );
 
+had_no_warnings;

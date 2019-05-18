@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 4;
+use Test::More tests => 5;
 use Test::Deep;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use Shared::Examples::Net::Amazon::S3::Client (
     qw[ expect_client_bucket_delete ],
@@ -46,3 +46,4 @@ expect_client_bucket_delete 'error no such bucket' => (
     throws                  => qr/^NoSuchBucket: No such bucket error message/,
 );
 
+had_no_warnings;

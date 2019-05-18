@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 3;
+use Test::More tests => 4;
 use Test::Deep;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use Shared::Examples::Net::Amazon::S3::Request (
     qw[ behaves_like_net_amazon_s3_request ],
@@ -57,3 +57,5 @@ behaves_like_net_amazon_s3_request 'delete multi object with more than 1_000 key
 
     throws          => re( qr/The maximum number of keys is 1000/ ),
 );
+
+had_no_warnings;

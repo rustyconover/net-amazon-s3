@@ -3,10 +3,10 @@
 use strict;
 
 use Test::More;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 use Test::LoadAllModules;
 
-plan tests => 1+1;
+plan tests => 2;
 
 subtest 'use_ok' => sub {
     all_uses_ok(
@@ -14,3 +14,5 @@ subtest 'use_ok' => sub {
         except => [qw/ /],
     )
 };
+
+had_no_warnings;

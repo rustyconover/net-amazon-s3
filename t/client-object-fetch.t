@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 4;
+use Test::More tests => 5;
 use Test::Deep;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use HTTP::Status;
 
@@ -58,3 +58,4 @@ expect_client_object_fetch 'with error no such object' => (
     throws                  => qr/^NoSuchKey: No such key error message/i,
 );
 
+had_no_warnings;

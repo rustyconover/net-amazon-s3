@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 4;
+use Test::More tests => 5;
 use Test::Deep;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use Shared::Examples::Net::Amazon::S3::API (
     qw[ expect_api_object_acl_get ],
@@ -58,3 +58,4 @@ expect_api_object_acl_get 'with error bucket not found' => (
     expect_s3_errstr        => undef,
 );
 
+had_no_warnings;

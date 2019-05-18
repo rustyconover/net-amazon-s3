@@ -2,9 +2,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1 + 3;
+use Test::More tests => 4;
 use Test::Deep;
-use Test::Warnings;
+use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
 use Shared::Examples::Net::Amazon::S3::API (
     qw[ expect_api_list_all_my_buckets ],
@@ -65,3 +65,4 @@ expect_api_list_all_my_buckets 'list all my buckets without displayname' => (
     expect_s3_errstr    => 'Access denied error message',
 );
 
+had_no_warnings;
