@@ -16,7 +16,7 @@ behaves_like_net_amazon_s3_request 'delete multi object with empty keys' => (
     with_keys       => [],
 
     expect_request_method   => 'POST',
-    expect_request_path     => 'some-bucket/?delete',
+    expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/?delete',
     expect_request_headers  => {
         'Content-MD5' => 'hWgjGHog2fcu6stNeIAJsw==',
         'Content-Length' => 76,
@@ -35,7 +35,7 @@ behaves_like_net_amazon_s3_request 'delete multi object with some keys' => (
     with_keys       => [ 'some/key', '<another/key>' ],
 
     expect_request_method   => 'POST',
-    expect_request_path     => 'some-bucket/?delete',
+    expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/?delete',
     expect_request_headers  => {
         'Content-MD5' => '+6onPaU8IPGxGhWh0ULBJg==',
         'Content-Length' => 159,

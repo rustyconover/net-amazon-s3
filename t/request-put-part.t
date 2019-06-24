@@ -18,7 +18,7 @@ behaves_like_net_amazon_s3_request 'put object' => (
     with_part_number    => '1',
 
     expect_request_method   => 'PUT',
-    expect_request_path     => 'some-bucket/some/key?partNumber=1&uploadId=123',
+    expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/some/key?partNumber=1&uploadId=123',
     expect_request_headers  => { },
 );
 
@@ -32,7 +32,7 @@ behaves_like_net_amazon_s3_request 'put object with acl' => (
     with_acl_short      => 'private',
 
     expect_request_method   => 'PUT',
-    expect_request_path     => 'some-bucket/some/key?partNumber=1&uploadId=123',
+    expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/some/key?partNumber=1&uploadId=123',
     expect_request_headers  => { 'x-amz-acl' => 'private' },
 );
 

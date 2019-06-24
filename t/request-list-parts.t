@@ -17,7 +17,7 @@ behaves_like_net_amazon_s3_request 'list parts' => (
     with_upload_id      => '123',
 
     expect_request_method   => 'GET',
-    expect_request_path     => 'some-bucket/some/key?uploadId=123',
+    expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/some/key?uploadId=123',
     expect_request_headers  => { },
     expect_request_content  => '',
 );
@@ -30,7 +30,7 @@ behaves_like_net_amazon_s3_request 'list parts with acl' => (
     with_acl_short      => 'private',
 
     expect_request_method   => 'GET',
-    expect_request_path     => 'some-bucket/some/key?uploadId=123',
+    expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/some/key?uploadId=123',
     expect_request_headers  => { 'x-amz-acl' => 'private' },
     expect_request_content  => '',
 );

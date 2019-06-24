@@ -13,7 +13,7 @@ behaves_like_net_amazon_s3_request 'list all buckets' => (
     request_class   => 'Net::Amazon::S3::Request::ListAllMyBuckets',
 
     expect_request_method   => 'GET',
-    expect_request_path     => '',
+    expect_request_uri      => 'https://s3.amazonaws.com/',
     expect_request_headers  => { },
     expect_request_content  => '',
 );

@@ -16,7 +16,7 @@ behaves_like_net_amazon_s3_request 'get object' => (
     with_method     => 'GET',
 
     expect_request_method   => 'GET',
-    expect_request_path     => 'some-bucket/some/key',
+    expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/some/key',
     expect_request_headers  => { },
     expect_request_content  => '',
 );

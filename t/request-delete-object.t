@@ -15,7 +15,7 @@ behaves_like_net_amazon_s3_request 'delete object' => (
     with_key        => 'some/key',
 
     expect_request_method   => 'DELETE',
-    expect_request_path     => 'some-bucket/some/key',
+    expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/some/key',
     expect_request_headers  => { },
     expect_request_content  => '',
 );

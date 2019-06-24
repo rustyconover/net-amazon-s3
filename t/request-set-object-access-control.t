@@ -17,7 +17,7 @@ behaves_like_net_amazon_s3_request 'set object access control with header acl' =
     with_acl_short  => 'private',
 
     expect_request_method   => 'PUT',
-    expect_request_path     => 'some-bucket/some/key?acl',
+    expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/some/key?acl',
     expect_request_headers  => { 'x-amz-acl' => 'private' },
 );
 
@@ -28,7 +28,7 @@ behaves_like_net_amazon_s3_request 'set object access control with body acl' => 
     with_acl_xml    => 'private',
 
     expect_request_method   => 'PUT',
-    expect_request_path     => 'some-bucket/some/key?acl',
+    expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/some/key?acl',
     expect_request_headers  => { },
 );
 

@@ -14,7 +14,7 @@ behaves_like_net_amazon_s3_request 'get bucket location constraint' => (
     with_bucket     => 'some-bucket',
 
     expect_request_method   => 'GET',
-    expect_request_path     => 'some-bucket/?location',
+    expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/?location',
     expect_request_headers  => { },
     expect_request_content  => '',
 );
