@@ -89,6 +89,12 @@ sub sign_request {
 sub sign_uri {
     my ($self, $request, $expires_at) = @_;
 
+    unless ($request->uri->query_param('x-amz-security-token')) {
+        my $aws_session_token = $self->http_request->s3->aws_session_token;
+        $request->uri->query_param('x-amz-security-token' => $aws_session_token)
+            if defined $aws_session_token;
+    }
+
     my $sign = $self->_sign;
     $self->_host_to_region_host( $sign, $request );
 
