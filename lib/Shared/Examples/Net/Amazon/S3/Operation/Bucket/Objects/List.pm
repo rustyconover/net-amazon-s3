@@ -12,6 +12,7 @@ our @EXPORT_OK = (
     qw[ list_bucket_objects_v1_with_filter ],
     qw[ list_bucket_objects_v1_with_delimiter ],
     qw[ list_bucket_objects_v1_with_prefix_and_delimiter ],
+    qw[ list_bucket_objects_v1_google_cloud_storage ],
 );
 
 sub list_bucket_objects_v1 {
@@ -164,6 +165,35 @@ sub list_bucket_objects_v1_with_prefix_and_delimiter {
   <CommonPrefixes>
     <Prefix>photos/2006/January/</Prefix>
   </CommonPrefixes>
+</ListBucketResult>
+EOXML
+}
+
+sub list_bucket_objects_v1_google_cloud_storage {
+    <<'EOXML';
+<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns='http://doc.s3.amazonaws.com/2006-03-01'>
+  <Name>gcs-bucket</Name>
+  <Prefix></Prefix>
+  <Marker></Marker>
+  <NextMarker>next/marker/is/foo</NextMarker>
+  <IsTruncated>true</IsTruncated>
+  <Contents>
+    <Key>path/to/value</Key>
+    <Generation>1473499153424000</Generation>
+    <MetaGeneration>1</MetaGeneration>
+    <LastModified>2017-04-21T22:06:03.413Z</LastModified>
+    <ETag>"1f52bad2879ca96dacd7a40f33001230"</ETag>
+    <Size>742213</Size>
+  </Contents>
+  <Contents>
+    <Key>path/to/value2</Key>
+    <Generation>1473499153424001</Generation>
+    <MetaGeneration>1</MetaGeneration>
+    <LastModified>2018-04-21T22:06:03.413Z</LastModified>
+    <ETag>"1f52bad2889ca96dacd7a40f33001230"</ETag>
+    <Size>742214</Size>
+  </Contents>
 </ListBucketResult>
 EOXML
 }

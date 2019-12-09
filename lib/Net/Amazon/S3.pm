@@ -814,7 +814,12 @@ sub _xpc_of_content {
     # warn $doc->toString(1);
 
     my $xpc = XML::LibXML::XPathContext->new($doc);
-    $xpc->registerNs( 's3', 'http://s3.amazonaws.com/doc/2006-03-01/' );
+
+    # Set default XML document NS as S3 namespace.
+    # Or default Amazon xmlns (for documents without NS).
+    my $s3_ns = $doc->documentElement->lookupNamespaceURI
+       || 'http://s3.amazonaws.com/doc/2006-03-01/';
+    $xpc->registerNs( 's3', $s3_ns );
 
     return $xpc;
 }

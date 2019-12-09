@@ -43,6 +43,7 @@ sub s3_api_with_signature_4 {
 
 sub s3_api_with_signature_2 {
     Net::Amazon::S3->new (
+        @_,
         aws_access_key_id     => 'AKIDEXAMPLE',
         aws_secret_access_key => 'wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY',
         authorization_method  => 'Net::Amazon::S3::Signature::V2',
