@@ -17,6 +17,7 @@ has 'owner_display_name' => ( is => 'ro', isa => 'Str',     required => 0 );
 has 'region' => (
     is => 'ro',
     lazy => 1,
+    predicate => 'has_region',
     default => sub { $_[0]->location_constraint },
 );
 
