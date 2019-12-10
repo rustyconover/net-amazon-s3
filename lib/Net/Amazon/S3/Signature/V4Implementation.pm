@@ -21,6 +21,7 @@ our $X_AMZ_CONTENT_SHA256 = 'X-Amz-Content-Sha256';
 our $X_AMZ_CREDENTIAL     = 'X-Amz-Credential';
 our $X_AMZ_DATE           = 'X-Amz-Date';
 our $X_AMZ_EXPIRES        = 'X-Amz-Expires';
+our $X_AMZ_SECURITY_TOKEN = 'X-Amz-Security-Token';
 our $X_AMZ_SIGNEDHEADERS  = 'X-Amz-SignedHeaders';
 our $X_AMZ_SIGNATURE      = 'X-Amz-Signature';
 
@@ -58,13 +59,12 @@ Note that the access key ID is an alphanumeric string, not your account ID. The 
 
 sub new {
 	my $class = shift;
-	my ( $access_key_id, $secret, $endpoint, $service ) = @_;
-	my $self = {
-		access_key_id => $access_key_id,
-		secret        => $secret,
-		endpoint      => $endpoint,
-		service       => $service,
-	};
+	my $self = {};
+	if (int(@_) > 1) {
+		@{$self}{qw/ access_key_id secret endpoint service /} = @_;
+	} else {
+		$self = $_[0];
+	}
 	bless $self, $class;
 	return $self;
 }
@@ -139,6 +139,12 @@ sub _augment_request {
 	$request->header($X_AMZ_CONTENT_SHA256 => sha256_hex($request->content))
 		unless $request->header($X_AMZ_CONTENT_SHA256);
 
+	if ($self->{security_token}) {
+		if (not $request->header($X_AMZ_SECURITY_TOKEN)) {
+			$request->header($X_AMZ_SECURITY_TOKEN => $self->{security_token})
+		}
+	}
+
 	return $request;
 }
 
@@ -163,6 +169,12 @@ sub _augment_uri {
 		unless $request->uri->query_param( $X_AMZ_EXPIRES );
 	$request->uri->query_param( $X_AMZ_EXPIRES => $MAX_EXPIRES )
 		if $request->uri->query_param( $X_AMZ_EXPIRES ) > $MAX_EXPIRES;
+
+	if ($self->{security_token}) {
+		if (not $request->uri->query_param($X_AMZ_SECURITY_TOKEN)) {
+			$request->uri->query_param($X_AMZ_SECURITY_TOKEN => $self->{security_token})
+		}
+	}
 
 	$request->uri->query_param( $X_AMZ_SIGNEDHEADERS => 'host' );
 

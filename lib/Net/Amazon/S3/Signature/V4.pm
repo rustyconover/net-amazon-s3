@@ -43,12 +43,13 @@ sub _bucket_region {
 sub _sign {
     my ($self, $region) = @_;
 
-    return Net::Amazon::S3::Signature::V4Implementation->new(
-        $self->http_request->s3->aws_access_key_id,
-        $self->http_request->s3->aws_secret_access_key,
-        $region || $self->_bucket_region,
-        's3',
-    );
+    return Net::Amazon::S3::Signature::V4Implementation->new({
+        access_key_id  => $self->http_request->s3->aws_access_key_id,
+        endpoint       => $region || $self->_bucket_region,
+        secret         => $self->http_request->s3->aws_secret_access_key,
+        security_token => $self->http_request->s3->aws_session_token,
+        service        => 's3',
+    });
 }
 
 sub _host_to_region_host {
@@ -71,12 +72,6 @@ sub sign_request {
         }
 
         $request->header( $Net::Amazon::S3::Signature::V4Implementation::X_AMZ_CONTENT_SHA256 => $sha->hexdigest );
-    }
-
-    unless ($request->header ('x-amz-security-token')) {
-        my $aws_session_token = $self->http_request->s3->aws_session_token;
-        $request->header ('x-amz-security-token' => $aws_session_token)
-            if defined $aws_session_token;
     }
 
     my $sign = $self->_sign( $region );
