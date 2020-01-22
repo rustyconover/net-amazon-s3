@@ -14,8 +14,8 @@ use IO::File 1.14;
 # ABSTRACT: An easy-to-use Amazon S3 client object
 
 enum 'AclShort' =>
-    [ qw(private public-read public-read-write authenticated-read) ];
-
+    # Current list at https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+    [ qw(private public-read public-read-write aws-exec-read authenticated-read bucket-owner-read bucket-owner-full-control log-delivery-write ) ];
 enum 'StorageClass' =>
     [ qw(standard reduced_redundancy standard_ia onezone_ia) ];
 
