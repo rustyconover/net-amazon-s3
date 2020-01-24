@@ -748,8 +748,9 @@ sub delete_key {
 sub _validate_acl_short {
     my ( $self, $policy_name ) = @_;
 
+    # Current list at https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
     if (!grep( { $policy_name eq $_ }
-            qw(private public-read public-read-write authenticated-read) ) )
+            qw(private public-read public-read-write aws-exec-read authenticated-read bucket-owner-read bucket-owner-full-control log-delivery-write ) ) )
     {
         croak "$policy_name is not a supported canned access policy";
     }
