@@ -10,6 +10,7 @@ use MIME::Base64;
 use Moose::Util::TypeConstraints;
 use MooseX::Types::DateTime::MoreCoercions 0.07 qw( DateTime );
 use IO::File 1.14;
+use Ref::Util ();
 
 # ABSTRACT: An easy-to-use Amazon S3 client object
 
@@ -263,11 +264,13 @@ sub delete {
 
 sub initiate_multipart_upload {
     my $self = shift;
+    my %args = Ref::Util::is_plain_hashref($_[0]) ? %{$_[0]} : @_;
     my $http_request = Net::Amazon::S3::Request::InitiateMultipartUpload->new(
         s3     => $self->client->s3,
         bucket => $self->bucket->name,
         key    => $self->key,
         encryption => $self->encryption,
+        ($args{headers} ? (headers => $args{headers}) : ()),
     )->http_request;
     my $xpc = $self->client->_send_request_xpc($http_request);
     my $upload_id = $xpc->findvalue('//s3:UploadId');
