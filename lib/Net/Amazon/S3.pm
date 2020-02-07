@@ -384,6 +384,7 @@ sub add_bucket {
         bucket              => $conf->{bucket},
         acl_short           => $conf->{acl_short},
         location_constraint => $conf->{location_constraint},
+        ( $conf->{region} ? (region => $conf->{region}) : () ),
     )->http_request;
 
     return 0

@@ -139,6 +139,7 @@ sub operation_bucket_create {
             bucket => $params{with_bucket},
             (acl_short => $params{with_acl}) x!! exists $params{with_acl},
             (location_constraint => $params{with_region}) x!! exists $params{with_region},
+            (region => $params{with_region}) x!! exists $params{with_region},
         })
         ;
 }
