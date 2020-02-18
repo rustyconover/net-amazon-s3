@@ -28,7 +28,10 @@ our @EXPORT_OK = (
     qw[ expect_api_object_delete ],
     qw[ expect_api_object_fetch ],
     qw[ expect_api_object_head ],
+    qw[ with_fixture ],
 );
+
+*with_fixture = *Shared::Examples::Net::Amazon::S3::with_fixture;
 
 sub _exporter_expand_sub {
     my ($self, $name, $args, $globals) = @_;

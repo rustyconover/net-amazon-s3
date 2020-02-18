@@ -29,6 +29,8 @@ our @EXPORT_OK = (
     qw[ expect_client_object_fetch ],
 );
 
+*with_fixture = *Shared::Examples::Net::Amazon::S3::with_fixture;
+
 sub _exporter_expand_sub {
     my ($self, $name, $args, $globals) = @_;
 

@@ -5,12 +5,12 @@ use warnings;
 use Test::More tests => 5;
 use Test::Warnings qw[ :no_end_test had_no_warnings ];
 
-use Shared::Examples::Net::Amazon::S3::Request (
-    qw[ behaves_like_net_amazon_s3_request ],
+use Shared::Examples::Net::Amazon::S3 (
+    qw[ fixture ],
 );
 
-use Shared::Examples::Net::Amazon::S3::Operation::Bucket::Create (
-    qw[ create_bucket_in_ca_central_1_content_xml ],
+use Shared::Examples::Net::Amazon::S3::Request (
+    qw[ behaves_like_net_amazon_s3_request ],
 );
 
 behaves_like_net_amazon_s3_request 'create bucket' => (
@@ -42,7 +42,7 @@ behaves_like_net_amazon_s3_request 'create bucket in region' => (
     expect_request_method   => 'PUT',
     expect_request_path     => 'some-bucket/',
     expect_request_headers  => { },
-    expect_request_content  => create_bucket_in_ca_central_1_content_xml,
+    expect_request_content  => fixture ('request::bucket_create_ca_central_1')->{content},
 );
 
 behaves_like_net_amazon_s3_request 'create bucket in region with acl' => (
@@ -54,7 +54,7 @@ behaves_like_net_amazon_s3_request 'create bucket in region with acl' => (
     expect_request_method   => 'PUT',
     expect_request_path     => 'some-bucket/',
     expect_request_headers  => { 'x-amz-acl' => 'private' },
-    expect_request_content  => create_bucket_in_ca_central_1_content_xml,
+    expect_request_content  => fixture ('request::bucket_create_ca_central_1')->{content},
 );
 
 had_no_warnings;

@@ -29,7 +29,55 @@ our @EXPORT_OK = (
     qw[ expect_operation_list_all_my_buckets ],
     qw[ expect_operation_bucket_create ],
     qw[ expect_operation_bucket_delete ],
+    qw[ with_fixture ],
+    qw[ fixture ],
+    qw[ with_response_fixture ],
 );
+
+my %fixtures;
+sub fixture {
+    my ($name) = @_;
+
+    $fixtures{$name} = eval "require Shared::Examples::Net::Amazon::S3::Fixture::$name"
+        unless defined $fixtures{$name};
+
+    die "Fixture $name not found: $@"
+        unless defined $fixtures{$name};
+
+    return +{ %{ $fixtures{$name} } };
+}
+
+sub with_fixture {
+    my ($name) = @_;
+
+    my $fixture = fixture ($name);
+    return wantarray
+        ? %$fixture
+        : $fixture
+        ;
+}
+
+sub with_response_fixture {
+    my ($name) = @_;
+
+    my $fixture = fixture ($name);
+    my $response_fixture = {};
+
+    for my $key (keys %$fixture) {
+        my $new_key;
+        $new_key ||= "with_response_data" if $key eq 'content';
+        $new_key ||= "with_$key" if $key =~ m/^response/;
+        $new_key ||= "with_response_header_$key";
+
+        $response_fixture->{$new_key} = $fixture->{$key};
+    }
+
+    return wantarray
+        ? %$response_fixture
+        : $response_fixture
+        ;
+}
+
 
 sub s3_api {
     my $api = Net::Amazon::S3->new (@_);
@@ -46,6 +94,14 @@ sub s3_api_mock_http_response {
 
     my %headers = (
         content_type => 'application/xml',
+        (
+            map {
+                m/^with_response_header_(.*)/;
+				defined $1 && length $1
+					? ($1 => $params{$_})
+					: ()
+            } keys %params
+        ),
         %{ $params{with_response_headers} || {} },
     );
 
@@ -126,6 +182,8 @@ sub _keys_operation {
         qw[ with_response_code ],
         qw[ with_response_data ],
         qw[ with_response_headers ],
+        qw[ with_response_header_content_type ],
+        qw[ with_response_header_content_length ],
         qw[ expect_s3_err ],
         qw[ expect_s3_errstr ],
         qw[ expect_data ],
