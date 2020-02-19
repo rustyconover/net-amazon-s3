@@ -8,17 +8,26 @@ use MooseX::StrictConstructor 0.16;
 =head1 SYNOPSIS
 
   use Net::Amazon::S3;
+  use Net::Amazon::S3::Authorization::Basic;
+  use Net::Amazon::S3::Authorization::IAM;
   my $aws_access_key_id     = 'fill me in';
   my $aws_secret_access_key = 'fill me in too';
 
-  my $s3 = Net::Amazon::S3->new(
-      {   aws_access_key_id     => $aws_access_key_id,
-          aws_secret_access_key => $aws_secret_access_key,
-          # or use an IAM role.
-          use_iam_role          => 1
+  my $s3 = Net::Amazon::S3->new (
+    authorization_context => Net::Amazon::S3::Authorization::Basic->new (
+      aws_access_key_id     => $aws_access_key_id,
+      aws_secret_access_key => $aws_secret_access_key,
+    ),
+    retry => 1,
+  );
 
-          retry                 => 1,
-      }
+  # or use an IAM role.
+  my $s3 = Net::Amazon::S3->new (
+    authorization_context => Net::Amazon::S3::Authorization::IAM->new (
+      aws_access_key_id     => $aws_access_key_id,
+      aws_secret_access_key => $aws_secret_access_key,
+    ),
+    retry => 1,
   );
 
   # a bucket is a globally-unique directory
@@ -142,9 +151,18 @@ use XML::LibXML::XPathContext;
 
 my $AMAZON_S3_HOST = 's3.amazonaws.com';
 
-has 'use_iam_role' => ( is => 'ro', isa => 'Bool', required => 0, default => 0);
-has 'aws_access_key_id'     => ( is => 'rw', isa => 'Str', required => 0 );
-has 'aws_secret_access_key' => ( is => 'rw', isa => 'Str', required => 0 );
+has authorization_context => (
+	is => 'ro',
+	isa => 'Net::Amazon::S3::Authorization',
+	required => 0,
+
+	handles => {
+		aws_access_key_id     => 'aws_access_key_id',
+		aws_secret_access_key => 'aws_secret_access_key',
+		aws_session_token     => 'aws_session_token',
+	},
+);
+
 has 'secure' => ( is => 'ro', isa => 'Bool', required => 0, default => 1 );
 has 'timeout' => ( is => 'ro', isa => 'Num',  required => 0, default => 30 );
 has 'retry'   => ( is => 'ro', isa => 'Bool', required => 0, default => 0 );
@@ -160,7 +178,6 @@ has 'libxml' => ( is => 'rw', isa => 'XML::LibXML',    required => 0 );
 has 'ua'     => ( is => 'rw', isa => 'LWP::UserAgent', required => 0 );
 has 'err'    => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
 has 'errstr' => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
-has 'aws_session_token' => ( is => 'rw', isa => 'Str', required => 0 );
 has authorization_method => (
     is => 'ro',
     isa => 'Str',
@@ -175,8 +192,6 @@ has authorization_method => (
 
 has keep_alive_cache_size => ( is => 'ro', isa => 'Int', required => 0, default => 10 );
 
-__PACKAGE__->meta->make_immutable;
-
 =head1 METHODS
 
 =head2 new
@@ -185,7 +200,25 @@ Create a new S3 client object. Takes some arguments:
 
 =over
 
+=item authorization_context
+
+Class that provides authorization informations.
+
+See one of available implementations for more
+
+=over
+
+=item L<Net::Amazon::S3::Authorization::Basic>
+
+=item L<Net::Amazon::S3::Authorization::IAM>
+
+=back
+
 =item aws_access_key_id
+
+Deprecated.
+
+When used it's used to create authorization context.
 
 Use your Access Key ID as the value of the AWSAccessKeyId parameter
 in requests you send to Amazon Web Services (when required). Your
@@ -193,6 +226,10 @@ Access Key ID identifies you as the party responsible for the
 request.
 
 =item aws_secret_access_key
+
+Deprecated.
+
+When used it's used to create authorization context.
 
 Since your Access Key ID is not encrypted in requests to AWS, it
 could be discovered and used by anyone. Services that are not free
@@ -204,11 +241,19 @@ DO NOT INCLUDE THIS IN SCRIPTS OR APPLICATIONS YOU DISTRIBUTE. YOU'LL BE SORRY
 
 =item aws_session_token
 
+Deprecated.
+
+When used it's used to create authorization context.
+
 If you are using temporary credentials provided by the AWS Security Token
 Service, set the token here, and it will be added to the request in order to
 authenticate it.
 
 =item use_iam_role
+
+Deprecated.
+
+When used it's used to create authorization context.
 
 If you'd like to use IAM provided temporary credentials, pass this option
 with a true value.
@@ -269,15 +314,43 @@ the L<LWP::ConnCache> in the parent:
 
 =cut
 
+around BUILDARGS => sub {
+	my ($orig, $class, %params) = @_;
+
+	my $aws_access_key_id     = delete $params{aws_access_key_id};
+	my $aws_secret_access_key = delete $params{aws_secret_access_key};
+	my $use_iam_role          = delete $params{use_iam_role};
+	my $aws_session_token     = delete $params{aws_session_token};
+	my $authorization_context = $params{authorization_context};
+
+	$authorization_context ||= do {
+		require Net::Amazon::S3::Authorization::IAM;
+
+		Net::Amazon::S3::Authorization::IAM->new (
+			aws_access_key_id     => $aws_access_key_id,
+			aws_secret_access_key => $aws_secret_access_key,
+			aws_session_token     => $aws_session_token,
+		)
+	}
+		if $use_iam_role || $aws_session_token;
+
+	$authorization_context ||= do {
+		require Net::Amazon::S3::Authorization::Basic;
+
+		Net::Amazon::S3::Authorization::Basic->new (
+			aws_access_key_id => $aws_access_key_id,
+			aws_secret_access_key => $aws_secret_access_key,
+		);
+	};
+
+	$params{authorization_context} = $authorization_context;
+
+    $class->$orig (%params);
+};
+
+
 sub BUILD {
     my $self = shift;
-
-    if (!$self->use_iam_role) {
-        if (!defined($self->aws_secret_access_key) || !defined($self->aws_access_key_id)) {
-            die("Must specify aws_secret_access_key and aws_access_key_id");
-        }
-    }
-
 
     my $ua;
     if ( $self->retry ) {
@@ -298,15 +371,6 @@ sub BUILD {
 
     $self->ua($ua);
     $self->libxml( XML::LibXML->new );
-
-    if ($self->use_iam_role) {
-        eval "require VM::EC2::Security::CredentialCache" or die $@;
-        my $creds = VM::EC2::Security::CredentialCache->get();
-        defined($creds) || die("Unable to retrieve IAM role credentials");
-        $self->aws_access_key_id($creds->accessKeyId);
-        $self->aws_secret_access_key($creds->secretAccessKey);
-        $self->aws_session_token($creds->sessionToken);
-    }
 }
 
 =head2 buckets
@@ -851,6 +915,8 @@ sub _urlencode {
     my ( $self, $unencoded ) = @_;
     return uri_escape_utf8( $unencoded, '^A-Za-z0-9_\-\.' );
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;
 
