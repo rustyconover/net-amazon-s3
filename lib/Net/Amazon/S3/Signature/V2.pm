@@ -46,16 +46,12 @@ sub _add_auth_header {
 
     my $aws_access_key_id     = $self->http_request->s3->aws_access_key_id;
     my $aws_secret_access_key = $self->http_request->s3->aws_secret_access_key;
-    my $aws_session_token     = $self->http_request->s3->aws_session_token;
 
     if ( not $request->headers->header('Date') ) {
         $request->header( Date => time2str(time) );
     }
 
-    if ( not $request->header('x-amz-security-token') and
-         defined $aws_session_token ) {
-        $request->header( 'x-amz-security-token' => $aws_session_token );
-    }
+	$self->_append_authorization_headers ($request);
 
     my $canonical_string = $self->_canonical_string( $request );
     my $encoded_canonical = $self->_encode( $canonical_string );

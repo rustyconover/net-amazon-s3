@@ -38,6 +38,14 @@ sub _build_credentials {
 	return $creds;
 }
 
+around authorization_headers => sub {
+	my ($orig, $self) = @_;
+
+	return +(
+		$self->$orig,
+		'x-amz-security-token' => $self->aws_session_token,
+	);
+};
 
 1;
 

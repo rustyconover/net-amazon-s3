@@ -73,11 +73,7 @@ sub sign_request {
         $request->header( $Net::Amazon::S3::Signature::V4Implementation::X_AMZ_CONTENT_SHA256 => $sha->hexdigest );
     }
 
-    unless ($request->header ('x-amz-security-token')) {
-        my $aws_session_token = $self->http_request->s3->aws_session_token;
-        $request->header ('x-amz-security-token' => $aws_session_token)
-            if defined $aws_session_token;
-    }
+	$self->_append_authorization_headers ($request);
 
     my $sign = $self->_sign( $region );
     $self->_host_to_region_host( $sign, $request );
@@ -89,11 +85,7 @@ sub sign_request {
 sub sign_uri {
     my ($self, $request, $expires_at) = @_;
 
-    unless ($request->uri->query_param('x-amz-security-token')) {
-        my $aws_session_token = $self->http_request->s3->aws_session_token;
-        $request->uri->query_param('x-amz-security-token' => $aws_session_token)
-            if defined $aws_session_token;
-    }
+	$self->_append_authorization_query_params ($request);
 
     my $sign = $self->_sign;
     $self->_host_to_region_host( $sign, $request );

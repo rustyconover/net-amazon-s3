@@ -13,5 +13,16 @@ sub aws_secret_access_key {
 sub aws_session_token {
 }
 
+sub authorization_headers {
+}
+
 1;
+
+__END__
+
+=pod
+
+=head1 DESCRIPTION
+
+Authorization context provides an access to authorization informations
 

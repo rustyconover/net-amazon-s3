@@ -8,6 +8,52 @@ has http_request => (
     isa => 'Net::Amazon::S3::HTTPRequest',
 );
 
+sub _append_authorization_headers {
+	my ($self, $request) = @_;
+
+	my %headers = $self->http_request->s3->authorization_context->authorization_headers;
+
+	while (my ($key, $value) = each %headers) {
+		$self->_populate_default_header ($request, $key => $value);
+	}
+
+	();
+}
+
+sub _append_authorization_query_params {
+	my ($self, $request) = @_;
+
+	my %headers = $self->http_request->s3->authorization_context->authorization_headers;
+
+	while (my ($key, $value) = each %headers) {
+		$self->_populate_default_query_param ($request, $key => $value);
+	}
+
+	();
+}
+
+sub _populate_default_header {
+	my ($self, $request, $key, $value) = @_;
+
+	return unless defined $value;
+	return if defined $request->header ($key);
+
+	$request->header ($key => $value);
+
+	();
+}
+
+sub _populate_default_query_param {
+	my ($self, $request, $key, $value) = @_;
+
+	return unless defined $value;
+	return if defined $request->uri->query_param ($key);
+
+	$request->uri->query_param ($key => $value);
+
+	();
+}
+
 sub sign_request {
     my ($self, $request);
 
