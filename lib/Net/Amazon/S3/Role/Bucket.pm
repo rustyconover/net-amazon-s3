@@ -2,7 +2,7 @@ package Net::Amazon::S3::Role::Bucket;
 # ABSTRACT: Bucket role
 
 use Moose::Role;
-use Scalar::Util;
+use Safe::Isa ();
 
 around BUILDARGS => sub {
     my ($orig, $class, %params) = @_;
@@ -15,10 +15,7 @@ around BUILDARGS => sub {
         ;
 
     $params{bucket} = $params{bucket}->name
-        if $params{bucket}
-        and Scalar::Util::blessed( $params{bucket} )
-        and $params{bucket}->isa( 'Net::Amazon::S3::Client::Bucket' )
-        ;
+        if $params{bucket}->$Safe::Isa::_isa ('Net::Amazon::S3::Client::Bucket');
 
     $params{bucket} = Net::Amazon::S3::Bucket->new(
         bucket => $params{bucket},

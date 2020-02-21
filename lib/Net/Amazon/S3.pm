@@ -116,7 +116,7 @@ Development of this code happens here: https://github.com/rustyconover/net-amazo
 
 use Carp;
 use Digest::HMAC_SHA1;
-use Scalar::Util;
+use Safe::Isa ();
 
 use Net::Amazon::S3::Bucket;
 use Net::Amazon::S3::Client;
@@ -468,8 +468,7 @@ Returns an (unverified) bucket object from an account. Does no network access.
 sub bucket {
     my ( $self, $bucket ) = @_;
 
-    return $bucket
-        if Scalar::Util::blessed( $bucket ) && $bucket->isa( 'Net::Amazon::S3::Bucket' );
+    return $bucket if $bucket->$Safe::Isa::_isa ('Net::Amazon::S3::Bucket');
 
     return Net::Amazon::S3::Bucket->new(
         { bucket => $bucket, account => $self } );
