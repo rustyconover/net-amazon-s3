@@ -144,6 +144,8 @@ use Net::Amazon::S3::Request::SetBucketAccessControl;
 use Net::Amazon::S3::Request::SetObjectAccessControl;
 use Net::Amazon::S3::Signature::V2;
 use Net::Amazon::S3::Signature::V4;
+use Net::Amazon::S3::Vendor;
+use Net::Amazon::S3::Vendor::Amazon;
 use LWP::UserAgent::Determined;
 use URI::Escape qw(uri_escape_utf8);
 use XML::LibXML;
@@ -163,33 +165,25 @@ has authorization_context => (
 	},
 );
 
-has 'secure' => ( is => 'ro', isa => 'Bool', required => 0, default => 1 );
+has vendor => (
+	is => 'ro',
+	isa => 'Net::Amazon::S3::Vendor',
+	required => 1,
+
+	handles => {
+		authorization_method => 'authorization_method',
+		host                 => 'host',
+		secure               => 'use_https',
+		use_virtual_host     => 'use_virtual_host',
+	},
+);
+
 has 'timeout' => ( is => 'ro', isa => 'Num',  required => 0, default => 30 );
 has 'retry'   => ( is => 'ro', isa => 'Bool', required => 0, default => 0 );
-has 'host'    => ( is => 'ro', isa => 'Str',  required => 0, default => $AMAZON_S3_HOST );
-has 'use_virtual_host' => (
-    is => 'ro',
-    isa => 'Bool',
-    required => 0,
-    lazy => 1,
-    default => sub { $_[0]->authorization_method->enforce_use_virtual_host },
-);
 has 'libxml' => ( is => 'rw', isa => 'XML::LibXML',    required => 0 );
 has 'ua'     => ( is => 'rw', isa => 'LWP::UserAgent', required => 0 );
 has 'err'    => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
 has 'errstr' => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
-has authorization_method => (
-    is => 'ro',
-    isa => 'Str',
-    required => 0,
-    lazy => 1,
-    default => sub {
-        $_[0]->host eq $AMAZON_S3_HOST
-            ? 'Net::Amazon::S3::Signature::V4'
-            : 'Net::Amazon::S3::Signature::V2'
-    },
-);
-
 has keep_alive_cache_size => ( is => 'ro', isa => 'Int', required => 0, default => 10 );
 
 =head1 METHODS
@@ -211,6 +205,27 @@ See one of available implementations for more
 =item L<Net::Amazon::S3::Authorization::Basic>
 
 =item L<Net::Amazon::S3::Authorization::IAM>
+
+=back
+
+=item vendor
+
+Instance of L<Net::Amazon::S3::Vendor> holding vendor specific deviations.
+
+S3 became widely used object storage protocol with many vendors providing
+different feature sets and different compatibility level.
+
+One common difference is bucket's HEAD request to determine its region.
+
+To maintain currently known differences along with any differencies that
+may rise in feature it's better to hold vendor specification in dedicated
+classes. This also allows users to build their own fine-tuned vendor classes.
+
+=over
+
+=item L<Net::Amazon::S3::Vendor::Amazon>
+
+=item L<Net::Amazon::S3::Vendor::Generic>
 
 =back
 
@@ -260,10 +275,14 @@ with a true value.
 
 =item secure
 
+Deprecated.
+
 Set this to C<0> if you don't want to use SSL-encrypted connections when talking
 to S3. Defaults to C<1>.
 
 To use SSL-encrypted connections, LWP::Protocol::https is required.
+
+See L<#vendor> and L<Net::Amazon::S3::Vendor>.
 
 =item keep_alive_cache_size
 
@@ -282,23 +301,35 @@ as recommended by Amazon. Defaults to off.
 
 =item host
 
+Deprecated.
+
 The S3 host endpoint to use. Defaults to 's3.amazonaws.com'. This allows
 you to connect to any S3-compatible host.
 
+See L<#vendor> and L<Net::Amazon::S3::Vendor>.
+
 =item use_virtual_host
+
+Deprecated.
 
 Use the virtual host method ('bucketname.s3.amazonaws.com') instead of specifying the
 bucket at the first part of the path. This is particularly useful if you want to access
 buckets not located in the US-Standard region (such as EU, Asia Pacific or South America).
 See L<http://docs.aws.amazon.com/AmazonS3/latest/dev/VirtualHosting.html> for the pros and cons.
 
+See L<#vendor> and L<Net::Amazon::S3::Vendor>.
+
 =item authorization_method
+
+Deprecated.
 
 Authorization implementation package name.
 
 This library provides L<< Net::Amazon::S3::Signature::V2 >> and L<< Net::Amazon::S3::Signature::V4 >>
 
 Default is Signature 4 if host is C<< s3.amazonaws.com >>, Signature 2 otherwise
+
+See L<#vendor> and L<Net::Amazon::S3::Vendor>.
 
 =back
 
@@ -344,11 +375,38 @@ sub _build_arg_authorization_context {
 	);
 }
 
+sub _build_arg_vendor {
+	my ($args) = @_;
+
+	my %backward =
+		map  { $_ => delete $args->{$_} }
+		grep { exists  $args->{$_} }
+		qw[ host secure use_virtual_host authorization_method ]
+		;
+
+	return $args->{vendor}
+		if $args->{vendor};
+
+	$backward{host} = $AMAZON_S3_HOST
+		unless exists $backward{host};
+
+	$backward{use_https} = delete $backward{secure}
+		if exists $backward{secure};
+
+	my $vendor_class = $backward{host} eq $AMAZON_S3_HOST
+		? 'Net::Amazon::S3::Vendor::Amazon'
+		: 'Net::Amazon::S3::Vendor'
+		;
+
+	return $vendor_class->new (%backward);
+}
+
 around BUILDARGS => sub {
 	my ($orig, $class, %args) = @_;
 
 	# support compat authorization arguments
 	$args{authorization_context} = _build_arg_authorization_context \%args;
+	$args{vendor}                = _build_arg_vendor                \%args;
 
     $class->$orig (%args);
 };

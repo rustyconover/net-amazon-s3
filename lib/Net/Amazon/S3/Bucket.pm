@@ -14,7 +14,9 @@ has 'region' => (
     is => 'ro',
     lazy => 1,
     predicate => 'has_region',
-    default => sub { $_[0]->_head_region },
+    default => sub {
+		return $_[0]->account->vendor->guess_bucket_region ($_[0]);
+	},
 );
 
 __PACKAGE__->meta->make_immutable;

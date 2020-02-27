@@ -37,6 +37,19 @@ subtest "by default it should expect Amazon AWS" => sub {
 		got    => $s3->use_virtual_host,
 		expect => bool (1),
 		;
+
+	it "should build vendor class instance",
+		got    => $s3->vendor,
+		expect => all (
+			obj_isa ('Net::Amazon::S3::Vendor::Amazon'),
+			methods (
+				host => 's3.amazonaws.com',
+				use_virtual_host => bool (1),
+				use_https        => bool (1),
+				authorization_method => 'Net::Amazon::S3::Signature::V4',
+			),
+		),
+		;
 };
 
 subtest "except of Amazon AWS default signature method is still V2" => sub {
@@ -65,6 +78,20 @@ subtest "except of Amazon AWS default signature method is still V2" => sub {
 		got    => $s3->use_virtual_host,
 		expect => bool (0),
 		;
+
+	it "should build vendor class instance",
+		got    => $s3->vendor,
+		expect => all (
+			obj_isa ('Net::Amazon::S3::Vendor'),
+			methods (
+				host => 'my.service.local',
+				use_virtual_host => bool (0),
+				use_https        => bool (1),
+				authorization_method => 'Net::Amazon::S3::Signature::V2',
+			),
+		),
+		;
 };
+
 
 had_no_warnings;
