@@ -314,38 +314,43 @@ the L<LWP::ConnCache> in the parent:
 
 =cut
 
-around BUILDARGS => sub {
-	my ($orig, $class, %params) = @_;
+sub _build_arg_authorization_context {
+	my ($args) = @_;
 
-	my $aws_access_key_id     = delete $params{aws_access_key_id};
-	my $aws_secret_access_key = delete $params{aws_secret_access_key};
-	my $use_iam_role          = delete $params{use_iam_role};
-	my $aws_session_token     = delete $params{aws_session_token};
-	my $authorization_context = $params{authorization_context};
+	my $aws_access_key_id     = delete $args->{aws_access_key_id};
+	my $aws_secret_access_key = delete $args->{aws_secret_access_key};
+	my $use_iam_role          = delete $args->{use_iam_role};
+	my $aws_session_token     = delete $args->{aws_session_token};
 
-	$authorization_context ||= do {
+	if ($args->{authorization_context}) {
+		return $args->{authorization_context};
+	}
+
+	if ($use_iam_role || $aws_session_token) {
 		require Net::Amazon::S3::Authorization::IAM;
 
-		Net::Amazon::S3::Authorization::IAM->new (
+		return Net::Amazon::S3::Authorization::IAM->new (
 			aws_access_key_id     => $aws_access_key_id,
 			aws_secret_access_key => $aws_secret_access_key,
 			aws_session_token     => $aws_session_token,
 		)
 	}
-		if $use_iam_role || $aws_session_token;
 
-	$authorization_context ||= do {
-		require Net::Amazon::S3::Authorization::Basic;
+	require Net::Amazon::S3::Authorization::Basic;
 
-		Net::Amazon::S3::Authorization::Basic->new (
-			aws_access_key_id => $aws_access_key_id,
-			aws_secret_access_key => $aws_secret_access_key,
-		);
-	};
+	return Net::Amazon::S3::Authorization::Basic->new (
+		aws_access_key_id => $aws_access_key_id,
+		aws_secret_access_key => $aws_secret_access_key,
+	);
+}
 
-	$params{authorization_context} = $authorization_context;
+around BUILDARGS => sub {
+	my ($orig, $class, %args) = @_;
 
-    $class->$orig (%params);
+	# support compat authorization arguments
+	$args{authorization_context} = _build_arg_authorization_context \%args;
+
+    $class->$orig (%args);
 };
 
 
