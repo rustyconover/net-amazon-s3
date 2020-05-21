@@ -394,6 +394,19 @@ sub head {
     return \%metadata;
 }
 
+sub available {
+    my $self = shift;
+
+    my %metadata = %{$self->head};
+
+    # An object is available if:
+    # - the storage class isn't GLACIER;
+    # - the storage class is GLACIER and the object was fully restored (Restore: ongoing-request="false");
+    my $glacier = (exists($metadata{StorageClass}) and $metadata{StorageClass} eq 'GLACIER') ? 1 : 0;
+    my $restored = (exists($metadata{Restore}) and $metadata{Restore} =~ m/ongoing-request="false"/) ? 1 : 0;
+    return (!$glacier or $restored) ? 1 :0;
+}
+
 sub restore {
     my $self = shift;
     my (%conf) = @_;
@@ -517,6 +530,11 @@ no strict 'vars'
   # return the URI of a publically-accessible object
   my $uri = $object->uri;
 
+  # to view if an object is available for downloading
+  # Basically, the storage class isn't GLACIER or the object was
+  # fully restored
+  $object->available;
+
   # to restore an object on a GLACIER storage class
   $object->restore(
     days => 1,
@@ -614,6 +632,13 @@ This module represents objects in buckets.
 
   # show the key
   print $object->key . "\n";
+
+=head2 available
+
+  # to view if an object is available for downloading
+  # Basically, the storage class isn't GLACIER or the object was
+  # fully restored
+  $object->available;
 
 =head2 restore
 
