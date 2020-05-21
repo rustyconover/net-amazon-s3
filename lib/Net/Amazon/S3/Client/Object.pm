@@ -374,24 +374,42 @@ sub head {
     my %metadata;
     my $headers = $http_response->headers;
     foreach my $name ($headers->header_field_names) {
-        my $lc_name = lc($name);
-        if (
-            $lc_name =~ s/^x-amz-//
-                or $lc_name =~ m/^content-/
-                or $lc_name eq 'accept-ranges'
-                or $lc_name eq 'cache-control'
-                or $lc_name eq 'etag'
-                or $lc_name eq 'expires'
-                or $lc_name eq 'last-modified') {
-            next if ($lc_name eq 'id-2');
-
-            my $metadata_name = join('', map (ucfirst, split(/-/, $lc_name)));
-            $metadata_name = 'ETag' if ($metadata_name eq 'Etag');
+        if ($self->_is_metadata_header($name)) {
+            my $metadata_name = $self->_format_metadata_name($name);
             $metadata{$metadata_name} = $http_response->header($name);
         }
     }
 
     return \%metadata;
+}
+
+sub _is_metadata_header {
+    my (undef, $header) = @_;
+    $header = lc($header);
+
+    my %valid_metadata_headers = map +($_ => 1), (
+        'accept-ranges',
+        'cache-control',
+        'etag',
+        'expires',
+        'last-modified',
+    );
+
+    return 1 if exists $valid_metadata_headers{$header};
+    return 1 if $header =~ m/^x-amz-(?!id-2$)/;
+    return 1 if $header =~ m/^content-/;
+    return 0;
+}
+
+sub _format_metadata_name {
+    my (undef, $header) = @_;
+    $header = lc($header);
+    $header =~ s/^x-amz-//;
+
+    my $metadata_name = join('', map (ucfirst, split(/-/, $header)));
+    $metadata_name = 'ETag' if ($metadata_name eq 'Etag');
+
+    return $metadata_name;
 }
 
 sub available {
