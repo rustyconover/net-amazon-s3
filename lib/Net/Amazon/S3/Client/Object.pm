@@ -355,6 +355,61 @@ sub query_string_authentication_uri {
     )->query_string_authentication_uri( $self->expires->epoch, $query_form );
 }
 
+sub head {
+    my $self = shift;
+
+    my $http_request =
+        Net::Amazon::S3::Request::GetObject->new(
+            s3     => $self->client->s3,
+            bucket => $self->bucket->name,
+            key    => $self->key,
+            method => 'HEAD',
+        )->http_request;
+
+    my $http_response = $self->client->_send_request($http_request);
+
+    confess 'Error head-object ' . $http_response->as_string
+        if $http_response->code != 200;
+
+    my %metadata;
+    my $headers = $http_response->headers;
+    foreach my $name ($headers->header_field_names) {
+        my $lc_name = lc($name);
+        if (
+            $lc_name =~ s/^x-amz-//
+                or $lc_name =~ m/^content-/
+                or $lc_name eq 'accept-ranges'
+                or $lc_name eq 'cache-control'
+                or $lc_name eq 'etag'
+                or $lc_name eq 'expires'
+                or $lc_name eq 'last-modified') {
+            next if ($lc_name eq 'id-2');
+
+            my $metadata_name = join('', map (ucfirst, split(/-/, $lc_name)));
+            $metadata_name = 'ETag' if ($metadata_name eq 'Etag');
+            $metadata{$metadata_name} = $http_response->header($name);
+        }
+    }
+
+    return \%metadata;
+}
+
+sub restore {
+    my $self = shift;
+    my (%conf) = @_;
+
+    my $http_request =
+        Net::Amazon::S3::Request::RestoreObject->new(
+            s3     => $self->client->s3,
+            bucket => $self->bucket->name,
+            key    => $self->key,
+            days   => $conf{days},
+            tier   => $conf{tier},
+        )->http_request;
+
+    return $self->client->_send_request($http_request);
+}
+
 sub _content_sub {
     my $self      = shift;
     my $filename  = shift;
@@ -440,6 +495,9 @@ no strict 'vars'
   # to get the vaue of an object
   my $value = $object->get;
 
+  # to get the metadata of an object
+  my %metadata = %{$object->head};
+
   # to see if an object exists
   if ($object->exists) { ... }
 
@@ -458,6 +516,12 @@ no strict 'vars'
 
   # return the URI of a publically-accessible object
   my $uri = $object->uri;
+
+  # to restore an object on a GLACIER storage class
+  $object->restore(
+    days => 1,
+    tier => 'Standard',
+  );
 
   # to store a new object with server-side encryption enabled
   my $object = $bucket->object(
@@ -520,6 +584,11 @@ This module represents objects in buckets.
   # to get the vaue of an object
   my $value = $object->get;
 
+=head2 head
+
+  # to get the metadata of an object
+  my %metadata = %{$object->head};
+
 =head2 get_decoded
 
   # get the value of an object, and decode any Content-Encoding and/or
@@ -545,6 +614,14 @@ This module represents objects in buckets.
 
   # show the key
   print $object->key . "\n";
+
+=head2 restore
+
+  # to restore an object on a GLACIER storage class
+  $object->restore(
+    days => 1,
+    tier => 'Standard',
+  );
 
 =head2 put
 

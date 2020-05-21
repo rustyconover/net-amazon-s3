@@ -131,6 +131,7 @@ use Net::Amazon::S3::Request::ListBucket;
 use Net::Amazon::S3::Request::ListParts;
 use Net::Amazon::S3::Request::PutObject;
 use Net::Amazon::S3::Request::PutPart;
+use Net::Amazon::S3::Request::RestoreObject;
 use Net::Amazon::S3::Request::SetBucketAccessControl;
 use Net::Amazon::S3::Request::SetObjectAccessControl;
 use Net::Amazon::S3::Signature::V2;
