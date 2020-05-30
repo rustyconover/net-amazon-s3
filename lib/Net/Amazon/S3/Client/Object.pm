@@ -18,7 +18,8 @@ enum 'AclShort' =>
     # Current list at https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
     [ qw(private public-read public-read-write aws-exec-read authenticated-read bucket-owner-read bucket-owner-full-control log-delivery-write ) ];
 enum 'StorageClass' =>
-    [ qw(standard reduced_redundancy standard_ia onezone_ia) ];
+    # Current list at https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#AmazonS3-PutObject-request-header-StorageClass
+    [ qw(standard reduced_redundancy standard_ia onezone_ia intelligent_tiering glacier deep_archive) ];
 
 has 'client' =>
     ( is => 'ro', isa => 'Net::Amazon::S3::Client', required => 1 );
@@ -565,8 +566,9 @@ You may also set Content-Encoding using C<content_encoding>, and
 Content-Disposition using C<content_disposition>.
 
 You may specify the S3 storage class by setting C<storage_class> to either
-C<standard>, C<reduced_redundancy>, C<standard_ia>, or C<onezone_ia>;
-the default is C<standard>.
+C<standard>, C<reduced_redundancy>, C<standard_ia>, C<onezone_ia>,
+C<intelligent_tiering>, C<glacier>, or C<deep_archive>; the default
+is C<standard>.
 
 You may set website-redirect-location object metadata by setting
 C<website_redirect_location> to either another object name in the same
@@ -594,8 +596,9 @@ You may also set Content-Encoding using C<content_encoding>, and
 Content-Disposition using C<content_disposition>.
 
 You may specify the S3 storage class by setting C<storage_class> to either
-C<standard>, C<reduced_redundancy>, C<standard_ia>, or C<onezone_ia>;
-the default is C<standard>.
+C<standard>, C<reduced_redundancy>, C<standard_ia>, C<onezone_ia>,
+C<intelligent_tiering>, C<glacier>, or C<deep_archive>; the default
+is C<standard>.
 
 You may set website-redirect-location object metadata by setting
 C<website_redirect_location> to either another object name in the same
