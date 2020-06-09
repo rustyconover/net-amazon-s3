@@ -231,10 +231,6 @@ sub _put {
 
     confess 'Error uploading ' . $http_response->as_string
         if $http_response->code != 200;
-
-    my $etag = $self->_etag($http_response);
-
-    confess "Corrupted upload got $etag expected $md5_hex" if $etag ne $md5_hex;
 }
 
 sub put_filename {

@@ -1,17 +1,11 @@
-package Shared::Examples::Net::Amazon::S3::ACL;
-# ABSTRACT: used for testing and as example
 
 use strict;
 use warnings;
 
-use parent qw[ Exporter::Tiny ];
+use HTTP::Status;
+use Shared::Examples::Net::Amazon::S3::Fixture;
 
-our @EXPORT_OK = (
-    qw[ acl_xml ],
-);
-
-sub acl_xml {
-    <<'XML';
+Shared::Examples::Net::Amazon::S3::Fixture::fixture content => <<'XML';
 <AccessControlPolicy>
   <Owner>
     <ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID>
@@ -29,7 +23,3 @@ sub acl_xml {
   </AccessControlList>
 </AccessControlPolicy>
 XML
-}
-
-1;
-
