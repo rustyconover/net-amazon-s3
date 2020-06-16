@@ -34,19 +34,13 @@ sub redirect_handler {
     return $request;
 }
 
-sub _bucket_region {
-    my ($self) = @_;
-
-    return $self->http_request->region;
-}
-
 sub _sign {
     my ($self, $region) = @_;
 
     return Net::Amazon::S3::Signature::V4Implementation->new(
         $self->http_request->s3->aws_access_key_id,
         $self->http_request->s3->aws_secret_access_key,
-        $region || $self->_bucket_region,
+        $region || $self->http_request->region,
         's3',
     );
 }
