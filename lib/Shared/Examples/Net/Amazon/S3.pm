@@ -82,7 +82,7 @@ sub with_response_fixture {
 sub s3_api {
     my $api = Net::Amazon::S3->new (@_);
 
-    $api->ua (Test::LWP::UserAgent->new);
+    $api->ua (Test::LWP::UserAgent->new (network_fallback => 0));
 
     $api;
 }
