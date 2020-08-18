@@ -1,4 +1,3 @@
-#package Net::Amazon::Signature::V4;
 package Net::Amazon::S3::Signature::V4Implementation;
 # ABSTRACT: Implements the Amazon Web Services signature version 4, AWS4-HMAC-SHA256 (copy of Net::Amazon::Signature::V4)
 
@@ -24,35 +23,21 @@ our $X_AMZ_EXPIRES        = 'X-Amz-Expires';
 our $X_AMZ_SIGNEDHEADERS  = 'X-Amz-SignedHeaders';
 our $X_AMZ_SIGNATURE      = 'X-Amz-Signature';
 
-=head1 VERSION
+=head1 DESCRIPTION
 
-Version 0.19
+This package clones L<Net::Amazon::Signature::V4> 0.19 adding support for
+signing URIs (GET request)
+
+Until https://github.com/Grinnz/Net-Amazon-Signature-V4/pull/5 will be merged
+we have to maintain our clone.
 
 =cut
 
-our $VERSION = '0.19';
+=head1 Net::Amazon::Signature::S4 AUTHORS
 
+Tim Nordenfur, C<< <tim at gurka.se> >>
 
-=head1 SYNOPSIS
-
-This module signs an HTTP::Request to Amazon Web Services by appending an Authorization header. Amazon Web Services signature version 4, AWS4-HMAC-SHA256, is used.
-
-    use Net::Amazon::Signature::V4;
-
-    my $sig = Net::Amazon::Signature::V4->new( $access_key_id, $secret, $endpoint, $service );
-    my $req = HTTP::Request->parse( $request_string );
-    my $signed_req = $sig->sign( $req );
-    ...
-
-The primary purpose of this module is to be used by Net::Amazon::Glacier.
-
-=head1 METHODS
-
-=head2 new( $access_key_id, $secret, $endpoint, $service )
-
-Constructs the signature object, which is used to sign requests.
-
-Note that the access key ID is an alphanumeric string, not your account ID. The endpoint could be "eu-west-1", and the service could be "glacier".
+Maintained by Dan Book, C<< <dbook at cpan.org> >>
 
 =cut
 
@@ -272,14 +257,6 @@ sub _authorization {
 
 }
 
-=head1 AUTHOR
-
-Tim Nordenfur, C<< <tim at gurka.se> >>
-
-Maintained by Dan Book, C<< <dbook at cpan.org> >>
-
-=cut
-
 sub _simplify_uri {
 	my $orig_uri = shift;
 	my @parts = split /\//, $orig_uri;
@@ -350,55 +327,4 @@ sub _req_timepiece {
 	return _str_to_timepiece($date);
 }
 
-=head1 BUGS
-
-Please report any bugs or feature requests to C<bug-net-amazon-signature-v4 at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Net-Amazon-Signature-V4>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc Net::Amazon::Signature::V4
-
-
-You can also look for information at:
-
-=over 4
-
-=item * RT: CPAN's request tracker (report bugs here)
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Net-Amazon-Signature-V4>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/Net-Amazon-Signature-V4>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/Net-Amazon-Signature-V4>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/Net-Amazon-Signature-V4/>
-
-=back
-
-=head1 LICENSE AND COPYRIGHT
-
-Copyright 2012 Tim Nordenfur.
-
-This program is free software; you can redistribute it and/or modify it
-under the terms of either: the GNU General Public License as published
-by the Free Software Foundation; or the Artistic License.
-
-See http://dev.perl.org/licenses/ for more information.
-
-
-=cut
-
-1; # End of Net::Amazon::Signature::V4
+1;
