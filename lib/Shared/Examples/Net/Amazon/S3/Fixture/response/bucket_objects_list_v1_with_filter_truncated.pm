@@ -1,3 +1,5 @@
+# PODNAME: Shared::Examples::Net::Amazon::S3::Fixture::response::bucket_objects_list_v1_with_filter_truncated
+# ABSTRACT: Shared::Examples providing response fixture
 
 use strict;
 use warnings;

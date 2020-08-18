@@ -1,3 +1,5 @@
+# PODNAME: Shared::Examples::Net::Amazon::S3::Fixture::response::service_list_buckets_with_owner_displayname
+# ABSTRACT: Shared::Examples providing response fixture
 
 use strict;
 use warnings;

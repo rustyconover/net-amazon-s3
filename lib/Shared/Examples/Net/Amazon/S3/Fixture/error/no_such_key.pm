@@ -1,3 +1,5 @@
+# PODNAME: Shared::Examples::Net::Amazon::S3::Fixture::error::no_such_key
+# ABSTRACT: Shared::Examples providing error fixture
 
 use strict;
 use warnings;

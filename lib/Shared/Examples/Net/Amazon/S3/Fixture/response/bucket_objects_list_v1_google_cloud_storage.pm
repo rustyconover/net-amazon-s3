@@ -1,3 +1,5 @@
+# PODNAME: Shared::Examples::Net::Amazon::S3::Fixture::response::bucket_objects_list_v1_google_clout_storage
+# ABSTRACT: Shared::Examples providing response fixture
 
 # Google uses different XML namespace uri
 # XML namespace is treated by an XML parser as a string,

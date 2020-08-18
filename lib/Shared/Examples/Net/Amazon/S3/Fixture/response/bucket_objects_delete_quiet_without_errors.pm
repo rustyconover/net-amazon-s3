@@ -1,3 +1,5 @@
+# PODNAME: Shared::Examples::Net::Amazon::S3::Fixture::response::bucket_objects_delete_quiet_without_errors
+# ABSTRACT: Shared::Examples providing response fixture
 
 use strict;
 use warnings;

@@ -1,3 +1,5 @@
+# PODNAME: Shared::Examples::Net::Amazon::S3::Fixture::error::invalid_bucket_name
+# ABSTRACT: Shared::Examples providing error fixture
 
 use strict;
 use warnings;

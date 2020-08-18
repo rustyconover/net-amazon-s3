@@ -1,3 +1,5 @@
+# PODNAME: Shared::Examples::Net::Amazon::S3::Fixture::response::acl
+# ABSTRACT: Shared::Examples providing response fixture
 
 use strict;
 use warnings;

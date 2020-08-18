@@ -1,4 +1,6 @@
 package Net::Amazon::S3::Request::RestoreObject;
+# ABSTRACT: An internal class implementing RestoreObject operation
+
 use strict;
 use warnings FATAL => 'all';
 

@@ -1,3 +1,5 @@
+# PODNAME: Shared::Examples::Net::Amazon::S3::Fixture::error::bucket_already_exists
+# ABSTRACT: Shared::Examples providing error fixture
 
 use strict;
 use warnings;
