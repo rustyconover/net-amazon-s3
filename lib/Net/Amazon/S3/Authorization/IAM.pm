@@ -73,6 +73,13 @@ __END__
 		...
 	);
 
+=head1 INCOMPATIBILITY WARNING
+
+This module with its dependencies will be moved out and distributed separately
+without dependency from L<Net::Amazon::S3>.
+
+If you use IAM, please consider to add proper C<use> statement into your code.
+
 =head1 DESCRIPTION
 
 Authorization context using instance session credentials.
