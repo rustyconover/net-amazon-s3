@@ -403,13 +403,14 @@ sub _build_arg_vendor {
 }
 
 around BUILDARGS => sub {
-	my ($orig, $class, %args) = @_;
+	my ($orig, $class) = (shift, shift);
+	my $args = $class->$orig (@_);
 
 	# support compat authorization arguments
-	$args{authorization_context} = _build_arg_authorization_context \%args;
-	$args{vendor}                = _build_arg_vendor                \%args;
+	$args->{authorization_context} = _build_arg_authorization_context $args;
+	$args->{vendor}                = _build_arg_vendor                $args;
 
-    $class->$orig (%args);
+    $args;
 };
 
 
