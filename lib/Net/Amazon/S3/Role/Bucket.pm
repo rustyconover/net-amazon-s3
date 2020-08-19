@@ -2,6 +2,7 @@ package Net::Amazon::S3::Role::Bucket;
 # ABSTRACT: Bucket role
 
 use Moose::Role;
+use Scalar::Util;
 use Safe::Isa ();
 
 around BUILDARGS => sub {
