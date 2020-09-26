@@ -131,7 +131,7 @@ expect_client_bucket_objects_list 'HTTP error - 400 Bad Request' => (
 			return 0, "expect throw but lives" if eval { $_[0]->get_more; 1 };
 			my $error = $@;
 
-			Test::Deep::cmp_details $error, re(qr/^Empty String at .* line \d+./);
+			Test::Deep::cmp_details $error, re(qr/^400: Bad Request/);
 		}),
 	),
 );

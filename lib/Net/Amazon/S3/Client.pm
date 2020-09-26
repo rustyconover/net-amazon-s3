@@ -85,21 +85,19 @@ sub _send_request {
     my $content      = $http_response->content;
     my $content_type = $http_response->content_type;
     my $code         = $http_response->code;
+	my $message      = $http_response->message;
 
     if ( is_error($code) ) {
-        if ( $content_type eq 'application/xml' ) {
+        if ( $content && $content_type eq 'application/xml' ) {
             my $xpc = $self->s3->_xpc_of_content ($content);
 
             if ( $xpc->findnodes('/Error') ) {
-                my $code    = $xpc->findvalue('/Error/Code');
-                my $message = $xpc->findvalue('/Error/Message');
-                confess("$code: $message");
-            } else {
-                confess status_message($code);
-            }
-        } else {
-            confess status_message($code);
+                $code    = $xpc->findvalue('/Error/Code');
+                $message = $xpc->findvalue('/Error/Message');
+			}
         }
+
+		confess("$code: $message");
     }
     return $http_response;
 }

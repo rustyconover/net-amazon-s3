@@ -57,7 +57,7 @@ expect_client_list_all_my_buckets 'S3 error - Access Denied' => (
 expect_client_list_all_my_buckets 'HTTP error - 400 Bad Request' => (
     with_response_fixture ('error::http_bad_request'),
     expect_request      => { GET => 'https://s3.amazonaws.com/' },
-    throws                  => qr/^Empty String at .* line \d+./,
+    throws                  => qr/^400: Bad Request/,
 );
 
 had_no_warnings;

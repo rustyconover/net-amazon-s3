@@ -46,7 +46,7 @@ expect_client_object_delete 'HTTP error - 400 Bad Request' => (
     with_key                => 'some-key',
     with_response_fixture ('error::http_bad_request'),
     expect_request          => { DELETE => 'https://some-bucket.s3.amazonaws.com/some-key' },
-    throws                  => qr/^Empty String at .* line \d+./,
+    throws                  => qr/^400: Bad Request/,
 );
 
 had_no_warnings;

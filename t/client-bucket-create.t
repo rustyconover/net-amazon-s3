@@ -70,7 +70,7 @@ expect_client_bucket_create 'HTTP error - 400 Bad Request' => (
     with_bucket             => 'some-bucket',
     with_response_fixture ('error::http_bad_request'),
     expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
-    throws                  => qr/^Empty String at .* line \d+./,
+    throws                  => qr/^400: Bad Request/,
 );
 
 had_no_warnings;

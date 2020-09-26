@@ -49,7 +49,7 @@ expect_client_bucket_objects_delete 'HTTP error - 400 Bad Request' => (
     with_keys               => [qw[ key-1 key-2 ]],
     with_response_fixture ('error::http_bad_request'),
     expect_request          => { POST => 'https://some-bucket.s3.amazonaws.com/?delete' },
-    throws                  => qr/^Empty String at .* line \d+./,
+    throws                  => qr/^400: Bad Request/,
 );
 
 had_no_warnings;
