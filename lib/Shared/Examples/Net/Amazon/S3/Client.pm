@@ -19,11 +19,13 @@ use Shared::Examples::Net::Amazon::S3;
 our @EXPORT_OK = (
     qw[ expect_signed_uri ],
     qw[ expect_client_list_all_my_buckets ],
+	qw[ expect_client_bucket_acl_set ],
+	qw[ expect_client_object_acl_set ],
     qw[ expect_client_bucket_acl_get ],
     qw[ expect_client_bucket_create ],
     qw[ expect_client_bucket_delete ],
-    qw[ expect_client_bucket_objects_list ],
     qw[ expect_client_bucket_objects_delete ],
+    qw[ expect_client_bucket_objects_list ],
     qw[ expect_client_object_create ],
     qw[ expect_client_object_delete ],
     qw[ expect_client_object_fetch ],
@@ -196,6 +198,33 @@ sub operation_object_fetch {
         ->object (key => $params{with_key})
         ->get
         ;
+}
+
+sub operation_bucket_acl_set {
+	my ($self, %params) = @_;
+
+	$self
+		->bucket (name => $params{with_bucket})
+		->set_acl (
+			(acl       => $params{with_acl})       x!! exists $params{with_acl},
+			(acl_short => $params{with_acl_short}) x!! exists $params{with_acl_short},
+			(acl_xml   => $params{with_acl_xml})   x!! exists $params{with_acl_xml},
+		)
+		;
+}
+
+sub operation_object_acl_set {
+	my ($self, %params) = @_;
+
+	$self
+        ->bucket (name => $params{with_bucket})
+        ->object (key => $params{with_key})
+		->set_acl (
+			(acl       => $params{with_acl})       x!! exists $params{with_acl},
+			(acl_short => $params{with_acl_short}) x!! exists $params{with_acl_short},
+			(acl_xml   => $params{with_acl_xml})   x!! exists $params{with_acl_xml},
+		)
+		;
 }
 
 1;

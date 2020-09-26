@@ -9,7 +9,7 @@ BEGIN { require "test-helper-common.pl" }
 
 use HTTP::Status qw[ HTTP_OK ];
 
-use Shared::Examples::Net::Amazon::S3::API (
+use Shared::Examples::Net::Amazon::S3::Client (
     qw[ fixture ],
     qw[ with_response_fixture ],
 );

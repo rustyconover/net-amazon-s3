@@ -62,6 +62,17 @@ sub acl {
     return $response->http_response->content;
 }
 
+sub set_acl {
+	my ($self, %params) = @_;
+
+	my $response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Bucket::Acl::Set',
+		%params,
+	);
+
+    return $response->is_success;
+}
+
 sub location_constraint {
     my $self = shift;
 

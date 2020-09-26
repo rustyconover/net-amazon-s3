@@ -249,6 +249,17 @@ sub delete {
     return $response->is_success;
 }
 
+sub set_acl {
+	my ($self, %params) = @_;
+
+	my $response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Object::Acl::Set',
+		%params,
+	);
+
+    return $response->is_success;
+}
+
 sub initiate_multipart_upload {
     my $self = shift;
     my %args = ref($_[0]) ? %{$_[0]} : @_;
