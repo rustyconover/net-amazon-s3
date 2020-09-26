@@ -230,14 +230,7 @@ sub copy_key {
         headers   => $conf,
     );
 
-    my $response = $acct->_do_http( $http_request );
-
-    if ( $response->is_error || !$response->xpath_context ) {
-        $acct->_remember_errors ($response);
-        return 0;
-    }
-
-    return 1;
+    return $acct->_send_request_expect_nothing( $http_request );
 }
 
 =head2 edit_metadata
@@ -407,7 +400,7 @@ sub delete_multi_object {
 		my $xpc = $response->xpath_context;
 
         return undef
-            unless $xpc && !$self->account->_remember_errors($response);
+            unless $xpc && !$response->is_error;
     }
 
     return 1;
@@ -606,7 +599,7 @@ sub get_location_constraint {
 
     my $response = $self->account->_send_request($http_request);
 	my $xpc = $response->xpath_context;
-    return undef unless $xpc && !$self->account->_remember_errors($response);
+    return undef unless $xpc && !$response->is_error;
 
     my $lc = $xpc->findvalue("//s3:LocationConstraint");
 

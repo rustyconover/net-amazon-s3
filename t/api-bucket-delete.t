@@ -51,8 +51,8 @@ expect_api_bucket_delete 'HTTP error - 400 Bad Request' => (
     with_response_fixture ('error::http_bad_request'),
     expect_request          => { DELETE => 'https://some-bucket.s3.amazonaws.com/' },
     expect_data             => bool (0),
-    expect_s3_err           => '',
-    expect_s3_errstr        => '',
+    expect_s3_err           => '400',
+    expect_s3_errstr        => 'Bad Request',
 );
 
 had_no_warnings;

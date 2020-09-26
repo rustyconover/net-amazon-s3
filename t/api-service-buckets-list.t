@@ -60,8 +60,8 @@ expect_api_list_all_my_buckets 'HTTP error - 400 Bad Request' => (
     with_response_fixture ('error::http_bad_request'),
     expect_request          => { GET => 'https://s3.amazonaws.com/' },
     expect_data             => bool (0),
-    expect_s3_err           => undef,
-    expect_s3_errstr        => undef,
+    expect_s3_err           => '400',
+    expect_s3_errstr        => 'Bad Request',
 );
 
 had_no_warnings;

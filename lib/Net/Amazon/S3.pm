@@ -459,7 +459,7 @@ sub buckets {
     my $response = $self->_send_request($http_request);
 	my $xpc = $response->xpath_context;
 
-    return undef unless $xpc && !$self->_remember_errors($response);
+    return undef unless $xpc && !$response->is_error;
 
     my $owner_id          = $xpc->findvalue("//s3:Owner/s3:ID");
     my $owner_displayname = $xpc->findvalue("//s3:Owner/s3:DisplayName");
@@ -730,7 +730,7 @@ sub list_bucket {
     my $response = $self->_send_request($http_request);
 	my $xpc = $response->xpath_context;
 
-    return undef unless $xpc && !$self->_remember_errors($response);
+    return undef unless $xpc && !$response->is_error;
 
     my $return = {
         bucket      => $xpc->findvalue("//s3:ListBucketResult/s3:Name"),
@@ -880,6 +880,9 @@ sub _send_request {
 
     my $response = $self->_do_http($http_request);
 
+	$self->_remember_errors ($response)
+		if $response->is_error;
+
 	return $response;
 }
 
@@ -909,8 +912,8 @@ sub _send_request_expect_nothing {
 
     return 1 if $response->is_success;
 
-    # anything else is a failure, and we save the parsed result
-    $self->_remember_errors ($response);
+	$self->_remember_errors ($response);
+
     return 0;
 }
 
@@ -930,13 +933,8 @@ sub _remember_errors {
 
 	return 0 unless $response->is_error;
 
-	if ($response->xpath_context) {
-		$self->err($response->error_code);
-		$self->errstr($response->error_message);
-	} else {
-		$self->err('');
-		$self->errstr('');
-	}
+	$self->err($response->error_code);
+	$self->errstr($response->error_message);
 
 	return 1;
 }
