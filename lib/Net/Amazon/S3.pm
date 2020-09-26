@@ -127,7 +127,6 @@ use Net::Amazon::S3::HTTPRequest;
 use Net::Amazon::S3::Request;
 use Net::Amazon::S3::Request::AbortMultipartUpload;
 use Net::Amazon::S3::Request::CompleteMultipartUpload;
-use Net::Amazon::S3::Request::DeleteBucket;
 use Net::Amazon::S3::Request::DeleteMultiObject;
 use Net::Amazon::S3::Request::DeleteObject;
 use Net::Amazon::S3::Request::GetBucketAccessControl;
@@ -144,6 +143,7 @@ use Net::Amazon::S3::Request::SetBucketAccessControl;
 use Net::Amazon::S3::Request::SetObjectAccessControl;
 use Net::Amazon::S3::Response;
 use Net::Amazon::S3::Operation::Bucket::Create;
+use Net::Amazon::S3::Operation::Bucket::Delete;
 use Net::Amazon::S3::Operation::Buckets::List;
 use Net::Amazon::S3::Signature::V2;
 use Net::Amazon::S3::Signature::V4;
@@ -590,12 +590,15 @@ sub delete_bucket {
     }
     croak 'must specify bucket' unless $bucket;
 
-    my $http_request = Net::Amazon::S3::Request::DeleteBucket->new(
-        s3     => $self,
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Bucket::Delete',
+
         bucket => $bucket,
     );
 
-    return $self->_send_request_expect_nothing($http_request);
+    return unless $response->is_success;
+
+    return 1;
 }
 
 =head2 list_bucket

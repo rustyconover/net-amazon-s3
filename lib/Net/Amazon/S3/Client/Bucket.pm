@@ -40,13 +40,14 @@ sub _create {
 }
 
 sub delete {
-    my $self         = shift;
-    my $http_request = Net::Amazon::S3::Request::DeleteBucket->new(
-        s3     => $self->client->s3,
-        bucket => $self->name,
+    my $self = shift;
+
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Bucket::Delete',
     );
 
-    $self->client->_send_request($http_request)->http_response;
+    return unless $response->is_success;
+    return $response->http_response;
 }
 
 sub acl {
