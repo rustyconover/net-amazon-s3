@@ -141,12 +141,12 @@ sub add_key {
         acl_short => $acl_short,
         (encryption => $encryption) x!! defined $encryption,
         headers   => $conf,
-    )->http_request;
+    );
 
     if ( ref($value) ) {
         # we may get a 307 redirect; ask server to signal 100 Continue
         # before reading the content from CODE reference (_content_sub)
-        $http_request->header('Expect' => '100-continue');
+        $http_request->http_request->header('Expect' => '100-continue');
     }
     return $self->account->_send_request_expect_nothing($http_request);
 }
@@ -228,7 +228,7 @@ sub copy_key {
         acl_short => $acl_short,
         (encryption => $encryption) x!! defined $encryption,
         headers   => $conf,
-    )->http_request;
+    );
 
     my $response = $acct->_do_http( $http_request );
     my $xpc      = $acct->_xpc_of_content( $response->content );
@@ -323,7 +323,7 @@ sub get_key {
         bucket => $self->bucket,
         key    => $key,
         method => $method || 'GET',
-    )->http_request;
+    );
 
     my $response = $acct->_do_http( $http_request, $filename );
 
@@ -402,7 +402,7 @@ sub delete_multi_object {
                     $_
                 }
             } splice @objects, 0, ((scalar(@objects) > 1000) ? 1000 : scalar(@objects))]
-        )->http_request;
+        );
 
         my $xpc = $self->account->_send_request($http_request);
 
@@ -421,7 +421,7 @@ sub delete_key {
         s3     => $self->account,
         bucket => $self->bucket,
         key    => $key,
-    )->http_request;
+    );
 
     return $self->account->_send_request_expect_nothing($http_request);
 }
@@ -499,12 +499,12 @@ sub get_acl {
             s3     => $account,
             bucket => $self->bucket,
             key    => $key,
-        )->http_request;
+        );
     } else {
         $http_request = Net::Amazon::S3::Request::GetBucketAccessControl->new(
             s3     => $account,
             bucket => $self->bucket,
-        )->http_request;
+        );
     }
 
     my $response = $account->_do_http($http_request);
@@ -574,7 +574,7 @@ sub set_acl {
             key       => $key,
             acl_short => $conf->{acl_short},
             acl_xml   => $conf->{acl_xml},
-        )->http_request;
+        );
     } else {
         $http_request = Net::Amazon::S3::Request::SetBucketAccessControl->new(
             s3     => $self->account,
@@ -582,7 +582,7 @@ sub set_acl {
 
             acl_short => $conf->{acl_short},
             acl_xml   => $conf->{acl_xml},
-        )->http_request;
+        );
     }
 
     return $self->account->_send_request_expect_nothing($http_request);
@@ -602,7 +602,7 @@ sub get_location_constraint {
     my $http_request = Net::Amazon::S3::Request::GetBucketLocationConstraint->new(
         s3     => $self->account,
         bucket => $self->bucket,
-    )->http_request;
+    );
 
     my $xpc = $self->account->_send_request($http_request);
     return undef unless $xpc && !$self->account->_remember_errors($xpc);

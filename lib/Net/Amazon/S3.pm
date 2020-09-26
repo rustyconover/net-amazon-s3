@@ -453,7 +453,7 @@ sub buckets {
 
     my $http_request
         = Net::Amazon::S3::Request::ListAllMyBuckets->new( s3 => $self )
-        ->http_request;
+        ;
 
     my $xpc = $self->_send_request($http_request);
 
@@ -516,7 +516,7 @@ sub add_bucket {
         acl_short           => $conf->{acl_short},
         location_constraint => $conf->{location_constraint},
         ( $conf->{region} ? (region => $conf->{region}) : () ),
-    )->http_request;
+    );
 
     return 0
         unless $self->_send_request_expect_nothing($http_request);
@@ -572,7 +572,7 @@ sub delete_bucket {
     my $http_request = Net::Amazon::S3::Request::DeleteBucket->new(
         s3     => $self,
         bucket => $bucket,
-    )->http_request;
+    );
 
     return $self->_send_request_expect_nothing($http_request);
 }
@@ -723,7 +723,7 @@ sub list_bucket {
         max_keys  => $conf->{max_keys},
         marker    => $conf->{marker},
         prefix    => $conf->{prefix},
-    )->http_request;
+    );
 
     my $xpc = $self->_send_request($http_request);
 
@@ -886,6 +886,9 @@ sub _send_request {
 # centralize all HTTP work, for debugging
 sub _do_http {
     my ( $self, $http_request, $filename ) = @_;
+
+	$http_request = $http_request->http_request
+		if $http_request->$Safe::Isa::_isa ('Net::Amazon::S3::Request');
 
     confess 'Need HTTP::Request object'
         if ( ref($http_request) ne 'HTTP::Request' );

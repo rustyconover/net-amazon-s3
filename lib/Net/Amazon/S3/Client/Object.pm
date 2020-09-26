@@ -89,7 +89,7 @@ sub exists {
         bucket => $self->bucket->name,
         key    => $self->key,
         method => 'HEAD',
-    )->http_request;
+    );
 
     my $http_response = $self->client->_send_request_raw($http_request);
     return $http_response->code == 200 ? 1 : 0;
@@ -103,7 +103,7 @@ sub _get {
         bucket => $self->bucket->name,
         key    => $self->key,
         method => 'GET',
-    )->http_request;
+    );
 
     my $http_response = $self->client->_send_request($http_request);
     my $content       = $http_response->content;
@@ -136,7 +136,7 @@ sub get_callback {
         bucket => $self->bucket->name,
         key    => $self->key,
         method => 'GET',
-    )->http_request;
+    );
 
     my $http_response
         = $self->client->_send_request( $http_request, $callback );
@@ -152,7 +152,7 @@ sub get_filename {
         bucket => $self->bucket->name,
         key    => $self->key,
         method => 'GET',
-    )->http_request;
+    );
 
     my $http_response
         = $self->client->_send_request( $http_request, $filename );
@@ -226,7 +226,7 @@ sub _put {
         headers    => $conf,
         acl_short  => $self->acl_short,
         encryption => $self->encryption,
-    )->http_request;
+    );
 
     my $http_response = $self->client->_send_request($http_request);
 
@@ -254,7 +254,7 @@ sub delete {
         s3     => $self->client->s3,
         bucket => $self->bucket->name,
         key    => $self->key,
-    )->http_request;
+    );
 
     $self->client->_send_request($http_request);
 }
@@ -268,7 +268,7 @@ sub initiate_multipart_upload {
         key    => $self->key,
         encryption => $self->encryption,
         ($args{headers} ? (headers => $args{headers}) : ()),
-    )->http_request;
+    );
     my $xpc = $self->client->_send_request_xpc($http_request);
     my $upload_id = $xpc->findvalue('//s3:UploadId');
     confess "Couldn't get upload id from initiate_multipart_upload response XML"
@@ -288,7 +288,7 @@ sub complete_multipart_upload {
     $args{bucket}   = $self->bucket->name;
 
     my $http_request =
-      Net::Amazon::S3::Request::CompleteMultipartUpload->new(%args)->http_request;
+      Net::Amazon::S3::Request::CompleteMultipartUpload->new(%args);
     return $self->client->_send_request($http_request);
 }
 
@@ -303,7 +303,7 @@ sub abort_multipart_upload {
     $args{bucket}   = $self->bucket->name;
 
     my $http_request =
-      Net::Amazon::S3::Request::AbortMultipartUpload->new(%args)->http_request;
+      Net::Amazon::S3::Request::AbortMultipartUpload->new(%args);
     return $self->client->_send_request($http_request);
 }
 
@@ -322,7 +322,7 @@ sub put_part {
       if(defined $args{value});
 
     my $http_request =
-      Net::Amazon::S3::Request::PutPart->new(%args)->http_request;
+      Net::Amazon::S3::Request::PutPart->new(%args);
     return $self->client->_send_request($http_request);
 }
 
@@ -361,7 +361,7 @@ sub head {
             bucket => $self->bucket->name,
             key    => $self->key,
             method => 'HEAD',
-        )->http_request;
+        );
 
     my $http_response = $self->client->_send_request($http_request);
 
@@ -433,7 +433,7 @@ sub restore {
             key    => $self->key,
             days   => $conf{days},
             tier   => $conf{tier},
-        )->http_request;
+        );
 
     return $self->client->_send_request($http_request);
 }

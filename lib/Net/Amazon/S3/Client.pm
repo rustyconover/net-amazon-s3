@@ -31,7 +31,7 @@ sub buckets {
 
     my $http_request
         = Net::Amazon::S3::Request::ListAllMyBuckets->new( s3 => $s3 )
-        ->http_request;
+        ;
 
     my $xpc = $self->_send_request_xpc($http_request);
 
@@ -83,6 +83,9 @@ sub bucket {
 
 sub _send_request_raw {
     my ( $self, $http_request, $filename ) = @_;
+
+	$http_request = $http_request->http_request
+		if $http_request->$Safe::Isa::_isa ('Net::Amazon::S3::Request');
 
     return $self->s3->ua->request( $http_request, $filename );
 }

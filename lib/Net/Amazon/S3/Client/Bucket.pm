@@ -32,7 +32,7 @@ sub _create {
         bucket              => $self->name,
         acl_short           => $conf{acl_short},
         location_constraint => $conf{location_constraint},
-    )->http_request;
+    );
 
     $self->client->_send_request($http_request);
 }
@@ -42,7 +42,7 @@ sub delete {
     my $http_request = Net::Amazon::S3::Request::DeleteBucket->new(
         s3     => $self->client->s3,
         bucket => $self->name,
-    )->http_request;
+    );
 
     $self->client->_send_request($http_request);
 }
@@ -53,7 +53,7 @@ sub acl {
     my $http_request = Net::Amazon::S3::Request::GetBucketAccessControl->new(
         s3     => $self->client->s3,
         bucket => $self->name,
-    )->http_request;
+    );
 
     return $self->client->_send_request_content($http_request);
 }
@@ -65,7 +65,7 @@ sub location_constraint {
         = Net::Amazon::S3::Request::GetBucketLocationConstraint->new(
         s3     => $self->client->s3,
         bucket => $self->name,
-        )->http_request;
+        );
 
     my $xpc = $self->client->_send_request_xpc($http_request);
 
@@ -98,7 +98,7 @@ sub list {
                 marker => $marker,
                 prefix => $prefix,
                 delimiter => $delimiter,
-            )->http_request;
+            );
 
             my $xpc = $self->client->_send_request_xpc($http_request);
 
@@ -159,7 +159,7 @@ sub delete_multi_object {
                     $_
                 }
             } splice @objects, 0, ((scalar(@objects) > 1000) ? 1000 : scalar(@objects))]
-        )->http_request;
+        );
 
         $last_result = $self->client->_send_request($http_request);
 
