@@ -1,4 +1,5 @@
-package Net::Amazon::S3::Request::CompleteMultipartUpload;
+package Net::Amazon::S3::Operation::Object::Upload::Complete::Request;
+# ABSTRACT: An internal class to complete a multipart upload
 
 use Moose 0.85;
 use Digest::MD5 qw/md5 md5_hex/;
@@ -49,23 +50,23 @@ sub BUILD {
 
 __END__
 
-# ABSTRACT: An internal class to complete a multipart upload
-
 =for test_synopsis
 no strict 'vars'
 
 =head1 SYNOPSIS
 
-  my $http_request = Net::Amazon::S3::Request::CompleteMultipartUpload->new(
-    s3                  => $s3,
-    bucket              => $bucket,
-    etags               => \@etags,
-    part_numbers        => \@part_numbers,
-  )->http_request;
+	my $request = Net::Amazon::S3::Operation::Object::Upload::Complete::Request->new (
+		s3           => $s3,
+		bucket       => $bucket,
+		etags        => \@etags,
+		part_numbers => \@part_numbers,
+	);
 
 =head1 DESCRIPTION
 
 This module completes a multipart upload.
+
+Implements operation L<< CompleteMultipartUpload|https://docs.aws.amazon.com/AmazonS3/latest/API/API_CompleteMultipartUpload.html >>
 
 =head1 METHODS
 
