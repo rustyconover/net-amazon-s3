@@ -7,9 +7,7 @@ use Regexp::Common qw /net/;
 
 # ABSTRACT: Base class for request objects
 
-enum 'AclShort' =>
-    # Current list at https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
-    [ qw(private public-read public-read-write aws-exec-read authenticated-read bucket-owner-read bucket-owner-full-control log-delivery-write ) ];
+use Net::Amazon::S3::Constraint::ACL::Canned;
 
 enum 'LocationConstraint' => [
     # https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region

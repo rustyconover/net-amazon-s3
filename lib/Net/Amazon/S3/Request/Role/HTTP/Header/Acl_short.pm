@@ -3,12 +3,12 @@ package Net::Amazon::S3::Request::Role::HTTP::Header::Acl_short;
 
 use Moose::Role;
 
-use Net::Amazon::S3::Constants;
+use Net::Amazon::S3::Constraint::ACL::Canned;
 
 with 'Net::Amazon::S3::Request::Role::HTTP::Header' => {
     name => 'acl_short',
     header => Net::Amazon::S3::Constants->HEADER_CANNED_ACL,
-    isa => 'Maybe[AclShort]',
+    isa => 'Maybe[Net::Amazon::S3::Constraint::ACL::Canned]',
     required => 0,
 };
 

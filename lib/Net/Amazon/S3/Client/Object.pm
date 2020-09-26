@@ -14,9 +14,8 @@ use Ref::Util ();
 
 # ABSTRACT: An easy-to-use Amazon S3 client object
 
-enum 'AclShort' =>
-    # Current list at https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
-    [ qw(private public-read public-read-write aws-exec-read authenticated-read bucket-owner-read bucket-owner-full-control log-delivery-write ) ];
+use Net::Amazon::S3::Constraint::ACL::Canned;
+
 enum 'StorageClass' =>
     # Current list at https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#AmazonS3-PutObject-request-header-StorageClass
     [ qw(standard reduced_redundancy standard_ia onezone_ia intelligent_tiering glacier deep_archive) ];
@@ -34,7 +33,7 @@ has 'last_modified_raw' =>
     ( is => 'ro', isa => 'Str', required => 0 );
 has 'expires' => ( is => 'rw', isa => DateTime, coerce => 1, required => 0 );
 has 'acl_short' =>
-    ( is => 'ro', isa => 'AclShort', required => 0, default => 'private' );
+    ( is => 'ro', isa => 'Net::Amazon::S3::Constraint::ACL::Canned', required => 0, default => 'private' );
 has 'content_type' => (
     is       => 'ro',
     isa      => 'Str',
