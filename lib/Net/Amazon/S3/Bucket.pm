@@ -132,23 +132,23 @@ sub add_key {
     }
 
     my $encryption = delete $conf->{encryption};
+    my %headers = %$conf;
 
-    my $http_request = Net::Amazon::S3::Request::PutObject->new(
-        s3        => $self->account,
-        bucket    => $self->bucket,
+    # we may get a 307 redirect; ask server to signal 100 Continue
+    # before reading the content from CODE reference (_content_sub)
+    $headers{expect} = '100-continue' if ref $value;
+
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Object::Add',
+
         key       => $key,
         value     => $value,
         acl_short => $acl_short,
-        (encryption => $encryption) x!! defined $encryption,
-        headers   => $conf,
+        ((encryption => $encryption) x!! defined $encryption),
+        headers   => \%headers,
     );
 
-    if ( ref($value) ) {
-        # we may get a 307 redirect; ask server to signal 100 Continue
-        # before reading the content from CODE reference (_content_sub)
-        $http_request->http_request->header('Expect' => '100-continue');
-    }
-    return $self->account->_send_request_expect_nothing($http_request);
+    return $response->is_success;
 }
 
 =head2 add_key_filename
@@ -220,9 +220,9 @@ sub copy_key {
     my $encryption = delete $conf->{encryption};
 
     my $acct    = $self->account;
-    my $http_request = Net::Amazon::S3::Request::PutObject->new(
-        s3        => $self->account,
-        bucket    => $self->bucket,
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Object::Add',
+
         key       => $key,
         value     => '',
         acl_short => $acl_short,
@@ -230,7 +230,7 @@ sub copy_key {
         headers   => $conf,
     );
 
-    return $acct->_send_request_expect_nothing( $http_request );
+    return unless $response->is_success;
 }
 
 =head2 edit_metadata

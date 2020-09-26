@@ -218,17 +218,16 @@ sub _put {
     $conf->{"x-amz-meta-\L$_"} = $self->user_metadata->{$_}
         for keys %{ $self->user_metadata };
 
-    my $http_request = Net::Amazon::S3::Request::PutObject->new(
-        s3         => $self->client->s3,
-        bucket     => $self->bucket->name,
-        key        => $self->key,
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Object::Add',
+
         value      => $value,
         headers    => $conf,
         acl_short  => $self->acl_short,
         encryption => $self->encryption,
     );
 
-    my $http_response = $self->client->_send_request($http_request)->http_response;
+    my $http_response = $response->http_response;
 
     confess 'Error uploading ' . $http_response->as_string
         unless $http_response->is_success;

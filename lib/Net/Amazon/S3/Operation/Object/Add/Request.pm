@@ -1,10 +1,10 @@
-package Net::Amazon::S3::Request::PutObject;
+package Net::Amazon::S3::Operation::Object::Add::Request;
+# ABSTRACT: An internal class to add an object to a bucket.
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;
-extends 'Net::Amazon::S3::Request::Object';
 
-# ABSTRACT: An internal class to put an object
+extends 'Net::Amazon::S3::Request::Object';
 
 with 'Net::Amazon::S3::Request::Role::HTTP::Header::Acl_short';
 with 'Net::Amazon::S3::Request::Role::HTTP::Header::Encryption';
@@ -39,16 +39,18 @@ no strict 'vars'
 
 =head1 SYNOPSIS
 
-  my $http_request = Net::Amazon::S3::Request::PutObject->new(
-    s3        => $s3,
-    bucket    => $bucket,
-    key       => $key,
-    value     => $value,
-    acl_short => $acl_short,
-    headers   => $conf,
-  )->http_request;
+	my $http_request = Net::Amazon::S3::Operation::Object::Add::Request->new (
+		s3        => $s3,
+		bucket    => $bucket,
+		key       => $key,
+		value     => $value,
+		acl_short => $acl_short,
+		headers   => $conf,
+	);
 
 =head1 DESCRIPTION
+
+Implements operation L<< PutObject|https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html >>.
 
 This module puts an object.
 
