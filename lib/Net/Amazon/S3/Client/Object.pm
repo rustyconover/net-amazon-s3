@@ -488,6 +488,15 @@ sub _is_multipart_etag {
     return 1 if($etag =~ /\-\d+$/);
 }
 
+sub _perform_operation {
+    my ($self, $operation, %params) = @_;
+
+    $self->bucket->_perform_operation ($operation => (
+        key => $self->key,
+        %params,
+    ));
+}
+
 1;
 
 __END__

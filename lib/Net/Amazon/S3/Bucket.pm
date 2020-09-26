@@ -699,6 +699,15 @@ sub _head_region {
     die "Cannot determine bucket region; bucket=${\ $self->bucket }";
 }
 
+sub _perform_operation {
+    my ($self, $operation, %params) = @_;
+
+    $self->account->_perform_operation ($operation => (
+        bucket => $self,
+        %params,
+    ));
+}
+
 1;
 
 __END__

@@ -136,6 +136,41 @@ sub _send_request_xpc {
     return $http_response->xpath_context;
 }
 
+=head2 _perform_operation
+
+Refer L<Net::Amazon::S3/_perform_operation
+
+Method supports additional parameters
+
+=over
+
+=item filename
+
+Filename callback (see L<LWP::UserAgent> for details) (optional)
+
+=back
+
+=cut
+
+sub _perform_operation {
+	my ($self, $operation, %params) = @_;
+
+	my $error_handler = delete $params{error_handler};
+	$error_handler = $self->error_handler unless defined $error_handler;
+
+    my $request_class  = $operation . '::Request';
+    my $response_class = $operation . '::Response';
+    my $filename       = delete $params{filename};
+
+    my $request  = $request_class->new (s3 => $self->s3, %params);
+    my $response = $self->_send_request_raw ($request->http_request, $filename);
+    $response    = $response_class->new (http_response => $response->http_response);
+
+    $error_handler->handle_error ($response);
+
+    return $response;
+}
+
 1;
 
 __END__

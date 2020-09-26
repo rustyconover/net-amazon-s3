@@ -905,6 +905,41 @@ sub _send_request {
 	return $response;
 }
 
+=head2 _perform_operation
+
+    my $response = $s3->_perform_operation ('Operation' => (
+        # ... operation request parameters
+    ));
+
+Internal operation implementation method, takes request construction parameters,
+performs necessary HTTP requests(s) and returns Response instance.
+
+Method takes same named parameters as realted Request class.
+
+Method provides available contextual parameters by default (eg s3, bucket)
+
+Method invokes contextual error handler.
+
+=cut
+
+sub _perform_operation {
+	my ($self, $operation, %params) = @_;
+
+	my $error_handler = delete $params{error_handler};
+	$error_handler = $self->error_handler unless defined $error_handler;
+
+    my $request_class  = $operation . '::Request';
+    my $response_class = $operation . '::Response';
+
+    my $request  = $request_class->new (s3 => $self, %params);
+    my $response = $self->_do_http ($request);
+    $response    = $response_class->new (http_response => $response->http_response);
+
+    $error_handler->handle_error ($response);
+
+    return $response;
+}
+
 # centralize all HTTP work, for debugging
 sub _do_http {
     my ( $self, $http_request, $filename ) = @_;

@@ -177,6 +177,14 @@ sub object {
     );
 }
 
+sub _perform_operation {
+    my ($self, $operation, %params) = @_;
+
+    $self->client->_perform_operation ($operation => (
+        bucket => $self->name,
+        %params,
+    ));
+}
 
 1;
 
