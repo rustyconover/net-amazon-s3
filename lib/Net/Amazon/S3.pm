@@ -143,6 +143,7 @@ use Net::Amazon::S3::Request::PutPart;
 use Net::Amazon::S3::Request::RestoreObject;
 use Net::Amazon::S3::Request::SetBucketAccessControl;
 use Net::Amazon::S3::Request::SetObjectAccessControl;
+use Net::Amazon::S3::Response;
 use Net::Amazon::S3::Signature::V2;
 use Net::Amazon::S3::Signature::V4;
 use Net::Amazon::S3::Vendor;
@@ -455,9 +456,10 @@ sub buckets {
         = Net::Amazon::S3::Request::ListAllMyBuckets->new( s3 => $self )
         ;
 
-    my $xpc = $self->_send_request($http_request);
+    my $response = $self->_send_request($http_request);
+	my $xpc = $response->xpath_context;
 
-    return undef unless $xpc && !$self->_remember_errors($xpc);
+    return undef unless $xpc && !$self->_remember_errors($response);
 
     my $owner_id          = $xpc->findvalue("//s3:Owner/s3:ID");
     my $owner_displayname = $xpc->findvalue("//s3:Owner/s3:DisplayName");
@@ -725,9 +727,10 @@ sub list_bucket {
         prefix    => $conf->{prefix},
     );
 
-    my $xpc = $self->_send_request($http_request);
+    my $response = $self->_send_request($http_request);
+	my $xpc = $response->xpath_context;
 
-    return undef unless $xpc && !$self->_remember_errors($xpc);
+    return undef unless $xpc && !$self->_remember_errors($response);
 
     my $return = {
         bucket      => $xpc->findvalue("//s3:ListBucketResult/s3:Name"),
@@ -876,11 +879,8 @@ sub _send_request {
     my ( $self, $http_request ) = @_;
 
     my $response = $self->_do_http($http_request);
-    my $content  = $response->content;
 
-    return $content unless $response->content_type eq 'application/xml';
-    return unless $content;
-    return $self->_xpc_of_content($content);
+	return $response;
 }
 
 # centralize all HTTP work, for debugging
@@ -896,7 +896,10 @@ sub _do_http {
     # convenient time to reset any error conditions
     $self->err(undef);
     $self->errstr(undef);
-    return $self->ua->request( $http_request, $filename );
+
+	return Net::Amazon::S3::Response->new (
+		http_response => scalar $self->ua->request( $http_request, $filename ),
+	);
 }
 
 sub _send_request_expect_nothing {
@@ -904,16 +907,16 @@ sub _send_request_expect_nothing {
 
     my $response = $self->_do_http($http_request);
 
-    return 1 if $response->code =~ /^2\d\d$/;
+    return 1 if $response->is_success;
 
     # anything else is a failure, and we save the parsed result
-    $self->_remember_errors( $response->content );
+    $self->_remember_errors ($response);
     return 0;
 }
 
 sub _croak_if_response_error {
     my ( $self, $response ) = @_;
-    unless ( $response->code =~ /^2\d\d$/ ) {
+    unless ( $response->is_success ) {
         $self->err("network_error");
         $self->errstr( $response->status_line );
         croak "Net::Amazon::S3: Amazon responded with "
@@ -921,40 +924,21 @@ sub _croak_if_response_error {
     }
 }
 
-sub _xpc_of_content {
-    my ( $self, $content ) = @_;
-    my $doc = $self->libxml->parse_string($content);
-
-    my $xpc = XML::LibXML::XPathContext->new($doc);
-
-    # Set default XML document NS as S3 namespace.
-    # Or default Amazon xmlns (for documents without NS).
-    my $s3_ns = $doc->documentElement->lookupNamespaceURI
-       || 'http://s3.amazonaws.com/doc/2006-03-01/';
-    $xpc->registerNs( 's3', $s3_ns );
-
-    return $xpc;
-}
-
 # returns 1 if errors were found
 sub _remember_errors {
-    my ( $self, $src ) = @_;
+    my ( $self, $response ) = @_;
 
-    # Do not try to parse non-xml
-    unless ( ref $src || $src =~ m/^[[:space:]]*</ ) {
-        ( my $code = $src ) =~ s/^[[:space:]]*\([0-9]*\).*$/$1/;
-        $self->err($code);
-        $self->errstr($src);
-        return 1;
-    }
+	return 0 unless $response->is_error;
 
-    my $xpc = ref $src ? $src : $self->_xpc_of_content($src);
-    if ( $xpc->findnodes("//Error") ) {
-        $self->err( $xpc->findvalue("//Error/Code") );
-        $self->errstr( $xpc->findvalue("//Error/Message") );
-        return 1;
-    }
-    return 0;
+	if ($response->xpath_context) {
+		$self->err($response->error_code);
+		$self->errstr($response->error_message);
+	} else {
+		$self->err('');
+		$self->errstr('');
+	}
+
+	return 1;
 }
 
 sub _urlencode {

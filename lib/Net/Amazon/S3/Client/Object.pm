@@ -92,7 +92,7 @@ sub exists {
     );
 
     my $http_response = $self->client->_send_request_raw($http_request);
-    return $http_response->code == 200 ? 1 : 0;
+    return $http_response->is_success;
 }
 
 sub _get {
@@ -105,7 +105,7 @@ sub _get {
         method => 'GET',
     );
 
-    my $http_response = $self->client->_send_request($http_request);
+    my $http_response = $self->client->_send_request($http_request)->http_response;
     my $content       = $http_response->content;
     $self->_load_user_metadata($http_response);
 
@@ -139,7 +139,7 @@ sub get_callback {
     );
 
     my $http_response
-        = $self->client->_send_request( $http_request, $callback );
+        = $self->client->_send_request( $http_request, $callback )->http_response;
 
     return $http_response;
 }
@@ -155,7 +155,7 @@ sub get_filename {
     );
 
     my $http_response
-        = $self->client->_send_request( $http_request, $filename );
+        = $self->client->_send_request( $http_request, $filename )->http_response;
 
     $self->_load_user_metadata($http_response);
 
@@ -228,10 +228,12 @@ sub _put {
         encryption => $self->encryption,
     );
 
-    my $http_response = $self->client->_send_request($http_request);
+    my $http_response = $self->client->_send_request($http_request)->http_response;
 
     confess 'Error uploading ' . $http_response->as_string
-        if $http_response->code != 200;
+        unless $http_response->is_success;
+
+	return '';
 }
 
 sub put_filename {
@@ -256,7 +258,7 @@ sub delete {
         key    => $self->key,
     );
 
-    $self->client->_send_request($http_request);
+    $self->client->_send_request($http_request)->http_response;
 }
 
 sub initiate_multipart_upload {
@@ -289,7 +291,7 @@ sub complete_multipart_upload {
 
     my $http_request =
       Net::Amazon::S3::Request::CompleteMultipartUpload->new(%args);
-    return $self->client->_send_request($http_request);
+    return $self->client->_send_request($http_request)->http_response;
 }
 
 sub abort_multipart_upload {
@@ -304,7 +306,7 @@ sub abort_multipart_upload {
 
     my $http_request =
       Net::Amazon::S3::Request::AbortMultipartUpload->new(%args);
-    return $self->client->_send_request($http_request);
+    return $self->client->_send_request($http_request)->http_response;
 }
 
 
@@ -323,7 +325,7 @@ sub put_part {
 
     my $http_request =
       Net::Amazon::S3::Request::PutPart->new(%args);
-    return $self->client->_send_request($http_request);
+    return $self->client->_send_request($http_request)->http_response;
 }
 
 sub list_parts {
@@ -363,10 +365,10 @@ sub head {
             method => 'HEAD',
         );
 
-    my $http_response = $self->client->_send_request($http_request);
+    my $http_response = $self->client->_send_request($http_request)->http_response;
 
     confess 'Error head-object ' . $http_response->as_string
-        if $http_response->code != 200;
+        unless $http_response->is_success;
 
     my %metadata;
     my $headers = $http_response->headers;
@@ -435,7 +437,7 @@ sub restore {
             tier   => $conf{tier},
         );
 
-    return $self->client->_send_request($http_request);
+    return $self->client->_send_request($http_request)->http_response;
 }
 
 sub _content_sub {

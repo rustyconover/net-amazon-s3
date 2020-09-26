@@ -1,7 +1,7 @@
 package Net::Amazon::S3::Client;
 
 use Moose 0.85;
-use HTTP::Status qw(is_error status_message);
+use HTTP::Status qw(status_message);
 use MooseX::StrictConstructor 0.16;
 use Moose::Util::TypeConstraints;
 
@@ -87,7 +87,9 @@ sub _send_request_raw {
 	$http_request = $http_request->http_request
 		if $http_request->$Safe::Isa::_isa ('Net::Amazon::S3::Request');
 
-    return $self->s3->ua->request( $http_request, $filename );
+	return Net::Amazon::S3::Response->new (
+		http_response => scalar $self->s3->ua->request( $http_request, $filename ),
+	);
 }
 
 sub _send_request {
@@ -100,13 +102,11 @@ sub _send_request {
     my $code         = $http_response->code;
 	my $message      = $http_response->message;
 
-    if ( is_error($code) ) {
-        if ( $content && $content_type eq 'application/xml' ) {
-            my $xpc = $self->s3->_xpc_of_content ($content);
-
-            if ( $xpc->findnodes('/Error') ) {
-                $code    = $xpc->findvalue('/Error/Code');
-                $message = $xpc->findvalue('/Error/Message');
+    if ($http_response->is_error) {
+        if ($content && $http_response->is_xml_content) {
+            if ( $http_response->findnodes('/Error') ) {
+                $code    = $http_response->error_code;
+                $message = $http_response->error_message;
 			}
         }
 
@@ -125,7 +125,7 @@ sub _send_request_xpc {
     my ( $self, $http_request, $filename ) = @_;
     my $http_response = $self->_send_request( $http_request, $filename );
 
-    return $self->s3->_xpc_of_content( $http_response->content );
+    return $http_response->xpath_context;
 }
 
 1;

@@ -34,7 +34,7 @@ sub _create {
         location_constraint => $conf{location_constraint},
     );
 
-    $self->client->_send_request($http_request);
+    $self->client->_send_request($http_request)->http_response;
 }
 
 sub delete {
@@ -44,7 +44,7 @@ sub delete {
         bucket => $self->name,
     );
 
-    $self->client->_send_request($http_request);
+    $self->client->_send_request($http_request)->http_response;
 }
 
 sub acl {
@@ -167,7 +167,7 @@ sub delete_multi_object {
             last;
         }
     }
-    return $last_result;
+    return $last_result->http_response;
 }
 
 sub object {

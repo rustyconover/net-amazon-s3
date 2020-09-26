@@ -231,10 +231,9 @@ sub copy_key {
     );
 
     my $response = $acct->_do_http( $http_request );
-    my $xpc      = $acct->_xpc_of_content( $response->content );
 
-    if ( !$response->is_success || !$xpc || $xpc->findnodes("//Error") ) {
-        $acct->_remember_errors( $response->content );
+    if ( $response->is_error || !$response->xpath_context ) {
+        $acct->_remember_errors ($response);
         return 0;
     }
 
@@ -404,10 +403,11 @@ sub delete_multi_object {
             } splice @objects, 0, ((scalar(@objects) > 1000) ? 1000 : scalar(@objects))]
         );
 
-        my $xpc = $self->account->_send_request($http_request);
+        my $response = $self->account->_send_request($http_request);
+		my $xpc = $response->xpath_context;
 
         return undef
-            unless $xpc && !$self->account->_remember_errors($xpc);
+            unless $xpc && !$self->account->_remember_errors($response);
     }
 
     return 1;
@@ -604,8 +604,9 @@ sub get_location_constraint {
         bucket => $self->bucket,
     );
 
-    my $xpc = $self->account->_send_request($http_request);
-    return undef unless $xpc && !$self->account->_remember_errors($xpc);
+    my $response = $self->account->_send_request($http_request);
+	my $xpc = $response->xpath_context;
+    return undef unless $xpc && !$self->account->_remember_errors($response);
 
     my $lc = $xpc->findvalue("//s3:LocationConstraint");
 
