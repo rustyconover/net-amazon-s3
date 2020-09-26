@@ -132,7 +132,6 @@ use Net::Amazon::S3::Request::DeleteObject;
 use Net::Amazon::S3::Request::GetObject;
 use Net::Amazon::S3::Request::GetObjectAccessControl;
 use Net::Amazon::S3::Request::InitiateMultipartUpload;
-use Net::Amazon::S3::Request::ListBucket;
 use Net::Amazon::S3::Request::ListParts;
 use Net::Amazon::S3::Request::PutObject;
 use Net::Amazon::S3::Request::PutPart;
@@ -145,6 +144,7 @@ use Net::Amazon::S3::Operation::Bucket::Create;
 use Net::Amazon::S3::Operation::Bucket::Delete;
 use Net::Amazon::S3::Operation::Bucket::Location;
 use Net::Amazon::S3::Operation::Buckets::List;
+use Net::Amazon::S3::Operation::Objects::List;
 use Net::Amazon::S3::Signature::V2;
 use Net::Amazon::S3::Signature::V4;
 use Net::Amazon::S3::Vendor;
@@ -740,8 +740,9 @@ Each key is a hashref that looks like this:
 sub list_bucket {
     my ( $self, $conf ) = @_;
 
-    my $http_request = Net::Amazon::S3::Request::ListBucket->new(
-        s3        => $self,
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Objects::List',
+
         bucket    => $conf->{bucket},
         delimiter => $conf->{delimiter},
         max_keys  => $conf->{max_keys},
@@ -749,56 +750,33 @@ sub list_bucket {
         prefix    => $conf->{prefix},
     );
 
-    my $response = $self->_send_request($http_request);
-	my $xpc = $response->xpath_context;
-
-    return undef unless $xpc && !$response->is_error;
+    return unless $response->is_success;
 
     my $return = {
-        bucket      => $xpc->findvalue("//s3:ListBucketResult/s3:Name"),
-        prefix      => $xpc->findvalue("//s3:ListBucketResult/s3:Prefix"),
-        marker      => $xpc->findvalue("//s3:ListBucketResult/s3:Marker"),
-        next_marker => $xpc->findvalue("//s3:ListBucketResult/s3:NextMarker"),
-        max_keys    => $xpc->findvalue("//s3:ListBucketResult/s3:MaxKeys"),
-        is_truncated => (
-            scalar $xpc->findvalue("//s3:ListBucketResult/s3:IsTruncated") eq
-                'true'
-            ? 1
-            : 0
-        ),
+        bucket      => $response->bucket,
+        prefix      => $response->prefix,
+        marker      => $response->marker,
+        next_marker => $response->next_marker,
+        max_keys    => $response->max_keys,
+        is_truncated => $response->is_truncated,
     };
 
     my @keys;
-    foreach my $node ( $xpc->findnodes(".//s3:Contents") ) {
-        my $etag = $response->_decode_etag ($xpc->findvalue( ".//s3:ETag", $node ));
-
-        push @keys,
-            {
-            key           => $xpc->findvalue( ".//s3:Key",          $node ),
-            last_modified => $xpc->findvalue( ".//s3:LastModified", $node ),
-            etag          => $etag,
-            size          => $xpc->findvalue( ".//s3:Size",         $node ),
-            storage_class => $xpc->findvalue( ".//s3:StorageClass", $node ),
-            owner_id      => $xpc->findvalue( ".//s3:ID",           $node ),
-            owner_displayname =>
-                $xpc->findvalue( ".//s3:DisplayName", $node ),
+    foreach my $node ($response->contents) {
+        push @keys, {
+            key           => $node->{key},
+            last_modified => $node->{last_modified},
+            etag          => $node->{etag},
+            size          => $node->{size},
+            storage_class => $node->{storage_class},
+            owner_id      => $node->{owner}{id},
+            owner_displayname => $node->{owner}{displayname},
             };
     }
     $return->{keys} = \@keys;
 
     if ( $conf->{delimiter} ) {
-        my @common_prefixes;
-        my $strip_delim = qr/$conf->{delimiter}$/;
-
-        foreach my $node ( $xpc->findnodes(".//s3:CommonPrefixes") ) {
-            my $prefix = $xpc->findvalue( ".//s3:Prefix", $node );
-
-            # strip delimiter from end of prefix
-            $prefix =~ s/$strip_delim//;
-
-            push @common_prefixes, $prefix;
-        }
-        $return->{common_prefixes} = \@common_prefixes;
+        $return->{common_prefixes} = [ $response->common_prefixes ];
     }
 
     return $return;

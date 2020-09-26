@@ -88,44 +88,33 @@ sub list {
 
             return undef if $end;
 
-            my $http_request = Net::Amazon::S3::Request::ListBucket->new(
-                s3     => $self->client->s3,
-                bucket => $self->name,
-                marker => $marker,
-                prefix => $prefix,
+            my $response = $self->_perform_operation (
+                'Net::Amazon::S3::Operation::Objects::List',
+
+                marker    => $marker,
+                prefix    => $prefix,
                 delimiter => $delimiter,
             );
 
-            my $xpc = $self->client->_send_request($http_request);
+            return unless $response->is_success;
 
             my @objects;
-            foreach my $node (
-                $xpc->findnodes('/s3:ListBucketResult/s3:Contents') )
-            {
-                my $etag = $xpc->_decode_etag ($xpc->findvalue( "./s3:ETag", $node ));
-
-                push @objects,
-                    $self->object_class->new(
+            foreach my $node ($response->contents) {
+                push @objects, $self->object_class->new (
                     client => $self->client,
                     bucket => $self,
-                    key    => $xpc->findvalue( './s3:Key', $node ),
-                    last_modified_raw =>
-                        $xpc->findvalue( './s3:LastModified', $node ),
-                    etag => $etag,
-                    size => $xpc->findvalue( './s3:Size', $node ),
-                    );
+                    key    => $node->{key},
+                    etag   => $node->{etag},
+                    size   => $node->{size},
+                    last_modified_raw => $node->{last_modified},
+				);
             }
 
             return undef unless @objects;
 
-            my $is_truncated
-                = scalar $xpc->findvalue(
-                '/s3:ListBucketResult/s3:IsTruncated') eq 'true'
-                ? 1
-                : 0;
-            $end = 1 unless $is_truncated;
+            $end = 1 unless $response->is_truncated;
 
-            $marker = $xpc->findvalue('/s3:ListBucketResult/s3:NextMarker')
+            $marker = $response->next_marker
                 || $objects[-1]->key;
 
             return \@objects;

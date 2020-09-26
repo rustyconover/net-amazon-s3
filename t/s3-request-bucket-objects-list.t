@@ -1,16 +1,17 @@
+#!perl
 
 use strict;
 use warnings;
 
-use Test::More tests => 6;
-use Test::Warnings qw[ :no_end_test had_no_warnings ];
+use FindBin;
+use lib $FindBin::Bin;
 
-use Shared::Examples::Net::Amazon::S3::Request (
-    qw[ behaves_like_net_amazon_s3_request ],
-);
+BEGIN { require 'test-helper-s3-request.pl' }
+
+plan tests => 6;
 
 behaves_like_net_amazon_s3_request 'list bucket' => (
-    request_class   => 'Net::Amazon::S3::Request::ListBucket',
+    request_class   => 'Net::Amazon::S3::Operation::Objects::List::Request',
     with_bucket     => 'some-bucket',
 
     expect_request_method   => 'GET',
@@ -19,7 +20,7 @@ behaves_like_net_amazon_s3_request 'list bucket' => (
 );
 
 behaves_like_net_amazon_s3_request 'list bucket with prefix' => (
-    request_class   => 'Net::Amazon::S3::Request::ListBucket',
+    request_class   => 'Net::Amazon::S3::Operation::Objects::List::Request',
     with_bucket     => 'some-bucket',
     with_prefix     => 'some-prefix',
 
@@ -30,7 +31,7 @@ behaves_like_net_amazon_s3_request 'list bucket with prefix' => (
 );
 
 behaves_like_net_amazon_s3_request 'list bucket with delimiter' => (
-    request_class   => 'Net::Amazon::S3::Request::ListBucket',
+    request_class   => 'Net::Amazon::S3::Operation::Objects::List::Request',
     with_bucket     => 'some-bucket',
     with_delimiter  => '&',
 
@@ -41,7 +42,7 @@ behaves_like_net_amazon_s3_request 'list bucket with delimiter' => (
 );
 
 behaves_like_net_amazon_s3_request 'list bucket with max-keys' => (
-    request_class   => 'Net::Amazon::S3::Request::ListBucket',
+    request_class   => 'Net::Amazon::S3::Operation::Objects::List::Request',
     with_bucket     => 'some-bucket',
     with_max_keys   => '200',
 
@@ -52,7 +53,7 @@ behaves_like_net_amazon_s3_request 'list bucket with max-keys' => (
 );
 
 behaves_like_net_amazon_s3_request 'list bucket with marker' => (
-    request_class   => 'Net::Amazon::S3::Request::ListBucket',
+    request_class   => 'Net::Amazon::S3::Operation::Objects::List::Request',
     with_bucket     => 'some-bucket',
     with_marker     => 'x',
 
@@ -63,3 +64,6 @@ behaves_like_net_amazon_s3_request 'list bucket with marker' => (
 );
 
 had_no_warnings;
+
+done_testing;
+
