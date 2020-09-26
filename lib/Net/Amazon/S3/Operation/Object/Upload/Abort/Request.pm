@@ -1,10 +1,7 @@
-package Net::Amazon::S3::Request::AbortMultipartUpload;
+package Net::Amazon::S3::Operation::Object::Upload::Abort::Request;
+# ABSTRACT: An internal class to abort a multipart upload
 
 use Moose 0.85;
-use Digest::MD5 qw/md5 md5_hex/;
-use MIME::Base64;
-use Carp qw/croak/;
-use XML::LibXML;
 
 extends 'Net::Amazon::S3::Request::Object';
 
@@ -15,11 +12,13 @@ __PACKAGE__->meta->make_immutable;
 
 1;
 
+__END__
+
 =pod
 
 =head1 NAME
 
-Net::Amazon::S3::Request::AbortMultipartUpload - An internal class to abort a multipart upload
+Net::Amazon::S3::Operation::Object::Upload::Abort::Request - An internal class to abort a multipart upload
 
 =head1 VERSION
 
@@ -27,12 +26,12 @@ version 0.59
 
 =head1 SYNOPSIS
 
-  my $http_request = Net::Amazon::S3::Request::AbortMultipartUpload->new(
-    s3                  => $s3,
-    bucket              => $bucket,
-    key                 => $key
-    upload_id           => $upload_id,
-  )->http_request;
+	my $http_request = Net::Amazon::S3::Operation::Object::Upload::Abort::Request->new (
+		s3        => $s3,
+		bucket    => $bucket,
+		key       => $key
+		upload_id => $upload_id,
+	);
 
 =head1 DESCRIPTION
 
@@ -59,7 +58,4 @@ the same terms as the Perl 5 programming language system itself.
 
 =cut
 
-__END__
-
-# ABSTRACT: An internal class to complete a multipart upload
 
