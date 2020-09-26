@@ -3,9 +3,11 @@ package Net::Amazon::S3::Request::Role::HTTP::Header::Copy_source;
 
 use Moose::Role;
 
+use Net::Amazon::S3::Constants;
+
 with 'Net::Amazon::S3::Request::Role::HTTP::Header' => {
     name => '_copy_source',
-    header => 'x-amz-copy-source',
+    header => Net::Amazon::S3::Constants->HEADER_COPY_SOURCE,
     isa => 'Maybe[Str]',
     required => 0,
     default => sub {

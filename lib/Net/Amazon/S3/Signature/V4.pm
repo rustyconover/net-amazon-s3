@@ -7,6 +7,7 @@ use Net::Amazon::S3::Signature::V4Implementation;
 use Digest::SHA;
 use Ref::Util;
 
+use Net::Amazon::S3::Constants;
 use Net::Amazon::S3::Signature::V2;
 
 use namespace::clean;
@@ -20,7 +21,7 @@ sub enforce_use_virtual_host {
 sub redirect_handler {
     my ($self, $http_request, $response, $ua, $h) = @_;
 
-    my $region = $response->header('x-amz-bucket-region') or return;
+    my $region = $response->header(Net::Amazon::S3::Constants->HEADER_BUCKET_REGION) or return;
 
     # change the bucket region in request
     my $request = $response->request;
@@ -28,7 +29,7 @@ sub redirect_handler {
 
     # sign the request again
     $request->headers->remove_header('Authorization');
-    $request->headers->remove_header('x-amz-date');
+    $request->headers->remove_header(Net::Amazon::S3::Constants->HEADER_DATE);
     $http_request->_sign_request( $request, $region );
 
     return $request;

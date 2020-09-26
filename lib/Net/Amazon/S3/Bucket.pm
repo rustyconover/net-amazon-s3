@@ -210,12 +210,12 @@ sub copy_key {
             $acl_short = $conf->{acl_short};
             delete $conf->{acl_short};
         }
-        $conf->{'x-amz-metadata-directive'} ||= 'REPLACE';
+        $conf->{Net::Amazon::S3::Constants->HEADER_METADATA_DIRECTIVE} ||= 'REPLACE';
     } else {
         $conf = {};
     }
 
-    $conf->{'x-amz-copy-source'} = $source;
+    $conf->{Net::Amazon::S3::Constants->HEADER_COPY_SOURCE} = $source;
 
     my $encryption = delete $conf->{encryption};
 
@@ -703,8 +703,8 @@ sub _head_region {
 
         $self->account->ua->requests_redirectable( $requests_redirectable );
 
-        return $response->header ('x-amz-bucket-region')
-            if $response->header ('x-amz-bucket-region');
+        return $response->header (Net::Amazon::S3::Constants->HEADER_BUCKET_REGION)
+            if $response->header (Net::Amazon::S3::Constants->HEADER_BUCKET_REGION);
 
         print STDERR "Invalid bucket head response; $request_uri\n";
         print STDERR $response->as_string;

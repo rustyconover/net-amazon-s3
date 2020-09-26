@@ -8,6 +8,8 @@ use MIME::Base64 qw( encode_base64 );
 use URI::QueryParam;
 use URI;
 
+use Net::Amazon::S3::Constants;
+
 use namespace::clean;
 
 extends 'Net::Amazon::S3::Signature';
@@ -81,7 +83,7 @@ sub _canonical_string {
 
     # just in case someone used this.  it's not necessary in this lib.
     $interesting_headers{'date'} = ''
-        if $interesting_headers{'x-amz-date'};
+        if $interesting_headers{Net::Amazon::S3::Constants->HEADER_DATE};
 
     # if you're using expires for query string auth, then it trumps date
     # (and x-amz-date)
