@@ -136,7 +136,6 @@ use Net::Amazon::S3::Request::GetBucketLocationConstraint;
 use Net::Amazon::S3::Request::GetObject;
 use Net::Amazon::S3::Request::GetObjectAccessControl;
 use Net::Amazon::S3::Request::InitiateMultipartUpload;
-use Net::Amazon::S3::Request::ListAllMyBuckets;
 use Net::Amazon::S3::Request::ListBucket;
 use Net::Amazon::S3::Request::ListParts;
 use Net::Amazon::S3::Request::PutObject;
@@ -145,6 +144,7 @@ use Net::Amazon::S3::Request::RestoreObject;
 use Net::Amazon::S3::Request::SetBucketAccessControl;
 use Net::Amazon::S3::Request::SetObjectAccessControl;
 use Net::Amazon::S3::Response;
+use Net::Amazon::S3::Operation::Buckets::List;
 use Net::Amazon::S3::Signature::V2;
 use Net::Amazon::S3::Signature::V4;
 use Net::Amazon::S3::Vendor;
@@ -476,31 +476,26 @@ sub bucket_class {
 sub buckets {
     my $self = shift;
 
-    my $http_request
-        = Net::Amazon::S3::Request::ListAllMyBuckets->new( s3 => $self )
-        ;
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Buckets::List',
+    );
 
-    my $response = $self->_send_request($http_request);
-	my $xpc = $response->xpath_context;
+    return unless $response->is_success;
 
-    return undef unless $xpc && !$response->is_error;
-
-    my $owner_id          = $xpc->findvalue("//s3:Owner/s3:ID");
-    my $owner_displayname = $xpc->findvalue("//s3:Owner/s3:DisplayName");
+    my $owner_id          = $response->owner_id;;
+    my $owner_displayname = $response->owner_displayname;
 
     my @buckets;
-    foreach my $node ( $xpc->findnodes(".//s3:Bucket") ) {
-        push @buckets,
-            $self->bucket_class->new(
-            {   bucket => $xpc->findvalue( ".//s3:Name", $node ),
-                creation_date =>
-                    $xpc->findvalue( ".//s3:CreationDate", $node ),
-                account => $self,
-            }
-            );
+    foreach my $bucket ($response->buckets) {
+        push @buckets, $self->bucket_class->new (
+			account       => $self,
+			bucket        => $bucket->{name},
+			creation_date => $bucket->{creation_date},
+		);
 
     }
-    return {
+
+    return +{
         owner_id          => $owner_id,
         owner_displayname => $owner_displayname,
         buckets           => \@buckets,

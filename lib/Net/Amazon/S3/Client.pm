@@ -50,31 +50,24 @@ sub buckets {
     my $self = shift;
     my $s3   = $self->s3;
 
-    my $http_request
-        = Net::Amazon::S3::Request::ListAllMyBuckets->new( s3 => $s3 )
-        ;
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Buckets::List',
+    );
 
-    my $xpc = $self->_send_request_xpc($http_request);
+    return unless $response->is_success;
 
-    my $owner_id
-        = $xpc->findvalue('/s3:ListAllMyBucketsResult/s3:Owner/s3:ID');
-    my $owner_display_name = $xpc->findvalue(
-        '/s3:ListAllMyBucketsResult/s3:Owner/s3:DisplayName');
+    my $owner_id = $response->owner_id;
+    my $owner_display_name = $response->owner_displayname;
 
     my @buckets;
-    foreach my $node (
-        $xpc->findnodes('/s3:ListAllMyBucketsResult/s3:Buckets/s3:Bucket') )
-    {
-        push @buckets,
-            $self->bucket_class->new(
-            {   client => $self,
-                name   => $xpc->findvalue( './s3:Name', $node ),
-                creation_date =>
-                    $xpc->findvalue( './s3:CreationDate', $node ),
-                owner_id           => $owner_id,
-                owner_display_name => $owner_display_name,
-            }
-            );
+    foreach my $bucket ($response->buckets) {
+        push @buckets, $self->bucket_class->new (
+			client             => $self,
+			name               => $bucket->{name},
+			creation_date      => $bucket->{creation_date},
+			owner_id           => $owner_id,
+			owner_display_name => $owner_display_name,
+		);
 
     }
     return @buckets;
