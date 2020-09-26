@@ -444,6 +444,10 @@ Returns undef on error, else hashref of results
 
 =cut
 
+sub bucket_class {
+    'Net::Amazon::S3::Bucket'
+}
+
 sub buckets {
     my $self = shift;
 
@@ -461,7 +465,7 @@ sub buckets {
     my @buckets;
     foreach my $node ( $xpc->findnodes(".//s3:Bucket") ) {
         push @buckets,
-            Net::Amazon::S3::Bucket->new(
+            $self->bucket_class->new(
             {   bucket => $xpc->findvalue( ".//s3:Name", $node ),
                 creation_date =>
                     $xpc->findvalue( ".//s3:CreationDate", $node ),
@@ -531,9 +535,9 @@ Returns an (unverified) bucket object from an account. Does no network access.
 sub bucket {
     my ( $self, $bucket ) = @_;
 
-    return $bucket if $bucket->$Safe::Isa::_isa ('Net::Amazon::S3::Bucket');
+    return $bucket if $bucket->$Safe::Isa::_isa ($self->bucket_class);
 
-    return Net::Amazon::S3::Bucket->new(
+    return $self->bucket_class->new(
         { bucket => $bucket, account => $self } );
 }
 
@@ -814,7 +818,7 @@ sub list_bucket_all {
 
 sub _compat_bucket {
     my ( $self, $conf ) = @_;
-    return Net::Amazon::S3::Bucket->new(
+    return $self->bucket_class->new(
         { account => $self, bucket => delete $conf->{bucket} } );
 }
 
