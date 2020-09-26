@@ -1,10 +1,10 @@
-package Net::Amazon::S3::Request::SetObjectAccessControl;
+package Net::Amazon::S3::Operation::Object::Acl::Set::Request;
+# ABSTRACT: An internal class to set an object's access control
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;
-extends 'Net::Amazon::S3::Request::Object';
 
-# ABSTRACT: An internal class to set an object's access control
+extends 'Net::Amazon::S3::Request::Object';
 
 has 'acl_xml'   => ( is => 'ro', isa => 'Maybe[Str]',      required => 0 );
 
@@ -41,15 +41,17 @@ no strict 'vars'
 
 =head1 SYNOPSIS
 
-  my $http_request = Net::Amazon::S3::Request::SetObjectAccessControl->new(
-    s3        => $s3,
-    bucket    => $bucket,
-    key       => $key,
-    acl_short => $acl_short,
-    acl_xml   => $acl_xml,
-  )->http_request;
+	my $request = Net::Amazon::S3::Operation::Object::Acl::Set::Request->new (
+		s3        => $s3,
+		bucket    => $bucket,
+		key       => $key,
+		acl_short => $acl_short,
+		acl_xml   => $acl_xml,
+	);
 
 =head1 DESCRIPTION
+
+Implements operation L<< PutObjectAcl|https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectAcl.html>.
 
 This module sets an object's access control.
 

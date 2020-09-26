@@ -1,17 +1,17 @@
+#!perl
 
 use strict;
 use warnings;
 
-use Test::More tests => 5;
-use Test::Deep;
-use Test::Warnings qw[ :no_end_test had_no_warnings ];
+use FindBin;
+use lib $FindBin::Bin;
 
-use Shared::Examples::Net::Amazon::S3::Request (
-    qw[ behaves_like_net_amazon_s3_request ],
-);
+BEGIN { require 'test-helper-s3-request.pl' }
+
+plan tests => 5;
 
 behaves_like_net_amazon_s3_request 'set object access control with header acl' => (
-    request_class   => 'Net::Amazon::S3::Request::SetObjectAccessControl',
+    request_class   => 'Net::Amazon::S3::Operation::Object::Acl::Set::Request',
     with_bucket     => 'some-bucket',
     with_key        => 'some/key',
     with_acl_short  => 'private',
@@ -22,7 +22,7 @@ behaves_like_net_amazon_s3_request 'set object access control with header acl' =
 );
 
 behaves_like_net_amazon_s3_request 'set object access control with body acl' => (
-    request_class   => 'Net::Amazon::S3::Request::SetObjectAccessControl',
+    request_class   => 'Net::Amazon::S3::Operation::Object::Acl::Set::Request',
     with_bucket     => 'some-bucket',
     with_key        => 'some/key',
     with_acl_xml    => 'private',
@@ -33,7 +33,7 @@ behaves_like_net_amazon_s3_request 'set object access control with body acl' => 
 );
 
 behaves_like_net_amazon_s3_request 'set object access control without body or header acl' => (
-    request_class   => 'Net::Amazon::S3::Request::SetObjectAccessControl',
+    request_class   => 'Net::Amazon::S3::Operation::Object::Acl::Set::Request',
     with_bucket     => 'some-bucket',
     with_key        => 'some/key',
 
@@ -41,7 +41,7 @@ behaves_like_net_amazon_s3_request 'set object access control without body or he
 );
 
 behaves_like_net_amazon_s3_request 'set object access control with both body and header acl specified' => (
-    request_class   => 'Net::Amazon::S3::Request::SetObjectAccessControl',
+    request_class   => 'Net::Amazon::S3::Operation::Object::Acl::Set::Request',
     with_bucket     => 'some-bucket',
     with_key        => 'some/key',
     with_acl_short  => 'private',
@@ -51,3 +51,5 @@ behaves_like_net_amazon_s3_request 'set object access control with both body and
 );
 
 had_no_warnings;
+
+done_testing;
