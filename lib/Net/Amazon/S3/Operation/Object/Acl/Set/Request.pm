@@ -9,7 +9,7 @@ extends 'Net::Amazon::S3::Request::Object';
 has 'acl_xml'   => ( is => 'ro', isa => 'Maybe[Str]',      required => 0 );
 
 with 'Net::Amazon::S3::Request::Role::Query::Action::Acl';
-with 'Net::Amazon::S3::Request::Role::HTTP::Header::Acl_short';
+with 'Net::Amazon::S3::Request::Role::HTTP::Header::ACL';
 with 'Net::Amazon::S3::Request::Role::HTTP::Method::PUT';
 
 __PACKAGE__->meta->make_immutable;
@@ -23,12 +23,12 @@ sub _request_content {
 sub BUILD {
     my ($self) = @_;
 
-    unless ( $self->acl_xml || $self->acl_short ) {
-        confess "need either acl_xml or acl_short";
+    unless ( $self->acl_xml || $self->acl ) {
+        confess "need either acl_xml or acl";
     }
 
-    if ( $self->acl_xml && $self->acl_short ) {
-        confess "can not provide both acl_xml and acl_short";
+    if ( $self->acl_xml && $self->acl ) {
+        confess "can not provide both acl_xml and acl";
     }
 }
 

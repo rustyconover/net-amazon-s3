@@ -3,11 +3,18 @@ package Net::Amazon::S3::Operation::Bucket::Acl::Set::Request;
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;
+
+use Carp ();
+
 extends 'Net::Amazon::S3::Request::Bucket';
 
-with 'Net::Amazon::S3::Request::Role::HTTP::Header::Acl_short';
+with 'Net::Amazon::S3::Request::Role::HTTP::Header::ACL';
 
-has 'acl_xml'   => ( is => 'ro', isa => 'Maybe[Str]',      required => 0 );
+has 'acl_xml'   => (
+	is => 'ro',
+	isa => 'Maybe[Str]',
+	required => 0,
+);
 
 with 'Net::Amazon::S3::Request::Role::Query::Action::Acl';
 with 'Net::Amazon::S3::Request::Role::HTTP::Method::PUT';
@@ -23,12 +30,12 @@ sub _request_content {
 sub BUILD {
     my ($self) = @_;
 
-    unless ( $self->acl_xml || $self->acl_short ) {
-        confess "need either acl_xml or acl_short";
+    unless ($self->acl_xml || $self->acl) {
+        Carp::confess "need either acl_xml or acl";
     }
 
-    if ( $self->acl_xml && $self->acl_short ) {
-        confess "can not provide both acl_xml and acl_short";
+    if ($self->acl_xml && $self->acl) {
+        Carp::confess "can not provide both acl_xml and acl";
     }
 }
 

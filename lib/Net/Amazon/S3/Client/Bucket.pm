@@ -30,7 +30,8 @@ sub _create {
     my $response = $self->_perform_operation (
         'Net::Amazon::S3::Operation::Bucket::Create',
 
-        acl_short           => $conf{acl_short},
+        (acl                => $conf{acl})       x!! defined $conf{acl},
+        (acl_short          => $conf{acl_short}) x!! defined $conf{acl_short},
         location_constraint => $conf{location_constraint},
     );
 

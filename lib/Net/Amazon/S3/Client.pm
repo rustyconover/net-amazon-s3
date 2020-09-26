@@ -80,10 +80,7 @@ sub create_bucket {
         client => $self,
         name   => $conf{name},
     );
-    $bucket->_create(
-        acl_short           => $conf{acl_short},
-        location_constraint => $conf{location_constraint},
-    );
+    $bucket->_create(%conf);
     return $bucket;
 }
 

@@ -4,7 +4,7 @@ package Net::Amazon::S3::Operation::Bucket::Create::Request;
 use Moose 0.85;
 extends 'Net::Amazon::S3::Request::Bucket';
 
-with 'Net::Amazon::S3::Request::Role::HTTP::Header::Acl_short';
+with 'Net::Amazon::S3::Request::Role::HTTP::Header::ACL';
 with 'Net::Amazon::S3::Request::Role::HTTP::Method::PUT';
 
 has location_constraint => (

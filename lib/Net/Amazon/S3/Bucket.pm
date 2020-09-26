@@ -106,7 +106,19 @@ Takes three positional parameters:
 
 =item configuration
 
-A hash of configuration data for this key. (See synopsis);
+A hash of configuration data for this key.
+
+=over
+
+=item acl
+
+=item encryption
+
+=item any additional HTTP header
+
+=back
+
+See L<Net::Amazon::S3::Operation::Object::Add::Request> for details
 
 =back
 
@@ -125,11 +137,9 @@ sub add_key {
         $conf->{'Content-Length'} ||= length $value;
     }
 
-    my $acl_short;
-    if ( $conf->{acl_short} ) {
-        $acl_short = $conf->{acl_short};
-        delete $conf->{acl_short};
-    }
+    my $acl;
+	$acl = delete $conf->{acl_short} if exists $conf->{acl_short};
+	$acl = delete $conf->{acl}       if exists $conf->{acl};
 
     my $encryption = delete $conf->{encryption};
     my %headers = %$conf;
@@ -143,7 +153,7 @@ sub add_key {
 
         key       => $key,
         value     => $value,
-        acl_short => $acl_short,
+        (acl      => $acl) x!! defined $acl,
         ((encryption => $encryption) x!! defined $encryption),
         headers   => \%headers,
     );
@@ -539,15 +549,17 @@ sub set_acl {
             'Net::Amazon::S3::Operation::Object::Acl::Set',
 
             key       => $key,
-            acl_short => $conf->{acl_short},
-            acl_xml   => $conf->{acl_xml},
+            (acl       => $conf->{acl})       x!! defined $conf->{acl},
+            (acl_short => $conf->{acl_short}) x!! defined $conf->{acl_short},
+            (acl_xml   => $conf->{acl_xml})   x!! defined $conf->{acl_xml},
         );
     } else {
         $response = $self->_perform_operation (
             'Net::Amazon::S3::Operation::Bucket::Acl::Set',
 
-            acl_short => $conf->{acl_short},
-            acl_xml   => $conf->{acl_xml},
+            (acl       => $conf->{acl})       x!! defined $conf->{acl},
+            (acl_short => $conf->{acl_short}) x!! defined $conf->{acl_short},
+            (acl_xml   => $conf->{acl_xml})   x!! defined $conf->{acl_xml},
         );
     }
 

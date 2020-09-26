@@ -6,7 +6,7 @@ use FindBin;
 
 BEGIN { require "$FindBin::Bin/test-helper-s3-api.pl" }
 
-plan tests => 7;
+plan tests => 11;
 
 use Shared::Examples::Net::Amazon::S3::API qw[ expect_api_object_create ];
 
@@ -21,6 +21,74 @@ expect_api_object_create 'create object from scalar value' => (
         content_length => 10,
         content_md5 => undef,
         expires => undef,
+    },
+);
+
+expect_api_object_create 'create object with deprecated acl_short' => (
+    with_bucket             => 'some-bucket',
+    with_key                => 'some-key',
+    with_value              => 'some value',
+	with_acl_short          => 'private',
+    expect_data             => bool (1),
+    expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/some-key' },
+    expect_request_content  => 'some value',
+    expect_request_headers  => {
+        content_length => 10,
+        content_md5 => undef,
+        expires => undef,
+		x_amz_acl => 'private',
+    },
+);
+
+expect_api_object_create 'create object with canned acl' => (
+    with_bucket             => 'some-bucket',
+    with_key                => 'some-key',
+    with_value              => 'some value',
+	with_acl                => Net::Amazon::S3::ACL::Canned->PRIVATE,
+    expect_data             => bool (1),
+    expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/some-key' },
+    expect_request_content  => 'some value',
+    expect_request_headers  => {
+        content_length => 10,
+        content_md5 => undef,
+        expires => undef,
+		x_amz_acl => 'private',
+    },
+);
+
+expect_api_object_create 'create object with canned acl coercion' => (
+    with_bucket             => 'some-bucket',
+    with_key                => 'some-key',
+    with_value              => 'some value',
+	with_acl                => 'private',
+    expect_data             => bool (1),
+    expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/some-key' },
+    expect_request_content  => 'some value',
+    expect_request_headers  => {
+        content_length => 10,
+        content_md5 => undef,
+        expires => undef,
+		x_amz_acl => 'private',
+    },
+);
+
+expect_api_object_create 'create object with explicit acl' => (
+    with_bucket             => 'some-bucket',
+    with_key                => 'some-key',
+    with_value              => 'some value',
+    with_acl        => Net::Amazon::S3::ACL::Set->new
+		->grant_read (id => '123', id => '234')
+		->grant_write (id => '345')
+		,
+    expect_data             => bool (1),
+    expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/some-key' },
+    expect_request_content  => 'some value',
+    expect_request_headers  => {
+        content_length => 10,
+        content_md5 => undef,
+        expires => undef,
+		x_amz_grant_read  => 'id="123", id="234"',
+		x_amz_grant_write => 'id="345"',
     },
 );
 

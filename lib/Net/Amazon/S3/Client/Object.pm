@@ -16,6 +16,8 @@ use Ref::Util ();
 
 use Net::Amazon::S3::Constraint::ACL::Canned;
 
+with 'Net::Amazon::S3::Role::ACL';
+
 enum 'StorageClass' =>
     # Current list at https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html#AmazonS3-PutObject-request-header-StorageClass
     [ qw(standard reduced_redundancy standard_ia onezone_ia intelligent_tiering glacier deep_archive) ];
@@ -32,8 +34,6 @@ has 'last_modified' =>
 has 'last_modified_raw' =>
     ( is => 'ro', isa => 'Str', required => 0 );
 has 'expires' => ( is => 'rw', isa => DateTime, coerce => 1, required => 0 );
-has 'acl_short' =>
-    ( is => 'ro', isa => 'Net::Amazon::S3::Constraint::ACL::Canned', required => 0, default => 'private' );
 has 'content_type' => (
     is       => 'ro',
     isa      => 'Str',
@@ -214,7 +214,7 @@ sub _put {
 
         value      => $value,
         headers    => $conf,
-        acl_short  => $self->acl_short,
+        acl        => $self->acl,
         encryption => $self->encryption,
     );
 
@@ -253,11 +253,16 @@ sub initiate_multipart_upload {
     my $self = shift;
     my %args = ref($_[0]) ? %{$_[0]} : @_;
 
+	$args{acl} = $args{acl_short} if exists $args{acl_short};
+	delete $args{acl_short};
+	$args{acl} = $self->acl unless $args{acl};
+
     my $response = $self->_perform_operation (
         'Net::Amazon::S3::Operation::Object::Upload::Create',
 
         encryption => $self->encryption,
-        ($args{headers} ? (headers => $args{headers}) : ()),
+		($args{acl}       ? (acl       => $args{acl})     : ()),
+        ($args{headers}   ? (headers   => $args{headers}) : ()),
     );
 
     return unless $response->is_success;
@@ -530,7 +535,7 @@ no strict 'vars'
   # content-type of text/plain which expires on 2010-01-02
   my $object = $bucket->object(
     key          => 'this is the public key',
-    acl_short    => 'public-read',
+    acl          => Net::Amazon::S3::ACL::CANNED->PUBLIC_READ,
     content_type => 'text/plain',
     expires      => '2010-01-02',
   );
@@ -667,10 +672,12 @@ This module represents objects in buckets.
   # content-type of text/plain
   my $object = $bucket->object(
     key          => 'this is the public key',
-    acl_short    => 'public-read',
+    acl          => 'public-read',
     content_type => 'text/plain',
   );
   $object->put('this is the public value');
+
+For C<acl> refer L<Net::Amazon::S3::ACL>.
 
 You may also set Content-Encoding using C<content_encoding>, and
 Content-Disposition using C<content_disposition>.
@@ -741,11 +748,14 @@ C<user_metadata>.
 
 =head2 initiate_multipart_upload
 
-  #initiate a new multipart upload for this object
-  my $object = $bucket->object(
-    key         => 'massive_video.avi'
-  );
-  my $upload_id = $object->initiate_multipart_upload;
+	#initiate a new multipart upload for this object
+	my $object = $bucket->object(
+		key         => 'massive_video.avi',
+		acl         => ...,
+	);
+	my $upload_id = $object->initiate_multipart_upload;
+
+For description of C<acl> refer C<Net::Amazon::S3::ACL>.
 
 =head2 put_part
 

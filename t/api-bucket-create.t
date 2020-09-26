@@ -8,7 +8,7 @@ BEGIN { require "$FindBin::Bin/test-helper-s3-api.pl" }
 
 use Shared::Examples::Net::Amazon::S3::API qw[ expect_api_bucket_create ];
 
-plan tests => 8;
+plan tests => 11;
 
 expect_api_bucket_create 'simple create bucket (default region us-east-1)' => (
     with_bucket             => 'some-bucket',
@@ -31,12 +31,55 @@ expect_api_bucket_create 'create bucket in different region' => (
     ),
 );
 
-expect_api_bucket_create 'create bucket with acl' => (
+expect_api_bucket_create 'create bucket with deprecated acl_short' => (
+    with_bucket             => 'some-bucket',
+    with_acl_short          => 'private',
+    expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
+    expect_request_content  => '',
+    expect_request_headers  => { x_amz_acl => 'private' },
+    expect_data             => all (
+        obj_isa ('Net::Amazon::S3::Bucket'),
+        methods (bucket => 'some-bucket'),
+    ),
+);
+
+expect_api_bucket_create 'create bucket with canned acl' => (
+    with_bucket             => 'some-bucket',
+    with_acl                => Net::Amazon::S3::ACL::Canned->PRIVATE,
+    expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
+    expect_request_content  => '',
+    expect_request_headers  => { x_amz_acl => 'private' },
+    expect_data             => all (
+        obj_isa ('Net::Amazon::S3::Bucket'),
+        methods (bucket => 'some-bucket'),
+    ),
+);
+
+expect_api_bucket_create 'create bucket with canned acl coercion' => (
     with_bucket             => 'some-bucket',
     with_acl                => 'private',
     expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
     expect_request_content  => '',
     expect_request_headers  => { x_amz_acl => 'private' },
+    expect_data             => all (
+        obj_isa ('Net::Amazon::S3::Bucket'),
+        methods (bucket => 'some-bucket'),
+    ),
+);
+
+expect_api_bucket_create 'create bucket with explicit acl' => (
+    with_bucket             => 'some-bucket',
+    with_acl        => Net::Amazon::S3::ACL::Set->new
+		->grant_read (id => '123', id => '234')
+		->grant_write (id => '345')
+		,
+
+    expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
+    expect_request_content  => '',
+    expect_request_headers  => {
+		x_amz_grant_read    => 'id="123", id="234"',
+		x_amz_grant_write   => 'id="345"',
+	},
     expect_data             => all (
         obj_isa ('Net::Amazon::S3::Bucket'),
         methods (bucket => 'some-bucket'),

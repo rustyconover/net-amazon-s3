@@ -112,7 +112,8 @@ sub operation_bucket_create {
 
     $self->create_bucket(
         name => $params{with_bucket},
-        (acl_short => $params{with_acl}) x!! exists $params{with_acl},
+		(acl       => $params{with_acl})       x!! exists $params{with_acl},
+		(acl_short => $params{with_acl_short}) x!! exists $params{with_acl_short},
         (location_constraint => $params{with_region}) x!! exists $params{with_region},
     );
 }
@@ -167,6 +168,8 @@ sub operation_object_create {
                 qw[ expires ],
                 qw[ storage_class ],
                 qw[ user_metadata ],
+                qw[ acl ],
+                qw[ acl_short ],
             )
         )
         ->${\ (ref $params{with_value} ? 'put_filename' : 'put' ) } (

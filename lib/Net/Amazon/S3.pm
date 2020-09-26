@@ -512,11 +512,24 @@ Takes a hashref:
 
 The name of the bucket you want to add
 
-=item acl_short (optional)
+=item acl
 
-See the set_acl subroutine for documentation on the acl_short options
+	acl => 'private'
 
-=item location_constraint (option)
+	acl => Net::Amazon::S3::ACL::Canned->PRIVATE
+
+	acl => Net::Amazon::S3::ACL::Set
+		->grant_read (email => 'foo@bar.baz')
+
+Set ACL for newly created bucket. Refer L<Net::Amazon::S3::ACL>.
+
+=item acl_short (optional; deprecated)
+
+Deprecated. Use C<acl> now.
+
+=item region (optional)
+
+=item location_constraint (optional)
 
 Sets the location constraint of the new bucket. If left unspecified, the
 default S3 datacenter location will be used. Otherwise, you can set it
@@ -535,7 +548,8 @@ sub add_bucket {
         'Net::Amazon::S3::Operation::Bucket::Create',
 
         bucket              => $conf->{bucket},
-        acl_short           => $conf->{acl_short},
+        (acl                => $conf->{acl})       x!! defined $conf->{acl},
+        (acl_short          => $conf->{acl_short}) x!! defined $conf->{acl_short},
         location_constraint => $conf->{location_constraint},
         ( $conf->{region} ? (region => $conf->{region}) : () ),
     );

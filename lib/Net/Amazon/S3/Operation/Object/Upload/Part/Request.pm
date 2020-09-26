@@ -7,7 +7,6 @@ extends 'Net::Amazon::S3::Request::Object';
 
 with 'Net::Amazon::S3::Request::Role::Query::Param::Upload_id';
 with 'Net::Amazon::S3::Request::Role::Query::Param::Part_number';
-with 'Net::Amazon::S3::Request::Role::HTTP::Header::Acl_short';
 with 'Net::Amazon::S3::Request::Role::HTTP::Header::Copy_source';
 with 'Net::Amazon::S3::Request::Role::HTTP::Method::PUT';
 

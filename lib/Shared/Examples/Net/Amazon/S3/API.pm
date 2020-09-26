@@ -111,8 +111,9 @@ sub operation_bucket_acl_set {
     $self
         ->bucket ($params{with_bucket})
         ->set_acl ({
+            (acl       => $params{with_acl})       x!! exists $params{with_acl},
             (acl_short => $params{with_acl_short}) x!! exists $params{with_acl_short},
-            (acl_xml => $params{with_acl_xml}) x!! exists $params{with_acl_xml},
+            (acl_xml   => $params{with_acl_xml})   x!! exists $params{with_acl_xml},
         })
         ;
 }
@@ -123,7 +124,8 @@ sub operation_bucket_create {
     $self
         ->add_bucket ({
             bucket => $params{with_bucket},
-            (acl_short => $params{with_acl}) x!! exists $params{with_acl},
+            (acl       => $params{with_acl})       x!! exists $params{with_acl},
+            (acl_short => $params{with_acl_short}) x!! exists $params{with_acl_short},
             (location_constraint => $params{with_region}) x!! exists $params{with_region},
             (region => $params{with_region}) x!! exists $params{with_region},
         })
@@ -179,8 +181,9 @@ sub operation_object_acl_set {
         ->bucket ($params{with_bucket})
         ->set_acl ({
             key => $params{with_key},
+            (acl       => $params{with_acl})       x!! exists $params{with_acl},
             (acl_short => $params{with_acl_short}) x!! exists $params{with_acl_short},
-            (acl_xml => $params{with_acl_xml}) x!! exists $params{with_acl_xml},
+            (acl_xml   => $params{with_acl_xml})   x!! exists $params{with_acl_xml},
         })
         ;
 }
@@ -198,6 +201,8 @@ sub operation_object_create {
         qw[ content_type  ],
         qw[ encryption ],
         qw[ expires ],
+		qw[ acl_short ],
+		qw[ acl ],
         ;
 
     $headers->{x_amz_storage_class} = $params{with_storage_class}

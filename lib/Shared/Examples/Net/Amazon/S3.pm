@@ -349,6 +349,7 @@ sub expect_operation_bucket_acl_set {
 
     Hash::Util::lock_keys %params,
         qw[ with_bucket ],
+		qw[ with_acl ],
         qw[ with_acl_xml ],
         qw[ with_acl_short ],
         _keys_operation,
@@ -365,6 +366,7 @@ sub expect_operation_bucket_create {
     Hash::Util::lock_keys %params,
         qw[ with_bucket ],
         qw[ with_acl ],
+        qw[ with_acl_short ],
         qw[ with_region ],
         _keys_operation,
         ;
@@ -438,6 +440,7 @@ sub expect_operation_object_acl_set {
     Hash::Util::lock_keys %params,
         qw[ with_bucket ],
         qw[ with_key ],
+        qw[ with_acl ],
         qw[ with_acl_xml ],
         qw[ with_acl_short ],
         _keys_operation,
@@ -464,6 +467,8 @@ sub expect_operation_object_create {
         qw[ with_expires ],
         qw[ with_storage_class  ],
         qw[ with_user_metadata ],
+		qw[ with_acl ],
+		qw[ with_acl_short ],
 
         _keys_operation,
         ;

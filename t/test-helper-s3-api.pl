@@ -9,6 +9,9 @@ BEGIN { require "test-helper-common.pl" }
 
 use HTTP::Status qw[ HTTP_OK ];
 
+use Net::Amazon::S3::Constants;
+use Net::Amazon::S3::ACL::Canned;
+
 use Shared::Examples::Net::Amazon::S3::Client (
     qw[ fixture ],
     qw[ with_response_fixture ],

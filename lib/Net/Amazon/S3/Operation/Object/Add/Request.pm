@@ -6,7 +6,7 @@ use MooseX::StrictConstructor 0.16;
 
 extends 'Net::Amazon::S3::Request::Object';
 
-with 'Net::Amazon::S3::Request::Role::HTTP::Header::Acl_short';
+with 'Net::Amazon::S3::Request::Role::HTTP::Header::ACL';
 with 'Net::Amazon::S3::Request::Role::HTTP::Header::Encryption';
 with 'Net::Amazon::S3::Request::Role::HTTP::Method::PUT';
 

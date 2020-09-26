@@ -9,7 +9,7 @@ has 'headers' =>
     ( is => 'ro', isa => 'HashRef', required => 0, default => sub { {} } );
 
 with 'Net::Amazon::S3::Request::Role::Query::Action::Uploads';
-with 'Net::Amazon::S3::Request::Role::HTTP::Header::Acl_short';
+with 'Net::Amazon::S3::Request::Role::HTTP::Header::ACL';
 with 'Net::Amazon::S3::Request::Role::HTTP::Header::Encryption';
 with 'Net::Amazon::S3::Request::Role::HTTP::Method::POST';
 
