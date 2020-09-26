@@ -100,15 +100,13 @@ sub list {
                 delimiter => $delimiter,
             );
 
-            my $xpc = $self->client->_send_request_xpc($http_request);
+            my $xpc = $self->client->_send_request($http_request);
 
             my @objects;
             foreach my $node (
                 $xpc->findnodes('/s3:ListBucketResult/s3:Contents') )
             {
-                my $etag = $xpc->findvalue( "./s3:ETag", $node );
-                $etag =~ s/^"//;
-                $etag =~ s/"$//;
+                my $etag = $xpc->_decode_etag ($xpc->findvalue( "./s3:ETag", $node ));
 
                 push @objects,
                     $self->object_class->new(

@@ -772,9 +772,7 @@ sub list_bucket {
 
     my @keys;
     foreach my $node ( $xpc->findnodes(".//s3:Contents") ) {
-        my $etag = $xpc->findvalue( ".//s3:ETag", $node );
-        $etag =~ s/^"//;
-        $etag =~ s/"$//;
+        my $etag = $response->_decode_etag ($xpc->findvalue( ".//s3:ETag", $node ));
 
         push @keys,
             {

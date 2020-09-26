@@ -105,17 +105,17 @@ sub _get {
         method => 'GET',
     );
 
-    my $http_response = $self->client->_send_request($http_request)->http_response;
-    my $content       = $http_response->content;
-    $self->_load_user_metadata($http_response);
+    my $response = $self->client->_send_request($http_request);
+    my $content       = $response->content;
+    $self->_load_user_metadata($response->http_response);
 
-    my $etag = $self->etag || $self->_etag($http_response);
+    my $etag = $self->etag || $response->etag;
     unless ($self->_is_multipart_etag($etag)) {
         my $md5_hex = md5_hex($content);
         confess 'Corrupted download' if $etag ne $md5_hex;
     }
 
-    return $http_response;
+    return $response;
 }
 
 sub get {
@@ -154,12 +154,12 @@ sub get_filename {
         method => 'GET',
     );
 
-    my $http_response
-        = $self->client->_send_request( $http_request, $filename )->http_response;
+    my $response
+        = $self->client->_send_request( $http_request, $filename );
 
-    $self->_load_user_metadata($http_response);
+    $self->_load_user_metadata($response->http_response);
 
-    my $etag = $self->etag || $self->_etag($http_response);
+    my $etag = $self->etag || $response->etag;
     unless ($self->_is_multipart_etag($etag)) {
         my $md5_hex = file_md5_hex($filename);
         confess 'Corrupted download' if $etag ne $md5_hex;
@@ -481,16 +481,6 @@ sub _content_sub {
         $remaining -= length($buffer);
         return $buffer;
     };
-}
-
-sub _etag {
-    my ( $self, $http_response ) = @_;
-    my $etag = $http_response->header('ETag');
-    if ($etag) {
-        $etag =~ s/^"//;
-        $etag =~ s/"$//;
-    }
-    return $etag;
 }
 
 sub _is_multipart_etag {

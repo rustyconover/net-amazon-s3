@@ -322,11 +322,7 @@ sub get_key {
 	return undef
 		unless $acct->error_handler->handle_error ($response, $http_request);
 
-    my $etag = $response->header('ETag');
-    if ($etag) {
-        $etag =~ s/^"//;
-        $etag =~ s/"$//;
-    }
+    my $etag = $response->etag;
 
     my $return;
     foreach my $header ( $response->headers->header_field_names ) {
