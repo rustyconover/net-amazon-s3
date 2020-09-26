@@ -451,8 +451,6 @@ sub buckets {
         = Net::Amazon::S3::Request::ListAllMyBuckets->new( s3 => $self )
         ->http_request;
 
-    # die $request->http_request->as_string;
-
     my $xpc = $self->_send_request($http_request);
 
     return undef unless $xpc && !$self->_remember_errors($xpc);
@@ -879,8 +877,6 @@ sub delete_key {
 sub _send_request {
     my ( $self, $http_request ) = @_;
 
-    # warn $http_request->as_string;
-
     my $response = $self->_do_http($http_request);
     my $content  = $response->content;
 
@@ -905,8 +901,6 @@ sub _do_http {
 sub _send_request_expect_nothing {
     my ( $self, $http_request ) = @_;
 
-    # warn $http_request->as_string;
-
     my $response = $self->_do_http($http_request);
 
     return 1 if $response->code =~ /^2\d\d$/;
@@ -929,8 +923,6 @@ sub _croak_if_response_error {
 sub _xpc_of_content {
     my ( $self, $content ) = @_;
     my $doc = $self->libxml->parse_string($content);
-
-    # warn $doc->toString(1);
 
     my $xpc = XML::LibXML::XPathContext->new($doc);
 

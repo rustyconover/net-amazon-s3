@@ -110,11 +110,6 @@ sub list {
                 $etag =~ s/^"//;
                 $etag =~ s/"$//;
 
- #            storage_class => $xpc->findvalue( ".//s3:StorageClass", $node ),
- #            owner_id      => $xpc->findvalue( ".//s3:ID",           $node ),
- #            owner_displayname =>
- #                $xpc->findvalue( ".//s3:DisplayName", $node ),
-
                 push @objects,
                     $self->object_class->new(
                     client => $self->client,
