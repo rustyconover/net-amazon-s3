@@ -1,10 +1,9 @@
-package Net::Amazon::S3::Request::GetBucketLocationConstraint;
+package Net::Amazon::S3::Operation::Bucket::Location::Request;
+# ABSTRACT: An internal class to get a bucket's location constraint
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;
 extends 'Net::Amazon::S3::Request::Bucket';
-
-# ABSTRACT: An internal class to get a bucket's location constraint
 
 with 'Net::Amazon::S3::Request::Role::Query::Action::Location';
 with 'Net::Amazon::S3::Request::Role::HTTP::Method::GET';
@@ -20,14 +19,16 @@ no strict 'vars'
 
 =head1 SYNOPSIS
 
-  my $http_request = Net::Amazon::S3::Request::GetBucketLocationConstraint->new(
-    s3     => $s3,
-    bucket => $bucket,
-  )->http_request;
+	my $request = Net::Amazon::S3::Operation::Bucket::Location::Request->new (
+		s3     => $s3,
+		bucket => $bucket,
+	);
 
 =head1 DESCRIPTION
 
 This module gets a bucket's location constraint.
+
+Implements operation L<< GetBucketLocation|https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketLocation.html >>
 
 =head1 METHODS
 

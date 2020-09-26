@@ -64,19 +64,12 @@ sub acl {
 sub location_constraint {
     my $self = shift;
 
-    my $http_request
-        = Net::Amazon::S3::Request::GetBucketLocationConstraint->new(
-        s3     => $self->client->s3,
-        bucket => $self->name,
-        );
+    my $response = $self->_fetch_response (
+        'Net::Amazon::S3::Operation::Bucket::Location',
+    );
 
-    my $xpc = $self->client->_send_request_xpc($http_request);
-
-    my $lc = $xpc->findvalue('/s3:LocationConstraint');
-    if ( defined $lc && $lc eq '' ) {
-        $lc = 'us-east-1';
-    }
-    return $lc;
+    return unless $response->is_success;
+    return $response->location;
 }
 
 sub object_class { 'Net::Amazon::S3::Client::Object' }
