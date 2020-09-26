@@ -11,6 +11,16 @@ type 'Etag' => where { $_ =~ /^[a-z0-9]{32}(?:-\d+)?$/ };
 
 has 's3' => ( is => 'ro', isa => 'Net::Amazon::S3', required => 1 );
 
+around BUILDARGS => sub {
+	my ($orig, $class) = (shift, shift);
+	my $args = $class->$orig (@_);
+
+	$args = { s3 => Net::Amazon::S3->new ($args) }
+		unless exists $args->{s3};
+
+	$args;
+};
+
 __PACKAGE__->meta->make_immutable;
 
 sub bucket_class { 'Net::Amazon::S3::Client::Bucket' }
@@ -124,31 +134,35 @@ no strict 'vars'
 
 =head1 SYNOPSIS
 
-  my $s3 = Net::Amazon::S3->new(
-    aws_access_key_id     => $aws_access_key_id,
-    aws_secret_access_key => $aws_secret_access_key,
-    retry                 => 1,
-  );
-  my $client = Net::Amazon::S3::Client->new( s3 => $s3 );
+	# Build Client instance
+	my $client = Net::Amazon::S3::Client->new (
+		# accepts all Net::Amazon::S3's arguments
+		aws_access_key_id     => $aws_access_key_id,
+		aws_secret_access_key => $aws_secret_access_key,
+		retry                 => 1,
+	);
 
-  # list all my buckets
-  # returns a list of L<Net::Amazon::S3::Client::Bucket> objects
-  my @buckets = $client->buckets;
-  foreach my $bucket (@buckets) {
-    print $bucket->name . "\n";
-  }
+	# or reuse an existing S3 connection
+	my $client = Net::Amazon::S3::Client->new (s3 => $s3);
 
-  # create a new bucket
-  # returns a L<Net::Amazon::S3::Client::Bucket> object
-  my $bucket = $client->create_bucket(
-    name                => $bucket_name,
-    acl_short           => 'private',
-    location_constraint => 'us-east-1',
-  );
+	# list all my buckets
+	# returns a list of L<Net::Amazon::S3::Client::Bucket> objects
+	my @buckets = $client->buckets;
+	foreach my $bucket (@buckets) {
+		print $bucket->name . "\n";
+	}
 
-  # or use an existing bucket
-  # returns a L<Net::Amazon::S3::Client::Bucket> object
-  my $bucket = $client->bucket( name => $bucket_name );
+	# create a new bucket
+	# returns a L<Net::Amazon::S3::Client::Bucket> object
+	my $bucket = $client->create_bucket(
+		name                => $bucket_name,
+		acl_short           => 'private',
+		location_constraint => 'us-east-1',
+	);
+
+	# or use an existing bucket
+	# returns a L<Net::Amazon::S3::Client::Bucket> object
+	my $bucket = $client->bucket( name => $bucket_name );
 
 =head1 DESCRIPTION
 
@@ -167,6 +181,31 @@ WARNING: This is an early release of the Client classes, the APIs
 may change.
 
 =head1 METHODS
+
+=head2 new
+
+L<Net::Amazon::S3::Client> can be constructed two ways.
+
+Historically it wraps S3 API instance
+
+	use Net::Amazon::S3::Client;
+
+	my $client = Net::Amazon::S3::Client->new (
+		s3 => .... # Net::Amazon::S3 instance
+	);
+
+=head2 new (since v0.92)
+
+Since v0.92 explicit creation of S3 API instance is no longer necessary.
+L<Net::Amazon::S3::Client>'s constructor accepts same parameters as L<Net::Amazon::S3>
+
+	use Net::Amazon::S3::Client v0.92;
+
+	my $client = Net::Amazon::S3::Client->new (
+		aws_access_key_id     => ...,
+		aws_secret_access_key => ...,
+		...,
+	);
 
 =head2 buckets
 
