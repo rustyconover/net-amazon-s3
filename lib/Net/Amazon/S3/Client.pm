@@ -5,18 +5,39 @@ use HTTP::Status qw(status_message);
 use MooseX::StrictConstructor 0.16;
 use Moose::Util::TypeConstraints;
 
+use Net::Amazon::S3::Error::Handler::Confess;
+
 # ABSTRACT: An easy-to-use Amazon S3 client
 
 type 'Etag' => where { $_ =~ /^[a-z0-9]{32}(?:-\d+)?$/ };
 
 has 's3' => ( is => 'ro', isa => 'Net::Amazon::S3', required => 1 );
 
+has error_handler_class => (
+    is => 'ro',
+    lazy => 1,
+    default => 'Net::Amazon::S3::Error::Handler::Confess',
+);
+
+has error_handler => (
+    is => 'ro',
+    lazy => 1,
+    default => sub { $_[0]->error_handler_class->new (s3 => $_[0]->s3) },
+);
+
 around BUILDARGS => sub {
 	my ($orig, $class) = (shift, shift);
 	my $args = $class->$orig (@_);
 
-	$args = { s3 => Net::Amazon::S3->new ($args) }
-		unless exists $args->{s3};
+	unless (exists $args->{s3}) {
+		my $error_handler_class = delete $args->{error_handler_class};
+		my $error_handler       = delete $args->{error_handler};
+		$args = {
+			(error_handler_class => $error_handler_class) x!! defined $error_handler_class,
+			(error_handler       => $error_handler      ) x!! defined $error_handler,
+			s3 => Net::Amazon::S3->new ($args),
+		}
+	}
 
 	$args;
 };
@@ -97,21 +118,8 @@ sub _send_request {
 
     my $http_response = $self->_send_request_raw( $http_request, $filename );
 
-    my $content      = $http_response->content;
-    my $content_type = $http_response->content_type;
-    my $code         = $http_response->code;
-	my $message      = $http_response->message;
+	$self->error_handler->handle_error ($http_response);
 
-    if ($http_response->is_error) {
-        if ($content && $http_response->is_xml_content) {
-            if ( $http_response->findnodes('/Error') ) {
-                $code    = $http_response->error_code;
-                $message = $http_response->error_message;
-			}
-        }
-
-		confess("$code: $message");
-    }
     return $http_response;
 }
 
@@ -182,6 +190,25 @@ to S3 and check the resultant ETag.
 
 WARNING: This is an early release of the Client classes, the APIs
 may change.
+
+=head1 CONSTRUCTOR
+
+=over
+
+=item s3
+
+L<< Net::Amazon::S3 >> instance
+
+=item error_handler_class
+
+Error handler class name (package name), see L<< Net::Amazon::S3::Error::Handler >>
+for more. Overrides one available in C<s3>.
+
+Default: L<< Net::Amazon::S3::Error::Handler::Confess >>
+
+=item error_handler
+
+Instance of error handler class.
 
 =head1 METHODS
 

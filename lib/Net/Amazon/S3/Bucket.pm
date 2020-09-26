@@ -319,11 +319,8 @@ sub get_key {
 
     my $response = $acct->_do_http( $http_request, $filename );
 
-    if ( $response->code == 404 ) {
-        return undef;
-    }
-
-    $acct->_croak_if_response_error($response);
+	return undef
+		unless $acct->error_handler->handle_error ($response, $http_request);
 
     my $etag = $response->header('ETag');
     if ($etag) {
@@ -502,11 +499,8 @@ sub get_acl {
 
     my $response = $account->_do_http($http_request);
 
-    if ( $response->code == 404 ) {
-        return undef;
-    }
-
-    $account->_croak_if_response_error($response);
+	return undef
+		unless $account->error_handler->handle_error ($response, $http_request);
 
     return $response->content;
 }

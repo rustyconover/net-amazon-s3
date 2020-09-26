@@ -122,6 +122,7 @@ use Net::Amazon::S3::Bucket;
 use Net::Amazon::S3::Client;
 use Net::Amazon::S3::Client::Bucket;
 use Net::Amazon::S3::Client::Object;
+use Net::Amazon::S3::Error::Handler::Legacy;
 use Net::Amazon::S3::HTTPRequest;
 use Net::Amazon::S3::Request;
 use Net::Amazon::S3::Request::AbortMultipartUpload;
@@ -187,6 +188,18 @@ has 'ua'     => ( is => 'rw', isa => 'LWP::UserAgent', required => 0 );
 has 'err'    => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
 has 'errstr' => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
 has keep_alive_cache_size => ( is => 'ro', isa => 'Int', required => 0, default => 10 );
+
+has error_handler_class => (
+    is => 'ro',
+    lazy => 1,
+    default => 'Net::Amazon::S3::Error::Handler::Legacy',
+);
+
+has error_handler => (
+    is => 'ro',
+    lazy => 1,
+    default => sub { $_[0]->error_handler_class->new (s3 => $_[0]) },
+);
 
 =head1 METHODS
 
@@ -332,6 +345,17 @@ This library provides L<< Net::Amazon::S3::Signature::V2 >> and L<< Net::Amazon:
 Default is Signature 4 if host is C<< s3.amazonaws.com >>, Signature 2 otherwise
 
 See L<#vendor> and L<Net::Amazon::S3::Vendor>.
+
+=item error_handler_class
+
+Error handler class name (package name), see L<< Net::Amazon::S3::Error::Handler >>
+for more.
+
+Default: L<< Net::Amazon::S3::Error::Handler::Legacy >>
+
+=item error_handler
+
+Instance of error handler class.
 
 =back
 
@@ -880,9 +904,6 @@ sub _send_request {
 
     my $response = $self->_do_http($http_request);
 
-	$self->_remember_errors ($response)
-		if $response->is_error;
-
 	return $response;
 }
 
@@ -896,13 +917,13 @@ sub _do_http {
     confess 'Need HTTP::Request object'
         if ( ref($http_request) ne 'HTTP::Request' );
 
-    # convenient time to reset any error conditions
-    $self->err(undef);
-    $self->errstr(undef);
-
-	return Net::Amazon::S3::Response->new (
+	my $response = Net::Amazon::S3::Response->new (
 		http_response => scalar $self->ua->request( $http_request, $filename ),
 	);
+
+	$self->error_handler->handle_error ($response, $http_request);
+
+	return $response;
 }
 
 sub _send_request_expect_nothing {
@@ -912,31 +933,7 @@ sub _send_request_expect_nothing {
 
     return 1 if $response->is_success;
 
-	$self->_remember_errors ($response);
-
     return 0;
-}
-
-sub _croak_if_response_error {
-    my ( $self, $response ) = @_;
-    unless ( $response->is_success ) {
-        $self->err("network_error");
-        $self->errstr( $response->status_line );
-        croak "Net::Amazon::S3: Amazon responded with "
-            . $response->status_line . "\n";
-    }
-}
-
-# returns 1 if errors were found
-sub _remember_errors {
-    my ( $self, $response ) = @_;
-
-	return 0 unless $response->is_error;
-
-	$self->err($response->error_code);
-	$self->errstr($response->error_message);
-
-	return 1;
 }
 
 sub _urlencode {
