@@ -816,12 +816,6 @@ sub list_bucket_all {
     return $all;
 }
 
-sub _compat_bucket {
-    my ( $self, $conf ) = @_;
-    return $self->bucket_class->new(
-        { account => $self, bucket => delete $conf->{bucket} } );
-}
-
 =head2 add_key
 
 DEPRECATED. DO NOT USE
@@ -831,7 +825,7 @@ DEPRECATED. DO NOT USE
 # compat wrapper; deprecated as of 2005-03-23
 sub add_key {
     my ( $self, $conf ) = @_;
-    my $bucket = $self->_compat_bucket($conf);
+    my $bucket = $self->bucket (delete $conf->{bucket});
     my $key    = delete $conf->{key};
     my $value  = delete $conf->{value};
     return $bucket->add_key( $key, $value, $conf );
@@ -846,7 +840,7 @@ DEPRECATED. DO NOT USE
 # compat wrapper; deprecated as of 2005-03-23
 sub get_key {
     my ( $self, $conf ) = @_;
-    my $bucket = $self->_compat_bucket($conf);
+    my $bucket = $self->bucket (delete $conf->{bucket});
     return $bucket->get_key( $conf->{key} );
 }
 
@@ -859,7 +853,7 @@ DEPRECATED. DO NOT USE
 # compat wrapper; deprecated as of 2005-03-23
 sub head_key {
     my ( $self, $conf ) = @_;
-    my $bucket = $self->_compat_bucket($conf);
+    my $bucket = $self->bucket (delete $conf->{bucket});
     return $bucket->head_key( $conf->{key} );
 }
 
@@ -872,7 +866,7 @@ DEPRECATED. DO NOT USE
 # compat wrapper; deprecated as of 2005-03-23
 sub delete_key {
     my ( $self, $conf ) = @_;
-    my $bucket = $self->_compat_bucket($conf);
+    my $bucket = $self->bucket (delete $conf->{bucket});
     return $bucket->delete_key( $conf->{key} );
 }
 
