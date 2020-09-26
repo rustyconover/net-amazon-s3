@@ -103,29 +103,6 @@ sub _send_request_raw {
 	);
 }
 
-sub _send_request {
-    my ( $self, $http_request, $filename ) = @_;
-
-    my $http_response = $self->_send_request_raw( $http_request, $filename );
-
-	$self->error_handler->handle_error ($http_response);
-
-    return $http_response;
-}
-
-sub _send_request_content {
-    my ( $self, $http_request, $filename ) = @_;
-    my $http_response = $self->_send_request( $http_request, $filename );
-    return $http_response->content;
-}
-
-sub _send_request_xpc {
-    my ( $self, $http_request, $filename ) = @_;
-    my $http_response = $self->_send_request( $http_request, $filename );
-
-    return $http_response->xpath_context;
-}
-
 =head2 _perform_operation
 
 Refer L<Net::Amazon::S3/_perform_operation

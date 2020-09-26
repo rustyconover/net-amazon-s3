@@ -889,16 +889,6 @@ sub delete_key {
     return $bucket->delete_key( $conf->{key} );
 }
 
-# $self->_send_request($HTTP::Request)
-# $self->_send_request(@params_to_make_request)
-sub _send_request {
-    my ( $self, $http_request ) = @_;
-
-    my $response = $self->_do_http($http_request);
-
-	return $response;
-}
-
 =head2 _perform_operation
 
     my $response = $s3->_perform_operation ('Operation' => (
@@ -952,16 +942,6 @@ sub _do_http {
 	$self->error_handler->handle_error ($response, $http_request);
 
 	return $response;
-}
-
-sub _send_request_expect_nothing {
-    my ( $self, $http_request ) = @_;
-
-    my $response = $self->_do_http($http_request);
-
-    return 1 if $response->is_success;
-
-    return 0;
 }
 
 sub _urlencode {
