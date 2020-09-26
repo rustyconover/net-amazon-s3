@@ -1,11 +1,9 @@
+# ABSTRACT: Amazon S3 ACL support
+# PODNAME: Net::Amazon::S3::ACL
 
 =pod
 
 =encoding utf8
-
-=head1 NAME
-
-Net::Amazon::S3::ACL - Amazon S3 ACL support
 
 =head1 DESCRIPTION
 
