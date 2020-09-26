@@ -12,11 +12,11 @@ our @CARP_NOT = __PACKAGE__;
 
 my %croak_on_requests = map +($_ => 1), (
     'Net::Amazon::S3::Request::GetObject',
-    'Net::Amazon::S3::Request::GetObjectAccessControl',
 );
 
 my %croak_on_response = map +($_ => 1), (
     'Net::Amazon::S3::Operation::Bucket::Acl::Fetch::Response',
+    'Net::Amazon::S3::Operation::Object::Acl::Fetch::Response',
 );
 
 override handle_error => sub {

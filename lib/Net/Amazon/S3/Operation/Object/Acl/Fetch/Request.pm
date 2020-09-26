@@ -1,10 +1,9 @@
-package Net::Amazon::S3::Request::GetObjectAccessControl;
+package Net::Amazon::S3::Operation::Object::Acl::Fetch::Request;
+# ABSTRACT: An internal class to get an object's access control
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;
 extends 'Net::Amazon::S3::Request::Object';
-
-# ABSTRACT: An internal class to get an object's access control
 
 with 'Net::Amazon::S3::Request::Role::Query::Action::Acl';
 with 'Net::Amazon::S3::Request::Role::HTTP::Method::GET';
@@ -20,13 +19,15 @@ no strict 'vars'
 
 =head1 SYNOPSIS
 
-  my $http_request = Net::Amazon::S3::Request::GetObjectAccessControl->new(
-    s3     => $s3,
-    bucket => $bucket,
-    key    => $key,
-  )->http_request;
+	my $request = Net::Amazon::S3::Operation::Object::Acl::Fetch::Request->new (
+		s3     => $s3,
+		bucket => $bucket,
+		key    => $key,
+	);
 
 =head1 DESCRIPTION
+
+Implements operation L<< GetObjectAcl|https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObjectAcl.html >>.
 
 This module gets an object's access control.
 

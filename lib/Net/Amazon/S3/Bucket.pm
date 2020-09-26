@@ -469,31 +469,23 @@ Returns an acl in XML format.
 =cut
 
 sub get_acl {
-    my ( $self, $key ) = @_;
-    my $account = $self->account;
+    my ($self, $key) = @_;
 
-    my $http_request;
+    my $response;
     if ($key) {
-        $http_request = Net::Amazon::S3::Request::GetObjectAccessControl->new(
-            s3     => $account,
-            bucket => $self->bucket,
+        $response = $self->_perform_operation (
+            'Net::Amazon::S3::Operation::Object::Acl::Fetch',
+
             key    => $key,
         );
-
-        my $response = $account->_do_http($http_request);
-
-		return undef
-			unless $account->error_handler->handle_error ($response, $http_request);
-
-        return $response->content;
     } else {
-        my $response = $self->_perform_operation (
+        $response = $self->_perform_operation (
             'Net::Amazon::S3::Operation::Bucket::Acl::Fetch',
         );
-
-        return if $response->is_error;
-        return $response->content;
     }
+
+	return unless $response->is_success;
+	return $response->content;
 }
 
 =head2 set_acl
