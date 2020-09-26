@@ -377,23 +377,16 @@ sub delete_multi_object {
     # rather than only objects.
     my $last_result;
     while (scalar(@objects) > 0) {
-        my $http_request = Net::Amazon::S3::Request::DeleteMultiObject->new(
-            s3      => $self->account,
-            bucket  => $self,
-            keys    => [map {
-                if (ref($_)) {
-                    $_->key
-                } else {
-                    $_
-                }
-            } splice @objects, 0, ((scalar(@objects) > 1000) ? 1000 : scalar(@objects))]
+        my $response = $self->_perform_operation (
+            'Net::Amazon::S3::Operation::Objects::Delete',
+
+            keys    => [
+				map { ref ? $_->key : $_ }
+				splice @objects, 0, ((scalar(@objects) > 1000) ? 1000 : scalar(@objects))
+			]
         );
 
-        my $response = $self->account->_send_request($http_request);
-		my $xpc = $response->xpath_context;
-
-        return undef
-            unless $xpc && !$response->is_error;
+        return unless $response->is_success;
     }
 
     return 1;

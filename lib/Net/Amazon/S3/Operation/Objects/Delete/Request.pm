@@ -1,4 +1,5 @@
-package Net::Amazon::S3::Request::DeleteMultiObject;
+package Net::Amazon::S3::Operation::Objects::Delete::Request;
+# ABSTRACT: An internal class to delete multiple objects from a bucket
 
 use Moose 0.85;
 use Digest::MD5 qw/md5 md5_hex/;
@@ -46,22 +47,22 @@ sub BUILD {
 
 __END__
 
-# ABSTRACT: An internal class to delete multiple objects from a bucket
-
 =for test_synopsis
 no strict 'vars'
 
 =head1 SYNOPSIS
 
-  my $http_request = Net::Amazon::S3::Request::DeleteMultiObject->new(
-    s3                  => $s3,
-    bucket              => $bucket,
-    keys                => [$key1, $key2],
-  )->http_request;
+	my $http_request = Net::Amazon::S3::Operation::Objects::Delete::Request->new (
+		s3      => $s3,
+		bucket  => $bucket,
+		keys    => [$key1, $key2],
+	);
 
 =head1 DESCRIPTION
 
 This module deletes multiple objects from a bucket.
+
+Implements operation L<< DeleteObjects|https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObjects.html >>
 
 =head1 METHODS
 

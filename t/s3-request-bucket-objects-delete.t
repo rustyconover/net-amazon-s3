@@ -1,17 +1,17 @@
+#!perl
 
 use strict;
 use warnings;
 
-use Test::More tests => 4;
-use Test::Deep;
-use Test::Warnings qw[ :no_end_test had_no_warnings ];
+use FindBin;
+use lib $FindBin::Bin;
 
-use Shared::Examples::Net::Amazon::S3::Request (
-    qw[ behaves_like_net_amazon_s3_request ],
-);
+BEGIN { require 'test-helper-s3-request.pl' }
+
+plan tests => 4;
 
 behaves_like_net_amazon_s3_request 'delete multi object with empty keys' => (
-    request_class   => 'Net::Amazon::S3::Request::DeleteMultiObject',
+    request_class   => 'Net::Amazon::S3::Operation::Objects::Delete::Request',
     with_bucket     => 'some-bucket',
     with_keys       => [],
 
@@ -30,7 +30,7 @@ EOXML
 );
 
 behaves_like_net_amazon_s3_request 'delete multi object with some keys' => (
-    request_class   => 'Net::Amazon::S3::Request::DeleteMultiObject',
+    request_class   => 'Net::Amazon::S3::Operation::Objects::Delete::Request',
     with_bucket     => 'some-bucket',
     with_keys       => [ 'some/key', '<another/key>' ],
 
@@ -51,7 +51,7 @@ EOXML
 );
 
 behaves_like_net_amazon_s3_request 'delete multi object with more than 1_000 keys' => (
-    request_class   => 'Net::Amazon::S3::Request::DeleteMultiObject',
+    request_class   => 'Net::Amazon::S3::Operation::Objects::Delete::Request',
     with_bucket     => 'some-bucket',
     with_keys       => [ 0 .. 1_000 ],
 
@@ -59,3 +59,5 @@ behaves_like_net_amazon_s3_request 'delete multi object with more than 1_000 key
 );
 
 had_no_warnings;
+
+done_testing;
