@@ -1,16 +1,17 @@
+#!perl
 
 use strict;
 use warnings;
 
-use Test::More tests => 5;
-use Test::Warnings qw[ :no_end_test had_no_warnings ];
+use FindBin;
+use lib $FindBin::Bin;
 
-use Shared::Examples::Net::Amazon::S3::Request (
-    qw[ behaves_like_net_amazon_s3_request ],
-);
+BEGIN { require "test-helper-s3-request.pl" }
+
+plan tests => 5;
 
 behaves_like_net_amazon_s3_request 'initiate multipart upload' => (
-    request_class   => 'Net::Amazon::S3::Request::InitiateMultipartUpload',
+    request_class   => 'Net::Amazon::S3::Operation::Object::Upload::Create::Request',
     with_bucket     => 'some-bucket',
     with_key        => 'some/key',
 
@@ -21,7 +22,7 @@ behaves_like_net_amazon_s3_request 'initiate multipart upload' => (
 );
 
 behaves_like_net_amazon_s3_request 'initiate multipart upload with acl' => (
-    request_class   => 'Net::Amazon::S3::Request::InitiateMultipartUpload',
+    request_class   => 'Net::Amazon::S3::Operation::Object::Upload::Create::Request',
     with_bucket     => 'some-bucket',
     with_key        => 'some/key',
     with_acl_short  => 'private',
@@ -33,7 +34,7 @@ behaves_like_net_amazon_s3_request 'initiate multipart upload with acl' => (
 );
 
 behaves_like_net_amazon_s3_request 'initiate multipart upload with service side encryption' => (
-    request_class   => 'Net::Amazon::S3::Request::InitiateMultipartUpload',
+    request_class   => 'Net::Amazon::S3::Operation::Object::Upload::Create::Request',
     with_bucket     => 'some-bucket',
     with_key        => 'some/key',
     with_encryption => 'AES256',
@@ -45,7 +46,7 @@ behaves_like_net_amazon_s3_request 'initiate multipart upload with service side 
 );
 
 behaves_like_net_amazon_s3_request 'initiate multipart upload with headers' => (
-    request_class   => 'Net::Amazon::S3::Request::InitiateMultipartUpload',
+    request_class   => 'Net::Amazon::S3::Operation::Object::Upload::Create::Request',
     with_bucket     => 'some-bucket',
     with_key        => 'some/key',
     with_headers    => { 'x-amz-meta-test' => 99 },
@@ -57,3 +58,6 @@ behaves_like_net_amazon_s3_request 'initiate multipart upload with headers' => (
 );
 
 had_no_warnings;
+
+done_testing;
+

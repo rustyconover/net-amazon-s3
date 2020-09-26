@@ -1,4 +1,5 @@
-package Net::Amazon::S3::Request::InitiateMultipartUpload;
+package Net::Amazon::S3::Operation::Object::Upload::Create::Request;
+#ABSTRACT: An internal class to begin a multipart upload
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;
@@ -24,20 +25,20 @@ sub _request_headers {
 
 __END__
 
-#ABSTRACT: An internal class to begin a multipart upload
-
 =for test_synopsis
 no strict 'vars'
 
 =head1 SYNOPSIS
 
-  my $http_request = Net::Amazon::S3::Request::InitiateMultipartUpload->new(
-    s3                  => $s3,
-    bucket              => $bucket,
-    keys                => $key,
-  )->http_request;
+	my $request = Net::Amazon::S3::Operation::Object::Upload::Create::Request->new (
+		s3      => $s3,
+		bucket  => $bucket,
+		keys    => $key,
+	);
 
 =head1 DESCRIPTION
+
+Implement operation L<< CreateMultipartUpload|https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateMultipartUpload.html >>.
 
 This module begins a multipart upload
 

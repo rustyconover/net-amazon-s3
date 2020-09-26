@@ -252,20 +252,21 @@ sub delete {
 
 sub initiate_multipart_upload {
     my $self = shift;
-    my %args = Ref::Util::is_plain_hashref($_[0]) ? %{$_[0]} : @_;
-    my $http_request = Net::Amazon::S3::Request::InitiateMultipartUpload->new(
-        s3     => $self->client->s3,
-        bucket => $self->bucket->name,
-        key    => $self->key,
+    my %args = ref($_[0]) ? %{$_[0]} : @_;
+
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Object::Upload::Create',
+
         encryption => $self->encryption,
         ($args{headers} ? (headers => $args{headers}) : ()),
     );
-    my $xpc = $self->client->_send_request_xpc($http_request);
-    my $upload_id = $xpc->findvalue('//s3:UploadId');
-    confess "Couldn't get upload id from initiate_multipart_upload response XML"
-      unless $upload_id;
 
-    return $upload_id;
+    return unless $response->is_success;
+
+    confess "Couldn't get upload id from initiate_multipart_upload response XML"
+        unless $response->upload_id;
+
+    return $response->upload_id;
 }
 
 sub complete_multipart_upload {
