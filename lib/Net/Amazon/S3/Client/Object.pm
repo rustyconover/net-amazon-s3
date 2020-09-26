@@ -414,19 +414,18 @@ sub available {
 }
 
 sub restore {
-    my $self = shift;
-    my (%conf) = @_;
+	my $self = shift;
+	my (%conf) = @_;
 
-    my $http_request =
-        Net::Amazon::S3::Request::RestoreObject->new(
-            s3     => $self->client->s3,
-            bucket => $self->bucket->name,
-            key    => $self->key,
-            days   => $conf{days},
-            tier   => $conf{tier},
-        );
+	my $request = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Object::Restore',
 
-    return $self->client->_send_request($http_request)->http_response;
+		key    => $self->key,
+		days   => $conf{days},
+		tier   => $conf{tier},
+	);
+
+    return $request->http_response;
 }
 
 sub _content_sub {

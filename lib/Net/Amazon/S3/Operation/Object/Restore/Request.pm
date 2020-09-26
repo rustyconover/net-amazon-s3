@@ -1,11 +1,12 @@
-package Net::Amazon::S3::Request::RestoreObject;
+package Net::Amazon::S3::Operation::Object::Restore::Request;
 # ABSTRACT: An internal class implementing RestoreObject operation
 
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
 use Moose;
 use Moose::Util::TypeConstraints;
+use MooseX::StrictConstructor 0.16;
 
 extends 'Net::Amazon::S3::Request::Object';
 with 'Net::Amazon::S3::Request::Role::Query::Action::Restore';
@@ -23,10 +24,16 @@ __PACKAGE__->meta->make_immutable;
 sub _request_content {
     my ($self) = @_;
 
-    return '<RestoreRequest>'
+    return '<RestoreRequest xmlns="http://s3.amazonaws.com/doc/2006-03-01/">'
         . '<Days>' . $self->days . '</Days>'
         . '<GlacierJobParameters><Tier>' . $self->tier . '</Tier></GlacierJobParameters>'
         . '</RestoreRequest>';
 }
 
 1;
+
+__END__
+
+=head1 DESCRIPTION
+
+Implements an operation L<< RestoreObject|https://docs.aws.amazon.com/AmazonS3/latest/API/API_RestoreObject.html >>
