@@ -1,17 +1,17 @@
+#!perl
 
 use strict;
 use warnings;
 
-use Test::More tests => 5;
-use Test::Deep;
-use Test::Warnings qw[ :no_end_test had_no_warnings ];
+use FindBin;
+use lib $FindBin::Bin;
 
-use Shared::Examples::Net::Amazon::S3::Request (
-    qw[ behaves_like_net_amazon_s3_request ],
-);
+BEGIN { require 'test-helper-s3-request.pl' }
+
+plan tests => 5;
 
 behaves_like_net_amazon_s3_request 'set bucket access control with header acl' => (
-    request_class   => 'Net::Amazon::S3::Request::SetBucketAccessControl',
+    request_class   => 'Net::Amazon::S3::Operation::Bucket::Acl::Set::Request',
     with_bucket     => 'some-bucket',
     with_acl_short  => 'private',
 
@@ -21,7 +21,7 @@ behaves_like_net_amazon_s3_request 'set bucket access control with header acl' =
 );
 
 behaves_like_net_amazon_s3_request 'set bucket access control with body acl' => (
-    request_class   => 'Net::Amazon::S3::Request::SetBucketAccessControl',
+    request_class   => 'Net::Amazon::S3::Operation::Bucket::Acl::Set::Request',
     with_bucket     => 'some-bucket',
     with_acl_xml    => 'private',
 
@@ -31,14 +31,14 @@ behaves_like_net_amazon_s3_request 'set bucket access control with body acl' => 
 );
 
 behaves_like_net_amazon_s3_request 'set bucket access control without body or header acl' => (
-    request_class   => 'Net::Amazon::S3::Request::SetBucketAccessControl',
+    request_class   => 'Net::Amazon::S3::Operation::Bucket::Acl::Set::Request',
     with_bucket     => 'some-bucket',
 
     throws          => re( qr/need either acl_xml or acl_short/ ),
 );
 
 behaves_like_net_amazon_s3_request 'set bucket access control with both body and header acl specified' => (
-    request_class   => 'Net::Amazon::S3::Request::SetBucketAccessControl',
+    request_class   => 'Net::Amazon::S3::Operation::Bucket::Acl::Set::Request',
     with_bucket     => 'some-bucket',
     with_acl_short  => 'private',
     with_acl_xml    => 'private',
@@ -47,3 +47,5 @@ behaves_like_net_amazon_s3_request 'set bucket access control with both body and
 );
 
 had_no_warnings;
+
+done_testing;

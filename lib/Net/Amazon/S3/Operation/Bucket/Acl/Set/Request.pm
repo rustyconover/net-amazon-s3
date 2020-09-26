@@ -1,10 +1,9 @@
-package Net::Amazon::S3::Request::SetBucketAccessControl;
+package Net::Amazon::S3::Operation::Bucket::Acl::Set::Request;
+# ABSTRACT: An internal class to set a bucket's access control
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;
 extends 'Net::Amazon::S3::Request::Bucket';
-
-# ABSTRACT: An internal class to set a bucket's access control
 
 with 'Net::Amazon::S3::Request::Role::HTTP::Header::Acl_short';
 
@@ -42,14 +41,16 @@ no strict 'vars'
 
 =head1 SYNOPSIS
 
-  my $http_request = Net::Amazon::S3::Request::SetBucketAccessControl->new(
-    s3        => $s3,
-    bucket    => $bucket,
-    acl_short => $acl_short,
-    acl_xml   => $acl_xml,
-  )->http_request;
+	my $request = Net::Amazon::S3::Operation::Bucket::Acl::Set::Request->new (
+		s3        => $s3,
+		bucket    => $bucket,
+		acl_short => $acl_short,
+		acl_xml   => $acl_xml,
+	);
 
 =head1 DESCRIPTION
+
+Implements operation L<< PutBucketAcl|https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutBucketAcl.html >>
 
 This module sets a bucket's access control.
 

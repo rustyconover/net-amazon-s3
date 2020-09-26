@@ -561,13 +561,15 @@ sub set_acl {
             acl_xml   => $conf->{acl_xml},
         );
     } else {
-        $http_request = Net::Amazon::S3::Request::SetBucketAccessControl->new(
-            s3     => $self->account,
-            bucket => $self->bucket,
+        my $response = $self->_perform_operation (
+            'Net::Amazon::S3::Operation::Bucket::Acl::Set',
 
             acl_short => $conf->{acl_short},
             acl_xml   => $conf->{acl_xml},
         );
+
+        return unless $response->is_success;
+        return 1;
     }
 
     return $self->account->_send_request_expect_nothing($http_request);
