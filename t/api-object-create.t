@@ -2,14 +2,13 @@
 use strict;
 use warnings;
 
-use Test::More tests => 6;
-use Test::Deep;
-use Test::Warnings qw[ :no_end_test had_no_warnings ];
+use FindBin;
 
-use Shared::Examples::Net::Amazon::S3::API (
-    qw[ with_response_fixture ],
-    qw[ expect_api_object_create ],
-);
+BEGIN { require "$FindBin::Bin/test-helper-s3-api.pl" }
+
+plan tests => 7;
+
+use Shared::Examples::Net::Amazon::S3::API qw[ expect_api_object_create ];
 
 expect_api_object_create 'create object from scalar value' => (
     with_bucket             => 'some-bucket',
@@ -69,7 +68,7 @@ expect_api_object_create 'create object with headers recognized by Client::Bucke
     },
 );
 
-expect_api_object_create 'error access denied' => (
+expect_api_object_create 'S3 error - Access Denied' => (
     with_bucket             => 'some-bucket',
     with_key                => 'some-key',
     with_value              => 'some value',
@@ -80,7 +79,7 @@ expect_api_object_create 'error access denied' => (
     expect_s3_errstr        => 'Access denied error message',
 );
 
-expect_api_object_create 'error no such bucket' => (
+expect_api_object_create 'S3 error - Bucket Not Found' => (
     with_bucket             => 'some-bucket',
     with_key                => 'some-key',
     with_value              => 'some value',
@@ -91,4 +90,18 @@ expect_api_object_create 'error no such bucket' => (
     expect_s3_errstr        => 'No such bucket error message',
 );
 
+expect_api_object_create 'HTTP error - 400 Bad Request' => (
+    with_bucket             => 'some-bucket',
+    with_key                => 'some-key',
+    with_value              => 'some value',
+    with_response_fixture ('error::http_bad_request'),
+    expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/some-key' },
+    expect_data             => bool (0),
+    expect_s3_err           => '',
+    expect_s3_errstr        => '',
+);
+
 had_no_warnings;
+
+done_testing;
+

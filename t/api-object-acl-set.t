@@ -2,14 +2,13 @@
 use strict;
 use warnings;
 
-use Test::More tests => 6;
-use Test::Deep;
-use Test::Warnings qw[ :no_end_test had_no_warnings ];
+use FindBin;
 
-use Shared::Examples::Net::Amazon::S3::API (
-    qw[ with_response_fixture ],
-    qw[ expect_api_object_acl_set ],
-);
+BEGIN { require "$FindBin::Bin/test-helper-s3-api.pl" }
+
+plan tests => 7;
+
+use Shared::Examples::Net::Amazon::S3::API qw[ expect_api_object_acl_set ];
 
 expect_api_object_acl_set 'set bucket acl via canned acl header' => (
     with_bucket             => 'some-bucket',
@@ -36,7 +35,7 @@ expect_api_object_acl_set 'set bucket acl via xml acl' => (
     expect_data             => bool (1),
 );
 
-expect_api_object_acl_set 'with error access denied' => (
+expect_api_object_acl_set 'S3 error - Access Denied' => (
     with_bucket             => 'some-bucket',
     with_key                => 'some-key',
     with_acl_short          => 'private',
@@ -47,7 +46,7 @@ expect_api_object_acl_set 'with error access denied' => (
     expect_s3_errstr        => 'Access denied error message',
 );
 
-expect_api_object_acl_set 'with error no such bucket' => (
+expect_api_object_acl_set 'S3 error - Bucket Not Found' => (
     with_bucket             => 'some-bucket',
     with_key                => 'some-key',
     with_acl_short          => 'private',
@@ -58,7 +57,7 @@ expect_api_object_acl_set 'with error no such bucket' => (
     expect_s3_errstr        => 'No such bucket error message',
 );
 
-expect_api_object_acl_set 'with error no such object' => (
+expect_api_object_acl_set 'S3 error - Object Not Found' => (
     with_bucket             => 'some-bucket',
     with_key                => 'some-key',
     with_acl_short          => 'private',
@@ -69,4 +68,18 @@ expect_api_object_acl_set 'with error no such object' => (
     expect_s3_errstr        => 'No such key error message',
 );
 
+expect_api_object_acl_set 'HTTP error - 400 Bad Request' => (
+    with_bucket             => 'some-bucket',
+    with_key                => 'some-key',
+    with_acl_short          => 'private',
+    with_response_fixture ('error::http_bad_request'),
+    expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/some-key?acl' },
+    expect_data             => bool (0),
+    expect_s3_err           => '',
+    expect_s3_errstr        => '',
+);
+
 had_no_warnings;
+
+done_testing;
+

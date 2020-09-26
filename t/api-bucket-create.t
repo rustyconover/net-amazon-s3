@@ -2,15 +2,13 @@
 use strict;
 use warnings;
 
-use Test::More tests => 7;
-use Test::Deep v0.111; # 0.111 => obj_isa
-use Test::Warnings qw[ :no_end_test had_no_warnings ];
+use FindBin;
 
-use Shared::Examples::Net::Amazon::S3::API (
-    qw[ fixture ],
-    qw[ with_response_fixture ],
-    qw[ expect_api_bucket_create ],
-);
+BEGIN { require "$FindBin::Bin/test-helper-s3-api.pl" }
+
+use Shared::Examples::Net::Amazon::S3::API qw[ expect_api_bucket_create ];
+
+plan tests => 8;
 
 expect_api_bucket_create 'simple create bucket (default region us-east-1)' => (
     with_bucket             => 'some-bucket',
@@ -45,7 +43,7 @@ expect_api_bucket_create 'create bucket with acl' => (
     ),
 );
 
-expect_api_bucket_create 'error access denied' => (
+expect_api_bucket_create 'S3 error - Access Denied' => (
     with_bucket             => 'some-bucket',
     with_response_fixture ('error::access_denied'),
     expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
@@ -55,7 +53,7 @@ expect_api_bucket_create 'error access denied' => (
     expect_s3_errstr        => 'Access denied error message',
 );
 
-expect_api_bucket_create 'error bucket already exists' => (
+expect_api_bucket_create 'S3 error - Bucket Already Exists' => (
     with_bucket             => 'some-bucket',
     with_response_fixture ('error::bucket_already_exists'),
     expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
@@ -65,7 +63,7 @@ expect_api_bucket_create 'error bucket already exists' => (
     expect_s3_errstr        => 'Bucket already exists error message',
 );
 
-expect_api_bucket_create 'error invalid bucket name' => (
+expect_api_bucket_create 'S3 error - Invalid Bucket Name' => (
     with_bucket             => 'some-bucket',
     with_response_fixture ('error::invalid_bucket_name'),
     expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
@@ -75,4 +73,15 @@ expect_api_bucket_create 'error invalid bucket name' => (
     expect_s3_errstr        => 'Invalid bucket name error message',
 );
 
+expect_api_bucket_create 'HTTP error - 400 Bad Request' => (
+    with_bucket             => 'some-bucket',
+    with_response_fixture ('error::http_bad_request'),
+    expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
+    expect_data             => bool (0),
+    expect_s3_err           => '',
+    expect_s3_errstr        => '',
+);
+
 had_no_warnings;
+
+done_testing;

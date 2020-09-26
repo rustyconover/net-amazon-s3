@@ -36,10 +36,12 @@ sub fixture {
 }
 
 sub error_fixture {
-    my ($error_code, $http_status) = @_;
+    my ($error_code, $http_status, $error_message) = @_;
 
-    my $error_message = $error_code;
-    $error_message =~ s/ (?<=[[:lower:]]) ([[:upper:]])/ \L$1\E/gx;
+	unless (defined $error_message) {
+		$error_message = $error_code;
+		$error_message =~ s/ (?<=[[:lower:]]) ([[:upper:]])/ \L$1\E/gx;
+	}
 
     return response_fixture (
         response_code => $http_status,
