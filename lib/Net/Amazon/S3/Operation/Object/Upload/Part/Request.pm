@@ -1,4 +1,5 @@
-package Net::Amazon::S3::Request::PutPart;
+package Net::Amazon::S3::Operation::Object::Upload::Part::Request;
+# ABSTRACT: An internal class to put part of a multipart upload
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;
@@ -34,27 +35,27 @@ sub http_request {
 
 __END__
 
-# ABSTRACT: An internal class to put part of a multipart upload
-
 =for test_synopsis
 no strict 'vars'
 
 =head1 SYNOPSIS
 
-  my $http_request = Net::Amazon::S3::Request::PutPart->new(
-    s3          => $s3,
-    bucket      => $bucket,
-    key         => $key,
-    value       => $value,
-    acl_short   => $acl_short,
-    headers     => $conf,
-    part_number => $part_number,
-    upload_id   => $upload_id
-  )->http_request;
+	my $request = Net::Amazon::S3::Operation::Object::Upload::Part::Request->new (
+		s3          => $s3,
+		bucket      => $bucket,
+		key         => $key,
+		value       => $value,
+		acl_short   => $acl_short,
+		headers     => $conf,
+		part_number => $part_number,
+		upload_id   => $upload_id
+	);
 
 =head1 DESCRIPTION
 
 This module puts an object.
+
+Implements an operation L<< UploadPart|https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html >>
 
 =head1 METHODS
 
