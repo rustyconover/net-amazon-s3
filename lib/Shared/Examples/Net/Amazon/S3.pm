@@ -519,4 +519,62 @@ sub expect_operation_object_head {
     _expect_operation $title, %params, -operation => 'operation_object_head';
 }
 
+sub expect_operation_bucket_tags_add {
+    my ($title, %params) = @_;
+
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+    Hash::Util::lock_keys %params,
+        qw[ with_bucket ],
+        qw[ with_tags ],
+        _keys_operation,
+        ;
+
+    _expect_operation $title, %params, -operation => 'operation_bucket_tags_add';
+}
+
+sub expect_operation_object_tags_add {
+    my ($title, %params) = @_;
+
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+    Hash::Util::lock_keys %params,
+        qw[ with_bucket ],
+        qw[ with_key ],
+        qw[ with_tags ],
+        qw[ with_version_id ],
+        _keys_operation,
+        ;
+
+    _expect_operation $title, %params, -operation => 'operation_object_tags_add';
+}
+
+sub expect_operation_bucket_tags_delete {
+    my ($title, %params) = @_;
+
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+    Hash::Util::lock_keys %params,
+        qw[ with_bucket ],
+        _keys_operation,
+        ;
+
+    _expect_operation $title, %params, -operation => 'operation_bucket_tags_delete';
+}
+
+sub expect_operation_object_tags_delete {
+    my ($title, %params) = @_;
+
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+
+    Hash::Util::lock_keys %params,
+        qw[ with_bucket ],
+        qw[ with_key ],
+        qw[ with_version_id ],
+        _keys_operation,
+        ;
+
+    _expect_operation $title, %params, -operation => 'operation_object_tags_delete';
+}
+
 1;

@@ -19,16 +19,20 @@ use Shared::Examples::Net::Amazon::S3;
 our @EXPORT_OK = (
     qw[ expect_signed_uri ],
     qw[ expect_client_list_all_my_buckets ],
-	qw[ expect_client_bucket_acl_set ],
-	qw[ expect_client_object_acl_set ],
     qw[ expect_client_bucket_acl_get ],
+    qw[ expect_client_bucket_acl_set ],
     qw[ expect_client_bucket_create ],
     qw[ expect_client_bucket_delete ],
     qw[ expect_client_bucket_objects_delete ],
     qw[ expect_client_bucket_objects_list ],
+    qw[ expect_client_bucket_tags_add ],
+    qw[ expect_client_bucket_tags_delete ],
+    qw[ expect_client_object_acl_set ],
     qw[ expect_client_object_create ],
     qw[ expect_client_object_delete ],
     qw[ expect_client_object_fetch ],
+    qw[ expect_client_object_tags_add],
+    qw[ expect_client_object_tags_delete],
 );
 
 *with_fixture = *Shared::Examples::Net::Amazon::S3::with_fixture;
@@ -225,6 +229,51 @@ sub operation_object_acl_set {
 			(acl_xml   => $params{with_acl_xml})   x!! exists $params{with_acl_xml},
 		)
 		;
+}
+
+sub operation_bucket_tags_add {
+    my ($self, %params) = @_;
+
+    $self
+        ->bucket (name => $params{with_bucket})
+        ->add_tags (
+			tags => $params{with_tags},
+		)
+        ;
+}
+
+sub operation_object_tags_add {
+    my ($self, %params) = @_;
+
+	$self
+        ->bucket (name => $params{with_bucket})
+        ->object (key => $params{with_key})
+        ->add_tags (
+			tags => $params{with_tags},
+			(version_id => $params{with_version_id}) x!! defined $params{with_version_id},
+		)
+        ;
+}
+
+sub operation_bucket_tags_delete {
+    my ($self, %params) = @_;
+
+    $self
+        ->bucket (name => $params{with_bucket})
+        ->delete_tags
+        ;
+}
+
+sub operation_object_tags_delete {
+    my ($self, %params) = @_;
+
+	$self
+        ->bucket (name => $params{with_bucket})
+        ->object (key => $params{with_key})
+        ->delete_tags (
+			(version_id => $params{with_version_id}) x!! defined $params{with_version_id},
+		)
+        ;
 }
 
 1;

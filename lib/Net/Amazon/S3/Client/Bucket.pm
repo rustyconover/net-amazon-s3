@@ -73,6 +73,28 @@ sub set_acl {
     return $response->is_success;
 }
 
+sub add_tags {
+	my ($self, %params) = @_;
+
+	my $response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Bucket::Tags::Add',
+
+		tags   => $params{tags},
+	);
+
+	return $response->is_success;
+}
+
+sub delete_tags {
+    my ($self, $conf) = @_;
+
+	my $response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Bucket::Tags::Delete',
+	);
+
+    return $response->is_success;
+}
+
 sub location_constraint {
     my $self = shift;
 
@@ -227,6 +249,17 @@ This module represents buckets.
 
   # return the ACL XML
   my $acl = $bucket->acl;
+
+=head2 add_tags
+
+	$bucket->add_tags (
+		tags => { tag1 => 'val1', ... },
+	)
+
+
+=head2 delete_tags
+
+	$bucket->delete_tags;
 
 =head2 delete
 

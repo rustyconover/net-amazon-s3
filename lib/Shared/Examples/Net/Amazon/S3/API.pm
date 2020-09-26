@@ -20,14 +20,18 @@ our @EXPORT_OK = (
     qw[ expect_api_bucket_acl_set ],
     qw[ expect_api_bucket_create ],
     qw[ expect_api_bucket_delete ],
-    qw[ expect_api_bucket_objects_list ],
     qw[ expect_api_bucket_objects_delete ],
+    qw[ expect_api_bucket_objects_list ],
+    qw[ expect_api_bucket_tags_add ],
+    qw[ expect_api_bucket_tags_delete ],
     qw[ expect_api_object_acl_get ],
     qw[ expect_api_object_acl_set ],
     qw[ expect_api_object_create ],
     qw[ expect_api_object_delete ],
     qw[ expect_api_object_fetch ],
     qw[ expect_api_object_head ],
+    qw[ expect_api_object_tags_add ],
+    qw[ expect_api_object_tags_delete ],
     qw[ with_fixture ],
 );
 
@@ -245,6 +249,51 @@ sub operation_object_head {
     $self
         ->bucket ($params{with_bucket})
         ->head_key ($params{with_key})
+        ;
+}
+
+sub operation_bucket_tags_add {
+    my ($self, %params) = @_;
+
+    $self
+        ->bucket ($params{with_bucket})
+        ->add_tags ({
+			tags => $params{with_tags},
+		})
+        ;
+}
+
+sub operation_object_tags_add {
+    my ($self, %params) = @_;
+
+    $self
+        ->bucket ($params{with_bucket})
+        ->add_tags ({
+			key  => $params{with_key},
+			tags => $params{with_tags},
+			(version_id => $params{with_version_id}) x!! defined $params{with_version_id},
+		})
+        ;
+}
+
+sub operation_bucket_tags_delete {
+    my ($self, %params) = @_;
+
+    $self
+        ->bucket ($params{with_bucket})
+        ->delete_tags
+        ;
+}
+
+sub operation_object_tags_delete {
+    my ($self, %params) = @_;
+
+    $self
+        ->bucket ($params{with_bucket})
+        ->delete_tags ({
+			key  => $params{with_key},
+			(version_id => $params{with_version_id}) x!! defined $params{with_version_id},
+		})
         ;
 }
 

@@ -603,6 +603,123 @@ A human readable error string for the last error the object ran into
 
 sub errstr { $_[0]->account->errstr }
 
+=head2 add_tags
+
+	# Add tags for a bucket
+	$s3->add_tags ({
+		bucket => 'bucket-name',
+		tags   => { tag1 => 'value-1', tag2 => 'value-2' },
+	});
+
+	# Add tags for an object
+	$s3->add_tags ({
+		bucket => 'bucket-name',
+		key    => 'key',
+		tags   => { tag1 => 'value-1', tag2 => 'value-2' },
+	});
+
+Takes configuration parameters
+
+=over
+
+=item key (optional, scalar)
+
+If key is specified, add tag(s) to object, otherwise on bucket.
+
+=item tags (mandatory, hashref)
+
+Set specified tags and their respective values.
+
+=item version_id (optional)
+
+Is specified (in conjunction with C<key>) add tag(s) to versioned object.
+
+=back
+
+Returns C<true> on success.
+
+Returns C<false> and sets C<err>/C<errstr> otherwise.
+
+=cut
+
+sub add_tags {
+    my ($self, $conf) = @_;
+
+    my $response;
+    if (exists $conf->{key}) {
+        $response = $self->_perform_operation (
+            'Net::Amazon::S3::Operation::Object::Tags::Add',
+
+            tags   => $conf->{tags},
+            key    => $conf->{key},
+            (version_id => $conf->{version_id}) x!! defined $conf->{version_id},
+        );
+    } else {
+        $response = $self->_perform_operation (
+            'Net::Amazon::S3::Operation::Bucket::Tags::Add',
+
+            tags   => $conf->{tags},
+        );
+    }
+
+    return $response->is_success;
+}
+
+=head2 add_tags
+
+	# Add tags for a bucket
+	$s3->add_tags ({
+		bucket => 'bucket-name',
+		tags   => { tag1 => 'value-1', tag2 => 'value-2' },
+	});
+
+	# Add tags for an object
+	$s3->add_tags ({
+		bucket => 'bucket-name',
+		key    => 'key',
+		tags   => { tag1 => 'value-1', tag2 => 'value-2' },
+	});
+
+Takes configuration parameters
+
+=over
+
+=item key (optional, scalar)
+
+If key is specified, add tag(s) to object, otherwise on bucket.
+
+=item version_id (optional)
+
+Is specified (in conjunction with C<key>) add tag(s) to versioned object.
+
+=back
+
+Returns C<true> on success.
+
+Returns C<false> and sets C<err>/C<errstr> otherwise.
+
+=cut
+
+sub delete_tags {
+    my ($self, $conf) = @_;
+
+    my $response;
+    if (exists $conf->{key}) {
+        $response = $self->_perform_operation (
+            'Net::Amazon::S3::Operation::Object::Tags::Delete',
+
+            key    => $conf->{key},
+            (version_id => $conf->{version_id}) x!! defined $conf->{version_id},
+        );
+    } else {
+        $response = $self->_perform_operation (
+            'Net::Amazon::S3::Operation::Bucket::Tags::Delete',
+        );
+    }
+
+    return $response->is_success;
+}
+
 sub _content_sub {
     my $filename  = shift;
     my $stat      = stat($filename);

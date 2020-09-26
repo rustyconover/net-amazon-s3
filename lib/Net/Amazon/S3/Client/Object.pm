@@ -260,6 +260,29 @@ sub set_acl {
     return $response->is_success;
 }
 
+sub add_tags {
+	my ($self, %params) = @_;
+
+	my $response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Object::Tags::Add',
+		%params,
+	);
+
+    return $response->is_success;
+}
+
+sub delete_tags {
+    my ($self, %params) = @_;
+
+    my $response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Object::Tags::Delete',
+
+		(version_id => $params{version_id}) x!! defined $params{version_id},
+	);
+
+    return $response->is_success;
+}
+
 sub initiate_multipart_upload {
     my $self = shift;
     my %args = ref($_[0]) ? %{$_[0]} : @_;
@@ -805,3 +828,23 @@ To upload an object with user metadata, set C<user_metadata> at construction
 time to a hashref, with no C<x-amz-meta-> prefixes on the key names.  When
 downloading an object, the C<get>, C<get_decoded> and C<get_filename>
 ethods set the contents of C<user_metadata> to the same format.
+
+=head2 add_tags
+
+	$object->add_tags (
+		tags        => { tag1 => 'val1', tag2 => 'val2' },
+	);
+
+	$object->add_tags (
+		tags        => { tag1 => 'val1', tag2 => 'val2' },
+		version_id  => $version_id,
+	);
+
+=head2 delete_tags
+
+	$object->delete_tags;
+
+	$object->delete_tags (
+		version_id  => $version_id,
+	);
+
