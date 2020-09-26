@@ -127,7 +127,6 @@ use Net::Amazon::S3::HTTPRequest;
 use Net::Amazon::S3::Request;
 use Net::Amazon::S3::Request::AbortMultipartUpload;
 use Net::Amazon::S3::Request::CompleteMultipartUpload;
-use Net::Amazon::S3::Request::CreateBucket;
 use Net::Amazon::S3::Request::DeleteBucket;
 use Net::Amazon::S3::Request::DeleteMultiObject;
 use Net::Amazon::S3::Request::DeleteObject;
@@ -144,6 +143,7 @@ use Net::Amazon::S3::Request::RestoreObject;
 use Net::Amazon::S3::Request::SetBucketAccessControl;
 use Net::Amazon::S3::Request::SetObjectAccessControl;
 use Net::Amazon::S3::Response;
+use Net::Amazon::S3::Operation::Bucket::Create;
 use Net::Amazon::S3::Operation::Buckets::List;
 use Net::Amazon::S3::Signature::V2;
 use Net::Amazon::S3::Signature::V4;
@@ -529,20 +529,20 @@ Returns 0 on failure, Net::Amazon::S3::Bucket object on success
 =cut
 
 sub add_bucket {
-    my ( $self, $conf ) = @_;
+    my ($self, $conf) = @_;
 
-    my $http_request = Net::Amazon::S3::Request::CreateBucket->new(
-        s3                  => $self,
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Bucket::Create',
+
         bucket              => $conf->{bucket},
         acl_short           => $conf->{acl_short},
         location_constraint => $conf->{location_constraint},
         ( $conf->{region} ? (region => $conf->{region}) : () ),
     );
 
-    return 0
-        unless $self->_send_request_expect_nothing($http_request);
+    return unless $response->is_success;
 
-    return $self->bucket( $conf->{bucket} );
+    return $self->bucket ($conf->{bucket});
 }
 
 =head2 bucket BUCKET

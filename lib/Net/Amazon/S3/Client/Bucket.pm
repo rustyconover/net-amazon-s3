@@ -25,16 +25,18 @@ has 'region' => (
 __PACKAGE__->meta->make_immutable;
 
 sub _create {
-    my ( $self, %conf ) = @_;
+    my ($self, %conf) = @_;
 
-    my $http_request = Net::Amazon::S3::Request::CreateBucket->new(
-        s3                  => $self->client->s3,
-        bucket              => $self->name,
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Bucket::Create',
+
         acl_short           => $conf{acl_short},
         location_constraint => $conf{location_constraint},
     );
 
-    $self->client->_send_request($http_request)->http_response;
+    return unless $response->is_success;
+
+    return $response->http_response;
 }
 
 sub delete {
