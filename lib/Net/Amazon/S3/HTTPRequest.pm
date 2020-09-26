@@ -88,7 +88,10 @@ sub _build_request {
     my $http_headers = $self->_merge_meta( $headers, $metadata );
     my $uri          = $self->request_uri;
 
-    return HTTP::Request->new( $method, $uri, $http_headers, $content );
+    my $http_request = HTTP::Request->new( $method, $uri, $http_headers, $content );
+	$http_request->content_length (0) unless $http_request->content_length;
+
+	return $http_request;
 }
 
 sub http_request {
