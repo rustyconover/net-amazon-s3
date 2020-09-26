@@ -84,34 +84,30 @@ __PACKAGE__->meta->make_immutable;
 sub exists {
     my $self = shift;
 
-    my $http_request = Net::Amazon::S3::Request::GetObject->new(
-        s3     => $self->client->s3,
-        bucket => $self->bucket->name,
-        key    => $self->key,
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Object::Fetch',
+
         method => 'HEAD',
     );
 
-    my $http_response = $self->client->_send_request_raw($http_request);
-    return $http_response->is_success;
+    return $response->is_success;
 }
 
 sub _get {
     my $self = shift;
 
-    my $http_request = Net::Amazon::S3::Request::GetObject->new(
-        s3     => $self->client->s3,
-        bucket => $self->bucket->name,
-        key    => $self->key,
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Object::Fetch',
+
         method => 'GET',
     );
 
-    my $response = $self->client->_send_request($http_request);
-    my $content       = $response->content;
-    $self->_load_user_metadata($response->http_response);
+    $self->_load_user_metadata ($response->http_response);
 
     my $etag = $self->etag || $response->etag;
-    unless ($self->_is_multipart_etag($etag)) {
-        my $md5_hex = md5_hex($content);
+    unless ($self->_is_multipart_etag ($etag)) {
+		my $content = $response->content;
+        my $md5_hex = md5_hex ($content);
         confess 'Corrupted download' if $etag ne $md5_hex;
     }
 
@@ -131,31 +127,27 @@ sub get_decoded {
 sub get_callback {
     my ( $self, $callback ) = @_;
 
-    my $http_request = Net::Amazon::S3::Request::GetObject->new(
-        s3     => $self->client->s3,
-        bucket => $self->bucket->name,
-        key    => $self->key,
+    my $response = $self->_fetch_response (
+        response_class => 'Net::Amazon::S3::Operation::Object::Fetch::Response',
+        request_class  => 'Net::Amazon::S3::Operation::Object::Fetch::Request',
+        filename       => $callback,
+
         method => 'GET',
     );
 
-    my $http_response
-        = $self->client->_send_request( $http_request, $callback )->http_response;
-
-    return $http_response;
+    return $response->http_response;
 }
 
 sub get_filename {
     my ( $self, $filename ) = @_;
 
-    my $http_request = Net::Amazon::S3::Request::GetObject->new(
-        s3     => $self->client->s3,
-        bucket => $self->bucket->name,
-        key    => $self->key,
+    my $response = $self->_fetch_response (
+        response_class => 'Net::Amazon::S3::Operation::Object::Fetch::Response',
+        request_class  => 'Net::Amazon::S3::Operation::Object::Fetch::Request',
+        filename       => $filename,
+
         method => 'GET',
     );
-
-    my $response
-        = $self->client->_send_request( $http_request, $filename );
 
     $self->_load_user_metadata($response->http_response);
 
@@ -333,7 +325,7 @@ sub list_parts {
 
 sub uri {
     my $self = shift;
-    return Net::Amazon::S3::Request::GetObject->new(
+    return Net::Amazon::S3::Operation::Object::Fetch::Request->new (
         s3     => $self->client->s3,
         bucket => $self->bucket->name,
         key    => $self->key,
@@ -343,26 +335,26 @@ sub uri {
 
 sub query_string_authentication_uri {
     my ($self, $query_form) = @_;
-    return Net::Amazon::S3::Request::GetObject->new(
+    return Net::Amazon::S3::Operation::Object::Fetch::Request->new (
         s3     => $self->client->s3,
         bucket => $self->bucket->name,
         key    => $self->key,
         method => 'GET',
-    )->query_string_authentication_uri( $self->expires->epoch, $query_form );
+    )->query_string_authentication_uri ($self->expires->epoch, $query_form);
 }
 
 sub head {
     my $self = shift;
 
-    my $http_request =
-        Net::Amazon::S3::Request::GetObject->new(
-            s3     => $self->client->s3,
-            bucket => $self->bucket->name,
-            key    => $self->key,
-            method => 'HEAD',
-        );
+    my $http_request = Net::Amazon::S3::Operation::Object::Fetch::Request->new(
+		s3     => $self->client->s3,
+		bucket => $self->bucket->name,
+		key    => $self->key,
 
-    my $http_response = $self->client->_send_request($http_request)->http_response;
+		method => 'HEAD',
+	);
+
+    my $http_response = $self->client->_send_request ($http_request)->http_response;
 
     confess 'Error head-object ' . $http_response->as_string
         unless $http_response->is_success;
@@ -370,9 +362,9 @@ sub head {
     my %metadata;
     my $headers = $http_response->headers;
     foreach my $name ($headers->header_field_names) {
-        if ($self->_is_metadata_header($name)) {
-            my $metadata_name = $self->_format_metadata_name($name);
-            $metadata{$metadata_name} = $http_response->header($name);
+        if ($self->_is_metadata_header ($name)) {
+            my $metadata_name = $self->_format_metadata_name ($name);
+           $metadata{$metadata_name} = $http_response->header ($name);
         }
     }
 

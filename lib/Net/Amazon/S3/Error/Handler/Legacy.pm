@@ -10,22 +10,16 @@ use HTTP::Status;
 
 our @CARP_NOT = __PACKAGE__;
 
-my %croak_on_requests = map +($_ => 1), (
-    'Net::Amazon::S3::Request::GetObject',
-);
-
 my %croak_on_response = map +($_ => 1), (
     'Net::Amazon::S3::Operation::Bucket::Acl::Fetch::Response',
     'Net::Amazon::S3::Operation::Object::Acl::Fetch::Response',
+    'Net::Amazon::S3::Operation::Object::Fetch::Response',
 );
 
 override handle_error => sub {
     my ($self, $response, $request) = @_;
 
-    return super unless
-		exists $croak_on_response{ref $response}
-		or exists $croak_on_requests{ref $request}
-		;
+    return super unless exists $croak_on_response{ref $response};
 
     $self->s3->err (undef);
     $self->s3->errstr (undef);

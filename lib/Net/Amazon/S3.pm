@@ -127,7 +127,6 @@ use Net::Amazon::S3::HTTPRequest;
 use Net::Amazon::S3::Request;
 use Net::Amazon::S3::Request::AbortMultipartUpload;
 use Net::Amazon::S3::Request::CompleteMultipartUpload;
-use Net::Amazon::S3::Request::GetObject;
 use Net::Amazon::S3::Request::InitiateMultipartUpload;
 use Net::Amazon::S3::Request::ListParts;
 use Net::Amazon::S3::Request::PutPart;
@@ -142,6 +141,7 @@ use Net::Amazon::S3::Operation::Buckets::List;
 use Net::Amazon::S3::Operation::Object::Acl::Fetch;
 use Net::Amazon::S3::Operation::Object::Acl::Set;
 use Net::Amazon::S3::Operation::Object::Add;
+use Net::Amazon::S3::Operation::Object::Fetch;
 use Net::Amazon::S3::Operation::Object::Delete;
 use Net::Amazon::S3::Operation::Objects::Delete;
 use Net::Amazon::S3::Operation::Objects::List;
@@ -906,9 +906,10 @@ sub _perform_operation {
 
     my $request_class  = $operation . '::Request';
     my $response_class = $operation . '::Response';
+	my $filename = delete $params{filename};
 
     my $request  = $request_class->new (s3 => $self, %params);
-    my $response = $self->_do_http ($request);
+    my $response = $self->_do_http ($request, $filename);
     $response    = $response_class->new (http_response => $response->http_response);
 
     $error_handler->handle_error ($response);

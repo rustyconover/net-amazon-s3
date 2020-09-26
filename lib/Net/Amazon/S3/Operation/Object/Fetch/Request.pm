@@ -1,12 +1,12 @@
-package Net::Amazon::S3::Request::GetObject;
+package Net::Amazon::S3::Operation::Object::Fetch::Request;
+# ABSTRACT: An internal class to get an object
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;
+
 extends 'Net::Amazon::S3::Request::Object';
 
 with 'Net::Amazon::S3::Request::Role::HTTP::Method';
-
-# ABSTRACT: An internal class to get an object
 
 __PACKAGE__->meta->make_immutable;
 
@@ -30,14 +30,16 @@ no strict 'vars'
 
 =head1 SYNOPSIS
 
-  my $http_request = Net::Amazon::S3::Request::GetObject->new(
-    s3     => $s3,
-    bucket => $bucket,
-    key    => $key,
-    method => 'GET',
-  )->http_request;
+	my $http_request = Net::Amazon::S3::Operation::Object::Fetch::Request->new (
+		s3     => $s3,
+		bucket => $bucket,
+		key    => $key,
+		method => 'GET',
+	);
 
 =head1 DESCRIPTION
+
+Implements operation L<< GetObject|https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html >>.
 
 This module gets an object.
 

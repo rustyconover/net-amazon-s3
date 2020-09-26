@@ -279,14 +279,14 @@ with query parameter
 sub query_string_authentication_uri {
     my ( $self, $key, $expires_at ) = @_;
 
-    my $request = Net::Amazon::S3::Request::GetObject->new(
+    my $request = Net::Amazon::S3::Operation::Object::Fetch::Request->new (
         s3     => $self->account,
         bucket => $self,
         key    => $key,
         method => 'GET',
     );
 
-    return $request->query_string_authentication_uri( $expires_at );
+    return $request->query_string_authentication_uri ($expires_at);
 }
 
 =head2 get_key $key_name [$method]
@@ -310,23 +310,20 @@ sub get_key {
     $filename = $$filename if ref $filename;
     my $acct = $self->account;
 
-    my $http_request = Net::Amazon::S3::Request::GetObject->new(
-        s3     => $acct,
-        bucket => $self->bucket,
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Object::Fetch',
+		filename => $filename,
+
         key    => $key,
         method => $method || 'GET',
     );
 
-    my $response = $acct->_do_http( $http_request, $filename );
-
-	return undef
-		unless $acct->error_handler->handle_error ($response, $http_request);
-
+    return unless $response->is_success;
     my $etag = $response->etag;
 
     my $return;
-    foreach my $header ( $response->headers->header_field_names ) {
-        $return->{ lc $header } = $response->header($header);
+    foreach my $header ($response->headers->header_field_names) {
+        $return->{ lc $header } = $response->header ($header);
     }
     $return->{content_length} = $response->content_length || 0;
     $return->{content_type}   = $response->content_type;
