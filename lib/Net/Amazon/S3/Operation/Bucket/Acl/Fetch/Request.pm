@@ -1,10 +1,9 @@
-package Net::Amazon::S3::Request::GetBucketAccessControl;
+package Net::Amazon::S3::Operation::Bucket::Acl::Fetch::Request;
+# ABSTRACT: An internal class to get a bucket's access control
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;
 extends 'Net::Amazon::S3::Request::Bucket';
-
-# ABSTRACT: An internal class to get a bucket's access control
 
 with 'Net::Amazon::S3::Request::Role::Query::Action::Acl';
 with 'Net::Amazon::S3::Request::Role::HTTP::Method::GET';
@@ -20,12 +19,14 @@ no strict 'vars'
 
 =head1 SYNOPSIS
 
-  my $http_request = Net::Amazon::S3::Request::GetBucketAccessControl->new(
-    s3     => $s3,
-    bucket => $bucket,
-  )->http_request;
+	my $http_request = Net::Amazon::S3::Operation::Bucket::Acl::Fetch::Request->new (
+		s3     => $s3,
+		bucket => $bucket,
+	);
 
 =head1 DESCRIPTION
+
+Implements operation L<< GetBucketAcl|https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetBucketAcl.html >>
 
 This module gets a bucket's access control.
 

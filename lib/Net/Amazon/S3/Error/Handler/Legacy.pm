@@ -13,13 +13,19 @@ our @CARP_NOT = __PACKAGE__;
 my %croak_on_requests = map +($_ => 1), (
     'Net::Amazon::S3::Request::GetObject',
     'Net::Amazon::S3::Request::GetObjectAccessControl',
-    'Net::Amazon::S3::Request::GetBucketAccessControl',
+);
+
+my %croak_on_response = map +($_ => 1), (
+    'Net::Amazon::S3::Operation::Bucket::Acl::Fetch::Response',
 );
 
 override handle_error => sub {
     my ($self, $response, $request) = @_;
 
-    return super unless exists $croak_on_requests{ref $request};
+    return super unless
+		exists $croak_on_response{ref $response}
+		or exists $croak_on_requests{ref $request}
+		;
 
     $self->s3->err (undef);
     $self->s3->errstr (undef);

@@ -53,12 +53,12 @@ sub delete {
 sub acl {
     my $self = shift;
 
-    my $http_request = Net::Amazon::S3::Request::GetBucketAccessControl->new(
-        s3     => $self->client->s3,
-        bucket => $self->name,
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Bucket::Acl::Fetch',
     );
 
-    return $self->client->_send_request_content($http_request);
+    return if $response->is_error;
+    return $response->http_response->content;
 }
 
 sub location_constraint {

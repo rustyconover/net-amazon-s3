@@ -486,19 +486,21 @@ sub get_acl {
             bucket => $self->bucket,
             key    => $key,
         );
+
+        my $response = $account->_do_http($http_request);
+
+		return undef
+			unless $account->error_handler->handle_error ($response, $http_request);
+
+        return $response->content;
     } else {
-        $http_request = Net::Amazon::S3::Request::GetBucketAccessControl->new(
-            s3     => $account,
-            bucket => $self->bucket,
+        my $response = $self->_perform_operation (
+            'Net::Amazon::S3::Operation::Bucket::Acl::Fetch',
         );
+
+        return if $response->is_error;
+        return $response->content;
     }
-
-    my $response = $account->_do_http($http_request);
-
-	return undef
-		unless $account->error_handler->handle_error ($response, $http_request);
-
-    return $response->content;
 }
 
 =head2 set_acl
