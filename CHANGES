@@ -1,5 +1,8 @@
 Revision history for Perl module Net::Amazon::S3:
 
+0.93 2020-09-27
+	- fix syntax failures on perl < v5.22 (thanks cpantesters)
+
 0.92 2020-09-26
 	- misc cleanups, more tests
 	- Net::Amazon::S3::Client now can be constructed with same arguments as Net::Amazon::S3
