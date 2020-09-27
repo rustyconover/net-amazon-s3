@@ -388,7 +388,7 @@ sub delete_multi_object {
             'Net::Amazon::S3::Operation::Objects::Delete',
 
             keys    => [
-				map { ref ? $_->key : $_ }
+				map { ref ($_) ? $_->key : $_ }
 				splice @objects, 0, ((scalar(@objects) > 1000) ? 1000 : scalar(@objects))
 			]
         );
