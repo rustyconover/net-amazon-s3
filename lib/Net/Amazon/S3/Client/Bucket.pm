@@ -98,7 +98,7 @@ sub delete_tags {
 sub location_constraint {
     my $self = shift;
 
-    my $response = $self->_fetch_response (
+    my $response = $self->_perform_operation (
         'Net::Amazon::S3::Operation::Bucket::Location',
     );
 

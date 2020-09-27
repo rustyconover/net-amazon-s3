@@ -126,7 +126,7 @@ sub get_decoded {
 sub get_callback {
     my ( $self, $callback ) = @_;
 
-    my $response = $self->_fetch_response (
+    my $response = $self->__perform_operation (
         response_class => 'Net::Amazon::S3::Operation::Object::Fetch::Response',
         request_class  => 'Net::Amazon::S3::Operation::Object::Fetch::Request',
         filename       => $callback,
@@ -140,7 +140,7 @@ sub get_callback {
 sub get_filename {
     my ( $self, $filename ) = @_;
 
-    my $response = $self->_fetch_response (
+    my $response = $self->__perform_operation (
         response_class => 'Net::Amazon::S3::Operation::Object::Fetch::Response',
         request_class  => 'Net::Amazon::S3::Operation::Object::Fetch::Request',
         filename       => $filename,
