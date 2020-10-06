@@ -19,28 +19,28 @@ with 'Net::Amazon::S3::Request::Role::HTTP::Method::POST';
 __PACKAGE__->meta->make_immutable;
 
 sub _request_content {
-    my ($self) = @_;
+	my ($self) = @_;
 
-    #build XML doc
-    my $xml_doc = XML::LibXML::Document->new('1.0','UTF-8');
-    my $root_element = $xml_doc->createElement('Delete');
-    $xml_doc->addChild($root_element);
-    $root_element->appendTextChild('Quiet'=>'true');
-    #add content
-    foreach my $key (@{$self->keys}){
-        my $obj_element = $xml_doc->createElement('Object');
-        $obj_element->appendTextChild('Key' => $key);
-        $root_element->addChild($obj_element);
-    }
+	#build XML doc
+	my $xml_doc = XML::LibXML::Document->new('1.0','UTF-8');
+	my $root_element = $xml_doc->createElement('Delete');
+	$xml_doc->addChild($root_element);
+	$root_element->appendTextChild('Quiet'=>'true');
+	#add content
+	foreach my $key (@{$self->keys}){
+		my $obj_element = $xml_doc->createElement('Object');
+		$obj_element->appendTextChild('Key' => $key);
+		$root_element->addChild($obj_element);
+	}
 
-    return $xml_doc->toString;
+	return $xml_doc->toString;
 }
 
 sub BUILD {
-    my ($self) = @_;
+	my ($self) = @_;
 
-    croak "The maximum number of keys is 1000"
-        if (scalar(@{$self->keys}) > 1000);
+	croak "The maximum number of keys is 1000"
+		if (scalar(@{$self->keys}) > 1000);
 }
 
 1;

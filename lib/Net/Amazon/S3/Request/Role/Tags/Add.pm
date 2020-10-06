@@ -14,7 +14,7 @@ has 'tags' => (
 );
 
 sub _request_content {
-    my ($self) = @_;
+	my ($self) = @_;
 
 	$self->_build_xml (Tagging => [
 		{ TagSet => [

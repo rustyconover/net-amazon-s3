@@ -15,21 +15,21 @@ with 'Net::Amazon::S3::Request::Role::HTTP::Method::PUT';
 __PACKAGE__->meta->make_immutable;
 
 sub _request_content {
-    my ($self) = @_;
+	my ($self) = @_;
 
-    return $self->acl_xml || '';
+	return $self->acl_xml || '';
 }
 
 sub BUILD {
-    my ($self) = @_;
+	my ($self) = @_;
 
-    unless ( $self->acl_xml || $self->acl ) {
-        confess "need either acl_xml or acl";
-    }
+	unless ( $self->acl_xml || $self->acl ) {
+		confess "need either acl_xml or acl";
+	}
 
-    if ( $self->acl_xml && $self->acl ) {
-        confess "can not provide both acl_xml and acl";
-    }
+	if ( $self->acl_xml && $self->acl ) {
+		confess "can not provide both acl_xml and acl";
+	}
 }
 
 1;

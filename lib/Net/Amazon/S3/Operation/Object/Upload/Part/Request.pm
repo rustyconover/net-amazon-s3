@@ -12,22 +12,22 @@ with 'Net::Amazon::S3::Request::Role::HTTP::Method::PUT';
 
 has 'value'         => ( is => 'ro', isa => 'Str|CodeRef|ScalarRef',     required => 0 );
 has 'headers' =>
-    ( is => 'ro', isa => 'HashRef', required => 0, default => sub { {} } );
+	( is => 'ro', isa => 'HashRef', required => 0, default => sub { {} } );
 
 __PACKAGE__->meta->make_immutable;
 
 sub _request_headers {
-    my ($self) = @_;
+	my ($self) = @_;
 
-    return %{ $self->headers };
+	return %{ $self->headers };
 }
 
 sub http_request {
-    my $self    = shift;
+	my $self    = shift;
 
-    return $self->_build_http_request(
-        content => scalar( defined( $self->value ) ? $self->value : '' ),
-    );
+	return $self->_build_http_request(
+		content => scalar( defined( $self->value ) ? $self->value : '' ),
+	);
 }
 
 1;

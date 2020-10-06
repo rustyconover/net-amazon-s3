@@ -16,7 +16,7 @@ has acl => (
 		'Net::Amazon::S3::ACL::Set',
 		'Net::Amazon::S3::ACL::Canned',
 	]),
-    required    => 0,
+	required    => 0,
 	coerce      => 1,
 );
 

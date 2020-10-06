@@ -7,17 +7,17 @@ use Moose;
 extends 'Net::Amazon::S3::Error::Handler';
 
 sub handle_error {
-    my ($self, $response) = @_;
+	my ($self, $response) = @_;
 
-    $self->s3->err (undef);
-    $self->s3->errstr (undef);
+	$self->s3->err (undef);
+	$self->s3->errstr (undef);
 
-    return 1 unless $response->is_error;
+	return 1 unless $response->is_error;
 
-    $self->s3->err ($response->error_code);
-    $self->s3->errstr ($response->error_message);
+	$self->s3->err ($response->error_code);
+	$self->s3->errstr ($response->error_message);
 
-    return 0;
+	return 0;
 }
 
 1;

@@ -15,11 +15,11 @@ __PACKAGE__->meta->make_immutable;
 # https://docs.aws.amazon.com/general/latest/gr/rande.html
 
 sub http_request {
-    my $self    = shift;
-    return $self->_build_http_request (
-        use_virtual_host => 0,
-        region => 'us-east-1',
-    );
+	my $self    = shift;
+	return $self->_build_http_request (
+		use_virtual_host => 0,
+		region => 'us-east-1',
+	);
 }
 
 1;

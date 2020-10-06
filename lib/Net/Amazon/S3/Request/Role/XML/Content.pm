@@ -11,8 +11,8 @@ sub _build_xml {
 
 	my $ns = Net::Amazon::S3::Constants->S3_NAMESPACE_URI;
 
-    my $xml_doc = XML::LibXML::Document->new ('1.0','UTF-8');
-    my $root_element = $xml_doc->createElementNS ($ns, $root_name);
+	my $xml_doc = XML::LibXML::Document->new ('1.0','UTF-8');
+	my $root_element = $xml_doc->createElementNS ($ns, $root_name);
 	$xml_doc->setDocumentElement ($root_element);
 
 	my @queue = ([ $root_element, $root_content ]);

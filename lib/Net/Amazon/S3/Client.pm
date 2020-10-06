@@ -20,15 +20,15 @@ has 's3' => (
 );
 
 has error_handler_class => (
-    is => 'ro',
-    lazy => 1,
-    default => 'Net::Amazon::S3::Error::Handler::Confess',
+	is => 'ro',
+	lazy => 1,
+	default => 'Net::Amazon::S3::Error::Handler::Confess',
 );
 
 has error_handler => (
-    is => 'ro',
-    lazy => 1,
-    default => sub { $_[0]->error_handler_class->new (s3 => $_[0]->s3) },
+	is => 'ro',
+	lazy => 1,
+	default => sub { $_[0]->error_handler_class->new (s3 => $_[0]->s3) },
 );
 
 around BUILDARGS => sub {
@@ -53,21 +53,21 @@ __PACKAGE__->meta->make_immutable;
 sub bucket_class { 'Net::Amazon::S3::Client::Bucket' }
 
 sub buckets {
-    my $self = shift;
-    my $s3   = $self->s3;
+	my $self = shift;
+	my $s3   = $self->s3;
 
-    my $response = $self->_perform_operation (
-        'Net::Amazon::S3::Operation::Buckets::List',
-    );
+	my $response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Buckets::List',
+	);
 
-    return unless $response->is_success;
+	return unless $response->is_success;
 
-    my $owner_id = $response->owner_id;
-    my $owner_display_name = $response->owner_displayname;
+	my $owner_id = $response->owner_id;
+	my $owner_display_name = $response->owner_displayname;
 
-    my @buckets;
-    foreach my $bucket ($response->buckets) {
-        push @buckets, $self->bucket_class->new (
+	my @buckets;
+	foreach my $bucket ($response->buckets) {
+		push @buckets, $self->bucket_class->new (
 			client             => $self,
 			name               => $bucket->{name},
 			creation_date      => $bucket->{creation_date},
@@ -75,27 +75,27 @@ sub buckets {
 			owner_display_name => $owner_display_name,
 		);
 
-    }
-    return @buckets;
+	}
+	return @buckets;
 }
 
 sub create_bucket {
-    my ( $self, %conf ) = @_;
+	my ( $self, %conf ) = @_;
 
-    my $bucket = $self->bucket_class->new(
-        client => $self,
-        name   => $conf{name},
-    );
-    $bucket->_create(%conf);
-    return $bucket;
+	my $bucket = $self->bucket_class->new(
+		client => $self,
+		name   => $conf{name},
+	);
+	$bucket->_create(%conf);
+	return $bucket;
 }
 
 sub bucket {
-    my ( $self, %conf ) = @_;
-    return $self->bucket_class->new(
-        client => $self,
-        %conf,
-    );
+	my ( $self, %conf ) = @_;
+	return $self->bucket_class->new(
+		client => $self,
+		%conf,
+	);
 }
 
 sub _perform_operation {
@@ -104,17 +104,17 @@ sub _perform_operation {
 	my $error_handler = delete $params{error_handler};
 	$error_handler = $self->error_handler unless defined $error_handler;
 
-    my $request_class  = $operation . '::Request';
-    my $response_class = $operation . '::Response';
-    my $filename       = delete $params{filename};
+	my $request_class  = $operation . '::Request';
+	my $response_class = $operation . '::Response';
+	my $filename       = delete $params{filename};
 
-    my $request  = $request_class->new (s3 => $self->s3, %params);
-    my $http_response = $self->ua->request ($request->http_request, $filename);
-    my $response = $response_class->new (http_response => $http_response);
+	my $request  = $request_class->new (s3 => $self->s3, %params);
+	my $http_response = $self->ua->request ($request->http_request, $filename);
+	my $response = $response_class->new (http_response => $http_response);
 
-    $error_handler->handle_error ($response);
+	$error_handler->handle_error ($response);
 
-    return $response;
+	return $response;
 }
 
 1;

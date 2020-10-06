@@ -4,15 +4,15 @@ package Net::Amazon::S3::Request::Role::Query::Action;
 use MooseX::Role::Parameterized;
 
 parameter action => (
-    is => 'ro',
-    isa => 'Str',
+	is => 'ro',
+	isa => 'Str',
 );
 
 role {
-    my ($params) = @_;
-    my $action = $params->action;
+	my ($params) = @_;
+	my $action = $params->action;
 
-    method '_request_query_action' => sub { $action };
+	method '_request_query_action' => sub { $action };
 };
 
 1;

@@ -21,29 +21,29 @@ has 'part_numbers'  => ( is => 'ro', isa => 'ArrayRef',   required => 1 );
 __PACKAGE__->meta->make_immutable;
 
 sub _request_content {
-    my ($self) = @_;
+	my ($self) = @_;
 
-    #build XML doc
-    my $xml_doc = XML::LibXML::Document->new('1.0','UTF-8');
-    my $root_element = $xml_doc->createElement('CompleteMultipartUpload');
-    $xml_doc->addChild($root_element);
+	#build XML doc
+	my $xml_doc = XML::LibXML::Document->new('1.0','UTF-8');
+	my $root_element = $xml_doc->createElement('CompleteMultipartUpload');
+	$xml_doc->addChild($root_element);
 
-    #add content
-    for(my $i = 0; $i < scalar(@{$self->part_numbers}); $i++ ){
-        my $part = $xml_doc->createElement('Part');
-        $part->appendTextChild('PartNumber' => $self->part_numbers->[$i]);
-        $part->appendTextChild('ETag' => $self->etags->[$i]);
-        $root_element->addChild($part);
-    }
+	#add content
+	for(my $i = 0; $i < scalar(@{$self->part_numbers}); $i++ ){
+		my $part = $xml_doc->createElement('Part');
+		$part->appendTextChild('PartNumber' => $self->part_numbers->[$i]);
+		$part->appendTextChild('ETag' => $self->etags->[$i]);
+		$root_element->addChild($part);
+	}
 
-    return $xml_doc->toString;
+	return $xml_doc->toString;
 }
 
 sub BUILD {
-    my ($self) = @_;
+	my ($self) = @_;
 
-    croak "must have an equally sized list of etags and part numbers"
-        unless scalar(@{$self->part_numbers}) == scalar(@{$self->etags});
+	croak "must have an equally sized list of etags and part numbers"
+		unless scalar(@{$self->part_numbers}) == scalar(@{$self->etags});
 }
 
 1;

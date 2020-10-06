@@ -6,7 +6,7 @@ use MooseX::StrictConstructor 0.16;
 extends 'Net::Amazon::S3::Request::Object';
 
 has 'headers' =>
-    ( is => 'ro', isa => 'HashRef', required => 0, default => sub { {} } );
+	( is => 'ro', isa => 'HashRef', required => 0, default => sub { {} } );
 
 with 'Net::Amazon::S3::Request::Role::Query::Action::Uploads';
 with 'Net::Amazon::S3::Request::Role::HTTP::Header::ACL';
@@ -16,9 +16,9 @@ with 'Net::Amazon::S3::Request::Role::HTTP::Method::POST';
 __PACKAGE__->meta->make_immutable;
 
 sub _request_headers {
-    my ($self) = @_;
+	my ($self) = @_;
 
-    return %{ $self->headers };
+	return %{ $self->headers };
 }
 
 1;

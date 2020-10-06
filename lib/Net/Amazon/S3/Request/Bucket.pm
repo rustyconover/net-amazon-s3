@@ -8,9 +8,9 @@ extends 'Net::Amazon::S3::Request::Service';
 with 'Net::Amazon::S3::Role::Bucket';
 
 override _request_path => sub {
-    my ($self) = @_;
+	my ($self) = @_;
 
-    return super . $self->bucket->bucket . "/";
+	return super . $self->bucket->bucket . "/";
 };
 
 __PACKAGE__->meta->make_immutable;

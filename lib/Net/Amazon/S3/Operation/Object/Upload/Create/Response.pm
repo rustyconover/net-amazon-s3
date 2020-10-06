@@ -6,19 +6,19 @@ use Moose;
 extends 'Net::Amazon::S3::Response';
 
 sub upload_id {
-    $_[0]->_data->{upload_id};
+	$_[0]->_data->{upload_id};
 }
 
 sub _parse_data {
-    my ($self) = @_;
+	my ($self) = @_;
 
-    my $xpc = $self->xpath_context;
+	my $xpc = $self->xpath_context;
 
-    my $data = {
-        upload_id => scalar $xpc->findvalue ("//s3:UploadId"),
-    };
+	my $data = {
+		upload_id => scalar $xpc->findvalue ("//s3:UploadId"),
+	};
 
-    return $data;
+	return $data;
 }
 
 1;

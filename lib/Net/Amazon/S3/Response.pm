@@ -36,10 +36,10 @@ has xml_document => (
 );
 
 has xpath_context => (
-   is          => 'ro',
-   init_arg    => undef,
-   lazy        => 1,
-   builder     => '_build_xpath_context',
+	is          => 'ro',
+	init_arg    => undef,
+	lazy        => 1,
+	builder     => '_build_xpath_context',
 );
 
 has error_code => (

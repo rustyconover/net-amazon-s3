@@ -11,11 +11,11 @@ extends 'Net::Amazon::S3::Error::Handler';
 our @CARP_NOT = (__PACKAGE__);
 
 sub handle_error {
-    my ($self, $response) = @_;
+	my ($self, $response) = @_;
 
-    return 1 unless $response->is_error;
+	return 1 unless $response->is_error;
 
-    Carp::confess ("${\ $response->error_code }: ${\ $response->error_message }");
+	Carp::confess ("${\ $response->error_code }: ${\ $response->error_message }");
 }
 
 1;

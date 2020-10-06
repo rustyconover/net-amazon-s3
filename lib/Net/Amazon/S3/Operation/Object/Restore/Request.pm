@@ -22,12 +22,12 @@ has 'tier' => (is => 'ro', isa => 'Tier', required => 1);
 __PACKAGE__->meta->make_immutable;
 
 sub _request_content {
-    my ($self) = @_;
+	my ($self) = @_;
 
-    return '<RestoreRequest xmlns="http://s3.amazonaws.com/doc/2006-03-01/">'
-        . '<Days>' . $self->days . '</Days>'
-        . '<GlacierJobParameters><Tier>' . $self->tier . '</Tier></GlacierJobParameters>'
-        . '</RestoreRequest>';
+	return '<RestoreRequest xmlns="http://s3.amazonaws.com/doc/2006-03-01/">'
+		. '<Days>' . $self->days . '</Days>'
+		. '<GlacierJobParameters><Tier>' . $self->tier . '</Tier></GlacierJobParameters>'
+		. '</RestoreRequest>';
 }
 
 1;

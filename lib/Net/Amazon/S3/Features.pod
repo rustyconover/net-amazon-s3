@@ -1,7 +1,7 @@
 # PODNAME:Net::Amazon::S3::Features
 # ABSTRACT: Features available in Net::Amazon::S3
 
-__CUT__
+__DATA__
 
 =pod
 

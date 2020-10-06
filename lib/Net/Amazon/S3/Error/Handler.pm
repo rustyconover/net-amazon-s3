@@ -5,9 +5,9 @@ use Moose;
 # ABSTRACT: A base class for S3 response error handler
 
 has s3 => (
-    is => 'ro',
-    isa => 'Net::Amazon::S3',
-    required => 1,
+	is => 'ro',
+	isa => 'Net::Amazon::S3',
+	required => 1,
 );
 
 sub handle_error;

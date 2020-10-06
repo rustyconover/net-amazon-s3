@@ -11,14 +11,14 @@ with 'Net::Amazon::S3::Request::Role::HTTP::Method';
 __PACKAGE__->meta->make_immutable;
 
 sub query_string_authentication_uri {
-    my ( $self, $expires, $query_form ) = @_;
+	my ( $self, $expires, $query_form ) = @_;
 
-    my $uri = URI->new( $self->_request_path );
-    $uri->query_form( %$query_form ) if $query_form;
+	my $uri = URI->new( $self->_request_path );
+	$uri->query_form( %$query_form ) if $query_form;
 
-    return $self->_build_signed_request(
-        path   => $uri->as_string,
-    )->query_string_authentication_uri($expires);
+	return $self->_build_signed_request(
+		path   => $uri->as_string,
+	)->query_string_authentication_uri($expires);
 }
 
 1;

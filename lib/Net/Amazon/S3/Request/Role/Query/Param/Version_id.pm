@@ -4,10 +4,10 @@ package Net::Amazon::S3::Request::Role::Query::Param::Version_id;
 use Moose::Role;
 
 with 'Net::Amazon::S3::Request::Role::Query::Param' => {
-    param => 'version_id',
-    query_param => 'versionId',
-    constraint => 'Str',
-    required => 0,
+	param => 'version_id',
+	query_param => 'versionId',
+	constraint => 'Str',
+	required => 0,
 };
 
 1;

@@ -4,8 +4,8 @@ package Net::Amazon::S3::Signature;
 use Moose;
 
 has http_request => (
-    is => 'ro',
-    isa => 'Net::Amazon::S3::HTTPRequest',
+	is => 'ro',
+	isa => 'Net::Amazon::S3::HTTPRequest',
 );
 
 sub _append_authorization_headers {
@@ -55,15 +55,15 @@ sub _populate_default_query_param {
 }
 
 sub sign_request {
-    my ($self, $request);
+	my ($self, $request);
 
-    return;
+	return;
 }
 
 sub sign_uri {
-    my ($self, $uri, $expires_at);
+	my ($self, $uri, $expires_at);
 
-    return;
+	return;
 }
 
 1;

@@ -81,15 +81,15 @@ has 'errstr' => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
 has keep_alive_cache_size => ( is => 'ro', isa => 'Int', required => 0, default => 10 );
 
 has error_handler_class => (
-    is => 'ro',
-    lazy => 1,
-    default => 'Net::Amazon::S3::Error::Handler::Legacy',
+	is => 'ro',
+	lazy => 1,
+	default => 'Net::Amazon::S3::Error::Handler::Legacy',
 );
 
 has error_handler => (
-    is => 'ro',
-    lazy => 1,
-    default => sub { $_[0]->error_handler_class->new (s3 => $_[0]) },
+	is => 'ro',
+	lazy => 1,
+	default => sub { $_[0]->error_handler_class->new (s3 => $_[0]) },
 );
 
 sub _build_arg_authorization_context {
@@ -156,212 +156,212 @@ around BUILDARGS => sub {
 	$args->{authorization_context} = _build_arg_authorization_context $args;
 	$args->{vendor}                = _build_arg_vendor                $args;
 
-    $args;
+	$args;
 };
 
 
 sub BUILD {
-    my $self = shift;
+	my $self = shift;
 
-    my $ua;
-    if ( $self->retry ) {
-        $ua = LWP::UserAgent::Determined->new(
-            keep_alive            => $self->keep_alive_cache_size,
-            requests_redirectable => [qw(GET HEAD DELETE PUT POST)],
-        );
-        $ua->timing('1,2,4,8,16,32');
-    } else {
-        $ua = LWP::UserAgent->new(
-            keep_alive            => $self->keep_alive_cache_size,
-            requests_redirectable => [qw(GET HEAD DELETE PUT POST)],
-        );
-    }
+	my $ua;
+	if ( $self->retry ) {
+		$ua = LWP::UserAgent::Determined->new(
+			keep_alive            => $self->keep_alive_cache_size,
+			requests_redirectable => [qw(GET HEAD DELETE PUT POST)],
+		);
+		$ua->timing('1,2,4,8,16,32');
+	} else {
+		$ua = LWP::UserAgent->new(
+			keep_alive            => $self->keep_alive_cache_size,
+			requests_redirectable => [qw(GET HEAD DELETE PUT POST)],
+		);
+	}
 
-    $ua->timeout( $self->timeout );
-    $ua->env_proxy;
+	$ua->timeout( $self->timeout );
+	$ua->env_proxy;
 
-    $self->ua($ua);
+	$self->ua($ua);
 }
 
 sub bucket_class {
-    'Net::Amazon::S3::Bucket'
+	'Net::Amazon::S3::Bucket'
 }
 
 sub buckets {
-    my $self = shift;
+	my $self = shift;
 
-    my $response = $self->_perform_operation (
-        'Net::Amazon::S3::Operation::Buckets::List',
-    );
+	my $response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Buckets::List',
+	);
 
-    return unless $response->is_success;
+	return unless $response->is_success;
 
-    my $owner_id          = $response->owner_id;;
-    my $owner_displayname = $response->owner_displayname;
+	my $owner_id          = $response->owner_id;;
+	my $owner_displayname = $response->owner_displayname;
 
-    my @buckets;
-    foreach my $bucket ($response->buckets) {
-        push @buckets, $self->bucket_class->new (
+	my @buckets;
+	foreach my $bucket ($response->buckets) {
+		push @buckets, $self->bucket_class->new (
 			account       => $self,
 			bucket        => $bucket->{name},
 			creation_date => $bucket->{creation_date},
 		);
 
-    }
+	}
 
-    return +{
-        owner_id          => $owner_id,
-        owner_displayname => $owner_displayname,
-        buckets           => \@buckets,
-    };
+	return +{
+		owner_id          => $owner_id,
+		owner_displayname => $owner_displayname,
+		buckets           => \@buckets,
+	};
 }
 
 sub add_bucket {
-    my ($self, $conf) = @_;
+	my ($self, $conf) = @_;
 
-    my $response = $self->_perform_operation (
-        'Net::Amazon::S3::Operation::Bucket::Create',
+	my $response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Bucket::Create',
 
-        bucket              => $conf->{bucket},
-        (acl                => $conf->{acl})       x!! defined $conf->{acl},
-        (acl_short          => $conf->{acl_short}) x!! defined $conf->{acl_short},
-        location_constraint => $conf->{location_constraint},
-        ( $conf->{region} ? (region => $conf->{region}) : () ),
-    );
+		bucket              => $conf->{bucket},
+		(acl                => $conf->{acl})       x!! defined $conf->{acl},
+		(acl_short          => $conf->{acl_short}) x!! defined $conf->{acl_short},
+		location_constraint => $conf->{location_constraint},
+		( $conf->{region} ? (region => $conf->{region}) : () ),
+	);
 
-    return unless $response->is_success;
+	return unless $response->is_success;
 
-    return $self->bucket ($conf->{bucket});
+	return $self->bucket ($conf->{bucket});
 }
 
 sub bucket {
-    my ( $self, $bucket ) = @_;
+	my ( $self, $bucket ) = @_;
 
-    return $bucket if $bucket->$Safe::Isa::_isa ($self->bucket_class);
+	return $bucket if $bucket->$Safe::Isa::_isa ($self->bucket_class);
 
-    return $self->bucket_class->new(
-        { bucket => $bucket, account => $self } );
+	return $self->bucket_class->new(
+		{ bucket => $bucket, account => $self } );
 }
 
 sub delete_bucket {
-    my ( $self, $conf ) = @_;
-    my $bucket;
-    if ( eval { $conf->isa("Net::S3::Amazon::Bucket"); } ) {
-        $bucket = $conf->bucket;
-    } else {
-        $bucket = $conf->{bucket};
-    }
-    croak 'must specify bucket' unless $bucket;
+	my ( $self, $conf ) = @_;
+	my $bucket;
+	if ( eval { $conf->isa("Net::S3::Amazon::Bucket"); } ) {
+		$bucket = $conf->bucket;
+	} else {
+		$bucket = $conf->{bucket};
+	}
+	croak 'must specify bucket' unless $bucket;
 
-    my $response = $self->_perform_operation (
-        'Net::Amazon::S3::Operation::Bucket::Delete',
+	my $response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Bucket::Delete',
 
-        bucket => $bucket,
-    );
+		bucket => $bucket,
+	);
 
-    return unless $response->is_success;
+	return unless $response->is_success;
 
-    return 1;
+	return 1;
 }
 
 sub list_bucket {
-    my ( $self, $conf ) = @_;
+	my ( $self, $conf ) = @_;
 
-    my $response = $self->_perform_operation (
-        'Net::Amazon::S3::Operation::Objects::List',
+	my $response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Objects::List',
 
-        bucket    => $conf->{bucket},
-        delimiter => $conf->{delimiter},
-        max_keys  => $conf->{max_keys},
-        marker    => $conf->{marker},
-        prefix    => $conf->{prefix},
-    );
+		bucket    => $conf->{bucket},
+		delimiter => $conf->{delimiter},
+		max_keys  => $conf->{max_keys},
+		marker    => $conf->{marker},
+		prefix    => $conf->{prefix},
+	);
 
-    return unless $response->is_success;
+	return unless $response->is_success;
 
-    my $return = {
-        bucket      => $response->bucket,
-        prefix      => $response->prefix,
-        marker      => $response->marker,
-        next_marker => $response->next_marker,
-        max_keys    => $response->max_keys,
-        is_truncated => $response->is_truncated,
-    };
+	my $return = {
+		bucket      => $response->bucket,
+		prefix      => $response->prefix,
+		marker      => $response->marker,
+		next_marker => $response->next_marker,
+		max_keys    => $response->max_keys,
+		is_truncated => $response->is_truncated,
+	};
 
-    my @keys;
-    foreach my $node ($response->contents) {
-        push @keys, {
-            key           => $node->{key},
-            last_modified => $node->{last_modified},
-            etag          => $node->{etag},
-            size          => $node->{size},
-            storage_class => $node->{storage_class},
-            owner_id      => $node->{owner}{id},
-            owner_displayname => $node->{owner}{displayname},
-            };
-    }
-    $return->{keys} = \@keys;
+	my @keys;
+	foreach my $node ($response->contents) {
+		push @keys, {
+			key           => $node->{key},
+			last_modified => $node->{last_modified},
+			etag          => $node->{etag},
+			size          => $node->{size},
+			storage_class => $node->{storage_class},
+			owner_id      => $node->{owner}{id},
+			owner_displayname => $node->{owner}{displayname},
+			};
+	}
+	$return->{keys} = \@keys;
 
-    if ( $conf->{delimiter} ) {
-        $return->{common_prefixes} = [ $response->common_prefixes ];
-    }
+	if ( $conf->{delimiter} ) {
+		$return->{common_prefixes} = [ $response->common_prefixes ];
+	}
 
-    return $return;
+	return $return;
 }
 
 sub list_bucket_all {
-    my ( $self, $conf ) = @_;
-    $conf ||= {};
-    my $bucket = $conf->{bucket};
-    croak 'must specify bucket' unless $bucket;
+	my ( $self, $conf ) = @_;
+	$conf ||= {};
+	my $bucket = $conf->{bucket};
+	croak 'must specify bucket' unless $bucket;
 
-    my $response = $self->list_bucket($conf);
-    return $response unless $response->{is_truncated};
-    my $all = $response;
+	my $response = $self->list_bucket($conf);
+	return $response unless $response->{is_truncated};
+	my $all = $response;
 
-    while (1) {
-        my $next_marker = $response->{next_marker}
-            || $response->{keys}->[-1]->{key};
-        $conf->{marker} = $next_marker;
-        $conf->{bucket} = $bucket;
-        $response       = $self->list_bucket($conf);
-        push @{ $all->{keys} }, @{ $response->{keys} };
-        last unless $response->{is_truncated};
-    }
+	while (1) {
+		my $next_marker = $response->{next_marker}
+			|| $response->{keys}->[-1]->{key};
+		$conf->{marker} = $next_marker;
+		$conf->{bucket} = $bucket;
+		$response       = $self->list_bucket($conf);
+		push @{ $all->{keys} }, @{ $response->{keys} };
+		last unless $response->{is_truncated};
+	}
 
-    delete $all->{is_truncated};
-    delete $all->{next_marker};
-    return $all;
+	delete $all->{is_truncated};
+	delete $all->{next_marker};
+	return $all;
 }
 
 # compat wrapper; deprecated as of 2005-03-23
 sub add_key {
-    my ( $self, $conf ) = @_;
-    my $bucket = $self->bucket (delete $conf->{bucket});
-    my $key    = delete $conf->{key};
-    my $value  = delete $conf->{value};
-    return $bucket->add_key( $key, $value, $conf );
+	my ( $self, $conf ) = @_;
+	my $bucket = $self->bucket (delete $conf->{bucket});
+	my $key    = delete $conf->{key};
+	my $value  = delete $conf->{value};
+	return $bucket->add_key( $key, $value, $conf );
 }
 
 # compat wrapper; deprecated as of 2005-03-23
 sub get_key {
-    my ( $self, $conf ) = @_;
-    my $bucket = $self->bucket (delete $conf->{bucket});
-    return $bucket->get_key( $conf->{key} );
+	my ( $self, $conf ) = @_;
+	my $bucket = $self->bucket (delete $conf->{bucket});
+	return $bucket->get_key( $conf->{key} );
 }
 
 # compat wrapper; deprecated as of 2005-03-23
 sub head_key {
-    my ( $self, $conf ) = @_;
-    my $bucket = $self->bucket (delete $conf->{bucket});
-    return $bucket->head_key( $conf->{key} );
+	my ( $self, $conf ) = @_;
+	my $bucket = $self->bucket (delete $conf->{bucket});
+	return $bucket->head_key( $conf->{key} );
 }
 
 # compat wrapper; deprecated as of 2005-03-23
 sub delete_key {
-    my ( $self, $conf ) = @_;
-    my $bucket = $self->bucket (delete $conf->{bucket});
-    return $bucket->delete_key( $conf->{key} );
+	my ( $self, $conf ) = @_;
+	my $bucket = $self->bucket (delete $conf->{bucket});
+	return $bucket->delete_key( $conf->{key} );
 }
 
 sub _perform_operation {
@@ -370,22 +370,22 @@ sub _perform_operation {
 	my $error_handler = delete $params{error_handler};
 	$error_handler = $self->error_handler unless defined $error_handler;
 
-    my $request_class  = $operation . '::Request';
-    my $response_class = $operation . '::Response';
+	my $request_class  = $operation . '::Request';
+	my $response_class = $operation . '::Response';
 	my $filename = delete $params{filename};
 
-    my $request  = $request_class->new (s3 => $self, %params);
-    my $http_response = $self->ua->request ($request->http_request, $filename);
-    my $response    = $response_class->new (http_response => $http_response);
+	my $request  = $request_class->new (s3 => $self, %params);
+	my $http_response = $self->ua->request ($request->http_request, $filename);
+	my $response    = $response_class->new (http_response => $http_response);
 
-    $error_handler->handle_error ($response);
+	$error_handler->handle_error ($response);
 
-    return $response;
+	return $response;
 }
 
 sub _urlencode {
-    my ( $self, $unencoded ) = @_;
-    return uri_escape_utf8( $unencoded, '^A-Za-z0-9_\-\.' );
+	my ( $self, $unencoded ) = @_;
+	return uri_escape_utf8( $unencoded, '^A-Za-z0-9_\-\.' );
 }
 
 __PACKAGE__->meta->make_immutable;

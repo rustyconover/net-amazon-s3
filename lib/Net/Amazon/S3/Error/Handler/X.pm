@@ -9,7 +9,7 @@ extends 'Net::Amazon::S3::Error::Handler';
 use Net::Amazon::S3::X;
 
 override handle_error => sub {
-    my ($self, $response, $request) = @_;
+	my ($self, $response, $request) = @_;
 
 	return 1 unless $response->is_error;
 
@@ -19,7 +19,7 @@ override handle_error => sub {
 		response => $response,
 	);
 
-    die $exception;
+	die $exception;
 };
 
 1;

@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 package
-    Shared::Examples::Net::Amazon::S3::Fixture::bucket::objects::delete::quiet_without_errors;
+	Shared::Examples::Net::Amazon::S3::Fixture::bucket::objects::delete::quiet_without_errors;
 
 use HTTP::Status;
 use Shared::Examples::Net::Amazon::S3::Fixture qw[ fixture ];
