@@ -5,6 +5,8 @@ __DATA__
 
 =pod
 
+=encoding utf8
+
 =head1 API COMPARISON
 
 Net::Amazon::S3 supports two APIs with different feature support.
@@ -13,7 +15,7 @@ This document describes current behaviour.
 
 =head2 Error reporting
 
-How API signals operation error
+Default error reporting method.
 
 =over
 
@@ -22,14 +24,20 @@ How API signals operation error
 Operation returns expression evaluated as false
 and C<< err >> with C<< errstr >> are populated from response content
 
+See L<Net::Amazon::S3::Error::Handler::Status>, L<Net::Amazon::S3::Error::Handler::Legacy>
+
 =item set network error
 
 Populates S3 err with C<< network_error >> constant and S3 errstr
 with http status line (eg: C<< 404 Not Found >>) and throws.
 
+See L<Net::Amazon::S3::Error::Handler::Legacy>
+
 =item confess
 
 Operation throws using C<< confess >>
+
+See L<Net::Amazon::S3::Error::Handler::Confess>
 
 =back
 
@@ -37,92 +45,137 @@ Operation throws using C<< confess >>
 
 For details see corresponding C<< api-operation >> / C<< client-operation >> test file
 
- |-----------------------+----------------------------+--------------------------|
- | operation             | Net::Amazon::S3 (API)      | Net::Amazon::S3::Client  |
- |-----------------------+----------------------------+--------------------------|
- | service-buckets-list  |                            |                          |
- | - returns             | Bucket instances in struct | Bucket instances (list)  |
- | - errors              | set S3 err                 | confess                  |
- |-----------------------+----------------------------+--------------------------|
- | bucket-acl-get        |                            |                          |
- | - returns             | response body (XML)        | response body (XML)      |
- |                       | (undef on Not Found)       |                          |
- | - errors              | set network error          | confess                  |
- |                       | (none on Not Found)        |                          |
- |-----------------------+----------------------------+--------------------------|
- | bucket-acl-set        |                            |                          |
- | - with canned acl     | yes, as acl_short          | N/A                      |
- | - with xml acl        | yes, as acl_xml            | N/A                      |
- | - returns             | boolean                    | N/A                      |
- | - errors              | set S3 err                 | N/A                      |
- |-----------------------+----------------------------+--------------------------|
- | bucket-create         |                            |                          |
- | - with region         | yes                        | yes                      |
- | - returns             | Bucket instance            | Bucket instance          |
- | - errors              | set S3 err                 | confess                  |
- |-----------------------+----------------------------+--------------------------|
- | bucket-delete         |                            |                          |
- | - returns             | boolean                    | true                     |
- | - errors              | set S3 err                 | confess                  |
- |-----------------------+----------------------------+--------------------------|
- | bucket-objects-list   |                            |                          |
- | - list version 1      | yes                        | yes                      |
- | - list version 2      | no                         | no                       |
- | - common prefixes     | supported                  | not supported            |
- | - list all            | list all method            | yes                      |
- | - returns             | struct with list           | iterator (Object list)   |
- | - errors              | set S3 err                 | confess during iteration |
- |-----------------------+----------------------------+--------------------------|
- | bucket-objects-delete |                            |                          |
- | - returns             | boolean                    | HTTP::Response object    |
- | - errors              | set S3 err                 | confess                  |
- |-----------------------+----------------------------+--------------------------|
- | object-acl-get        |                            |                          |
- | - returns             | response body (XML)        | N/A                      |
- |                       | (undef on Not Found)       | N/A                      |
- | - errors              | set network error          | N/A                      |
- |                       | (none on Not Found)        | N/A                      |
- |-----------------------+----------------------------+--------------------------|
- | object-acl-set        |                            |                          |
- | - with canned acl     | yes, as acl_short          | N/A                      |
- | - with xml acl        | yes, as acl_xml            | N/A                      |
- | - returns             | boolean                    | N/A                      |
- | - errors              | set S3 err                 | N/A                      |
- |-----------------------+----------------------------+--------------------------|
- | object-copy           |                            |                          |
- | - returns             | boolean                    | N/A                      |
- | - errors              | set S3 err                 | N/A                      |
- |-----------------------+----------------------------+--------------------------|
- | object-create         |                            |                          |
- | - returns             | boolean                    | empty string             |
- | - errors              | set S3 err                 | confess                  |
- |-----------------------+----------------------------+--------------------------|
- | object-delete         |                            |                          |
- | - returns             | boolean                    | true                     |
- | - errors              | set S3 err                 | confess                  |
- |-----------------------+----------------------------+--------------------------|
- | object-fetch          |                            |                          |
- | - returns             | struct with value          | value                    |
- |                       | (undef on Not Found)       |                          |
- | - errors              | set network error          | confess                  |
- |                       | (none on Not Found)        |                          |
- |-----------------------+----------------------------+--------------------------|
- | object-head           |                            |                          |
- | - returns             | boolean                    | N/A                      |
- | - errors              | set S3 err                 | N/A                      |
- |-----------------------+----------------------------+--------------------------|
+List of L<"Amazon S3 Operations"|https://docs.aws.amazon.com/AmazonS3/latest/API/API_Operations_Amazon_Simple_Storage_Service.html>
 
-=head2 TODO plan (asorted, not promised)
+ |-------------------------+---------------------------------+-----------------------------------|
+ | operation               | Net::Amazon::S3 (API)           | Net::Amazon::S3::Client           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | AbortMultipartUpload    | ❌                              | object->abort_multipart_upload    |
+ | returns                 | ❌                              | http response                     |
+ | errors                  | ❌                              | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | CompleteMultipartUpload | ❌                              | object->complete_multipart_upload |
+ | returns                 | ❌                              | http response                     |
+ | errors                  | ❌                              | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | CreateBucket            | s3->add_bucket                  | client->create_bucket             |
+ | - with region           | ✅                              | ✅                                |
+ | returns                 | Bucket instance                 | Bucket instance                   |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | CreateMultipartUpload   | ❌                              | object->initiate_multipart_upload |
+ | returns                 | ❌                              | http response                     |
+ | errors                  | ❌                              | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | DeleteBucket            | s3->delete_bucket               | bucket->delete                    |
+ | returns                 | boolean                         | boolean                           |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | DeleteBucketTagging     | bucket->delete_tags             | bucket->delete_tags               |
+ | returns                 | boolean                         | boolean                           |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | DeleteObject            | bucket->delete_key              | bucket->object->delete            |
+ | returns                 | boolean                         | boolean                           |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | DeleteObjects           | bucket->delete_multi_object     | bucket->delete_multi_object       |
+ | - auto chunks           | ✅                              | ✅                                |
+ | returns                 | boolean                         | HTTP::Response object             |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | DeleteObjectTagging     | bucket->delete_tags             | bucket->object->delete_tags       |
+ | returns                 | boolean                         | boolean                           |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | GetBucketAcl            | bucket->get_acl                 | bucket->acl                       |
+ | returns                 | response body (XML)             | response body (XML)               |
+ |                         | (undef on Not Found)            |                                   |
+ | errors                  | set network error               | confess                           |
+ |                         | (none on Not Found)             |                                   |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | GetBucketLocation       | bucket->get_location_constraint | bucket->get_location_constraint   |
+ | returns                 | location (Str)                  | location (Str)                    |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | GetObject               | bucket->get_key                 | bucket->object->get               |
+ | returns                 | struct with value               | value                             |
+ |                         | (undef on Not Found)            |                                   |
+ | errors                  | set network error               | confess                           |
+ |                         | (none on Not Found)             |                                   |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | GetObjectAcl            | bucket->get_acl                 | ❌                                |
+ | returns                 | response body (XML)             | ❌                                |
+ |                         | (undef on Not Found)            | ❌                                |
+ | errors                  | set network error               | ❌                                |
+ |                         | (none on Not Found)             | ❌                                |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | ListBuckets             | s3->buckets                     | client->buckets                   |
+ | returns                 | Bucket instances in struct      | Bucket instances (list)           |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | ListObjects             | s3->list_bucket                 | bucket->list                      |
+ | - common prefixes       | ✅                              | ❌                                |
+ | - list all              | ✅, s3->list_bucket_all         | ✅                                |
+ | returns                 | struct with list                | iterator (Object list)            |
+ | errors                  | set S3 err                      | confess during iteration          |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | ListObjectsV2           | ❌                              | ❌                                |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | ListParts               | ❌                              | ❌                                |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | PutBucketAcl            | bucket->set_acl                 | bucket->set_acl                   |
+ | - with canned acl       | ✅, as acl                      | ✅, as acl                        |
+ | - with explicit acl     | ✅, as acl                      | ✅, as acl                        |
+ | - with xml acl          | ✅, as acl_xml                  | ✅, as acl_xml                    |
+ | returns                 | boolean                         | boolean                           |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | PutBucketTagging        | bucket->add_tags                | bucket->add_tags                  |
+ | - with canned acl       | ✅, as acl                      | ✅, as acl                        |
+ | - with explicit acl     | ✅, as acl                      | ✅, as acl                        |
+ | - with xml acl          | ✅, as acl_xml                  | ✅, as acl_xml                    |
+ | returns                 | boolean                         | boolean                           |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | PutObject               | bucket->add_key                 | bucket->object->put               |
+ | returns                 | boolean                         | empty string                      |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | PutObjectAcl            | bucket->set_acl                 | object->set_acl                   |
+ | - with canned acl       | ✅, as acl                      | ✅, as acl                        |
+ | - with explicit acl     | ✅, as acl                      | ✅, as acl                        |
+ | - with xml acl          | ✅, as acl_xml                  | ✅, as acl_xml                    |
+ | returns                 | boolean                         | boolean                           |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | PutObjectTagging        | bucket->add_tags                | bucket->object->add_tags          |
+ | - with canned acl       | ✅, as acl                      | ✅, as acl                        |
+ | - with explicit acl     | ✅, as acl                      | ✅, as acl                        |
+ | - with xml acl          | ✅, as acl_xml                  | ✅, as acl_xml                    |
+ | returns                 | boolean                         | boolean                           |
+ | errors                  | set S3 err                      | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | RestoreObject           | ❌                              | bucket->object->restore           |
+ | returns                 | ❌                              | http response                     |
+ | errors                  | ❌                              | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | UploadPart              | ❌                              | bucket->object->put_part          |
+ | returns                 | ❌                              | http response                     |
+ | errors                  | ❌                              | confess                           |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | object-copy             | bucket->copy_key                | ❌                                |
+ | returns                 | boolean                         | ❌                                |
+ | errors                  | set S3 err                      | ❌                                |
+ |-------------------------+---------------------------------+-----------------------------------|
+ | object-head             |                                 | ❌                                |
+ | returns                 | boolean                         | ❌                                |
+ | errors                  | set S3 err                      | ❌                                |
+ |-------------------------+---------------------------------+-----------------------------------|
+
+=head2 TODO plan (asorted, without time-plan)
 
 =over
-
-=item normalize error reporting
-
-Make every operation to behave similar (especially C<< Net::Amazon::S3 >>
-
-=item make error reporting pluggable
-
-With possibility to inject user's own reporting
 
 =item unify features
 
