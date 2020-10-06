@@ -11,7 +11,14 @@ use Net::Amazon::S3::Error::Handler::Confess;
 
 type 'Etag' => where { $_ =~ /^[a-z0-9]{32}(?:-\d+)?$/ };
 
-has 's3' => ( is => 'ro', isa => 'Net::Amazon::S3', required => 1 );
+has 's3' => (
+	is => 'ro',
+	isa => 'Net::Amazon::S3',
+	required => 1,
+	handles => [
+		'ua',
+	],
+);
 
 has error_handler_class => (
     is => 'ro',
@@ -92,17 +99,6 @@ sub bucket {
     );
 }
 
-sub _send_request_raw {
-    my ( $self, $http_request, $filename ) = @_;
-
-	$http_request = $http_request->http_request
-		if $http_request->$Safe::Isa::_isa ('Net::Amazon::S3::Request');
-
-	return Net::Amazon::S3::Response->new (
-		http_response => scalar $self->s3->ua->request( $http_request, $filename ),
-	);
-}
-
 =head2 _perform_operation
 
 Refer L<Net::Amazon::S3/_perform_operation
@@ -130,8 +126,8 @@ sub _perform_operation {
     my $filename       = delete $params{filename};
 
     my $request  = $request_class->new (s3 => $self->s3, %params);
-    my $response = $self->_send_request_raw ($request->http_request, $filename);
-    $response    = $response_class->new (http_response => $response->http_response);
+    my $http_response = $self->ua->request ($request->http_request, $filename);
+    my $response = $response_class->new (http_response => $http_response);
 
     $error_handler->handle_error ($response);
 

@@ -783,7 +783,7 @@ sub _head_region {
         my $requests_redirectable = $self->account->ua->requests_redirectable;
         $self->account->ua->requests_redirectable( [] );
 
-        my $response = $self->account->_do_http( $request );
+        my $response = $self->account->ua->request ($request);
 
         $self->account->ua->requests_redirectable( $requests_redirectable );
 

@@ -917,31 +917,12 @@ sub _perform_operation {
 	my $filename = delete $params{filename};
 
     my $request  = $request_class->new (s3 => $self, %params);
-    my $response = $self->_do_http ($request, $filename);
-    $response    = $response_class->new (http_response => $response->http_response);
+    my $http_response = $self->ua->request ($request->http_request, $filename);
+    my $response    = $response_class->new (http_response => $http_response);
 
     $error_handler->handle_error ($response);
 
     return $response;
-}
-
-# centralize all HTTP work, for debugging
-sub _do_http {
-    my ( $self, $http_request, $filename ) = @_;
-
-	$http_request = $http_request->http_request
-		if $http_request->$Safe::Isa::_isa ('Net::Amazon::S3::Request');
-
-    confess 'Need HTTP::Request object'
-        if ( ref($http_request) ne 'HTTP::Request' );
-
-	my $response = Net::Amazon::S3::Response->new (
-		http_response => scalar $self->ua->request( $http_request, $filename ),
-	);
-
-	$self->error_handler->handle_error ($response, $http_request);
-
-	return $response;
 }
 
 sub _urlencode {
