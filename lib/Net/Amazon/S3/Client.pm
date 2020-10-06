@@ -101,20 +101,11 @@ sub bucket {
 sub _perform_operation {
 	my ($self, $operation, %params) = @_;
 
-	my $error_handler = delete $params{error_handler};
-	$error_handler = $self->error_handler unless defined $error_handler;
-
-	my $request_class  = $operation . '::Request';
-	my $response_class = $operation . '::Response';
-	my $filename       = delete $params{filename};
-
-	my $request  = $request_class->new (s3 => $self->s3, %params);
-	my $http_response = $self->ua->request ($request->http_request, $filename);
-	my $response = $response_class->new (http_response => $http_response);
-
-	$error_handler->handle_error ($response);
-
-	return $response;
+	return $self->s3->_perform_operation (
+		$operation,
+		error_handler => $self->error_handler,
+		%params
+	);
 }
 
 1;
