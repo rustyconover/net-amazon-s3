@@ -45,8 +45,6 @@ use Net::Amazon::S3::Vendor;
 use Net::Amazon::S3::Vendor::Amazon;
 use LWP::UserAgent::Determined;
 use URI::Escape qw(uri_escape_utf8);
-use XML::LibXML;
-use XML::LibXML::XPathContext;
 
 my $AMAZON_S3_HOST = 's3.amazonaws.com';
 
@@ -77,7 +75,6 @@ has vendor => (
 
 has 'timeout' => ( is => 'ro', isa => 'Num',  required => 0, default => 30 );
 has 'retry'   => ( is => 'ro', isa => 'Bool', required => 0, default => 0 );
-has 'libxml' => ( is => 'rw', isa => 'XML::LibXML',    required => 0 );
 has 'ua'     => ( is => 'rw', isa => 'LWP::UserAgent', required => 0 );
 has 'err'    => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
 has 'errstr' => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
@@ -184,7 +181,6 @@ sub BUILD {
     $ua->env_proxy;
 
     $self->ua($ua);
-    $self->libxml( XML::LibXML->new );
 }
 
 sub bucket_class {
