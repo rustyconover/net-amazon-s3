@@ -1,9 +1,404 @@
 package Net::Amazon::S3;
+# ABSTRACT: Use the Amazon S3 - Simple Storage Service
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;
 
-# ABSTRACT: Use the Amazon S3 - Simple Storage Service
+use Carp;
+use Digest::HMAC_SHA1;
+use Safe::Isa ();
+
+use Net::Amazon::S3::Bucket;
+use Net::Amazon::S3::Client;
+use Net::Amazon::S3::Client::Bucket;
+use Net::Amazon::S3::Client::Object;
+use Net::Amazon::S3::Error::Handler::Legacy;
+use Net::Amazon::S3::HTTPRequest;
+use Net::Amazon::S3::Request;
+use Net::Amazon::S3::Response;
+use Net::Amazon::S3::Operation::Bucket::Acl::Fetch;
+use Net::Amazon::S3::Operation::Bucket::Acl::Set;
+use Net::Amazon::S3::Operation::Bucket::Create;
+use Net::Amazon::S3::Operation::Bucket::Delete;
+use Net::Amazon::S3::Operation::Bucket::Location;
+use Net::Amazon::S3::Operation::Bucket::Tags::Add;
+use Net::Amazon::S3::Operation::Bucket::Tags::Delete;
+use Net::Amazon::S3::Operation::Buckets::List;
+use Net::Amazon::S3::Operation::Object::Acl::Fetch;
+use Net::Amazon::S3::Operation::Object::Acl::Set;
+use Net::Amazon::S3::Operation::Object::Add;
+use Net::Amazon::S3::Operation::Object::Fetch;
+use Net::Amazon::S3::Operation::Object::Delete;
+use Net::Amazon::S3::Operation::Object::Restore;
+use Net::Amazon::S3::Operation::Object::Tags::Add;
+use Net::Amazon::S3::Operation::Object::Tags::Delete;
+use Net::Amazon::S3::Operation::Object::Upload::Abort;
+use Net::Amazon::S3::Operation::Object::Upload::Complete;
+use Net::Amazon::S3::Operation::Object::Upload::Create;
+use Net::Amazon::S3::Operation::Object::Upload::Part;
+use Net::Amazon::S3::Operation::Object::Upload::Parts;
+use Net::Amazon::S3::Operation::Objects::Delete;
+use Net::Amazon::S3::Operation::Objects::List;
+use Net::Amazon::S3::Signature::V2;
+use Net::Amazon::S3::Signature::V4;
+use Net::Amazon::S3::Vendor;
+use Net::Amazon::S3::Vendor::Amazon;
+use LWP::UserAgent::Determined;
+use URI::Escape qw(uri_escape_utf8);
+use XML::LibXML;
+use XML::LibXML::XPathContext;
+
+my $AMAZON_S3_HOST = 's3.amazonaws.com';
+
+has authorization_context => (
+	is => 'ro',
+	isa => 'Net::Amazon::S3::Authorization',
+	required => 0,
+
+	handles => {
+		aws_access_key_id     => 'aws_access_key_id',
+		aws_secret_access_key => 'aws_secret_access_key',
+		aws_session_token     => 'aws_session_token',
+	},
+);
+
+has vendor => (
+	is => 'ro',
+	isa => 'Net::Amazon::S3::Vendor',
+	required => 1,
+
+	handles => {
+		authorization_method => 'authorization_method',
+		host                 => 'host',
+		secure               => 'use_https',
+		use_virtual_host     => 'use_virtual_host',
+	},
+);
+
+has 'timeout' => ( is => 'ro', isa => 'Num',  required => 0, default => 30 );
+has 'retry'   => ( is => 'ro', isa => 'Bool', required => 0, default => 0 );
+has 'libxml' => ( is => 'rw', isa => 'XML::LibXML',    required => 0 );
+has 'ua'     => ( is => 'rw', isa => 'LWP::UserAgent', required => 0 );
+has 'err'    => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
+has 'errstr' => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
+has keep_alive_cache_size => ( is => 'ro', isa => 'Int', required => 0, default => 10 );
+
+has error_handler_class => (
+    is => 'ro',
+    lazy => 1,
+    default => 'Net::Amazon::S3::Error::Handler::Legacy',
+);
+
+has error_handler => (
+    is => 'ro',
+    lazy => 1,
+    default => sub { $_[0]->error_handler_class->new (s3 => $_[0]) },
+);
+
+sub _build_arg_authorization_context {
+	my ($args) = @_;
+
+	my $aws_access_key_id     = delete $args->{aws_access_key_id};
+	my $aws_secret_access_key = delete $args->{aws_secret_access_key};
+	my $use_iam_role          = delete $args->{use_iam_role};
+	my $aws_session_token     = delete $args->{aws_session_token};
+
+	if ($args->{authorization_context}) {
+		return $args->{authorization_context};
+	}
+
+	if ($use_iam_role || $aws_session_token) {
+		require Net::Amazon::S3::Authorization::IAM;
+
+		return Net::Amazon::S3::Authorization::IAM->new (
+			aws_access_key_id     => $aws_access_key_id,
+			aws_secret_access_key => $aws_secret_access_key,
+			aws_session_token     => $aws_session_token,
+		)
+	}
+
+	require Net::Amazon::S3::Authorization::Basic;
+
+	return Net::Amazon::S3::Authorization::Basic->new (
+		aws_access_key_id => $aws_access_key_id,
+		aws_secret_access_key => $aws_secret_access_key,
+	);
+}
+
+sub _build_arg_vendor {
+	my ($args) = @_;
+
+	my %backward =
+		map  { $_ => delete $args->{$_} }
+		grep { exists  $args->{$_} }
+		qw[ host secure use_virtual_host authorization_method ]
+		;
+
+	return $args->{vendor}
+		if $args->{vendor};
+
+	$backward{host} = $AMAZON_S3_HOST
+		unless exists $backward{host};
+
+	$backward{use_https} = delete $backward{secure}
+		if exists $backward{secure};
+
+	my $vendor_class = $backward{host} eq $AMAZON_S3_HOST
+		? 'Net::Amazon::S3::Vendor::Amazon'
+		: 'Net::Amazon::S3::Vendor'
+		;
+
+	return $vendor_class->new (%backward);
+}
+
+around BUILDARGS => sub {
+	my ($orig, $class) = (shift, shift);
+	my $args = $class->$orig (@_);
+
+	# support compat authorization arguments
+	$args->{authorization_context} = _build_arg_authorization_context $args;
+	$args->{vendor}                = _build_arg_vendor                $args;
+
+    $args;
+};
+
+
+sub BUILD {
+    my $self = shift;
+
+    my $ua;
+    if ( $self->retry ) {
+        $ua = LWP::UserAgent::Determined->new(
+            keep_alive            => $self->keep_alive_cache_size,
+            requests_redirectable => [qw(GET HEAD DELETE PUT POST)],
+        );
+        $ua->timing('1,2,4,8,16,32');
+    } else {
+        $ua = LWP::UserAgent->new(
+            keep_alive            => $self->keep_alive_cache_size,
+            requests_redirectable => [qw(GET HEAD DELETE PUT POST)],
+        );
+    }
+
+    $ua->timeout( $self->timeout );
+    $ua->env_proxy;
+
+    $self->ua($ua);
+    $self->libxml( XML::LibXML->new );
+}
+
+sub bucket_class {
+    'Net::Amazon::S3::Bucket'
+}
+
+sub buckets {
+    my $self = shift;
+
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Buckets::List',
+    );
+
+    return unless $response->is_success;
+
+    my $owner_id          = $response->owner_id;;
+    my $owner_displayname = $response->owner_displayname;
+
+    my @buckets;
+    foreach my $bucket ($response->buckets) {
+        push @buckets, $self->bucket_class->new (
+			account       => $self,
+			bucket        => $bucket->{name},
+			creation_date => $bucket->{creation_date},
+		);
+
+    }
+
+    return +{
+        owner_id          => $owner_id,
+        owner_displayname => $owner_displayname,
+        buckets           => \@buckets,
+    };
+}
+
+sub add_bucket {
+    my ($self, $conf) = @_;
+
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Bucket::Create',
+
+        bucket              => $conf->{bucket},
+        (acl                => $conf->{acl})       x!! defined $conf->{acl},
+        (acl_short          => $conf->{acl_short}) x!! defined $conf->{acl_short},
+        location_constraint => $conf->{location_constraint},
+        ( $conf->{region} ? (region => $conf->{region}) : () ),
+    );
+
+    return unless $response->is_success;
+
+    return $self->bucket ($conf->{bucket});
+}
+
+sub bucket {
+    my ( $self, $bucket ) = @_;
+
+    return $bucket if $bucket->$Safe::Isa::_isa ($self->bucket_class);
+
+    return $self->bucket_class->new(
+        { bucket => $bucket, account => $self } );
+}
+
+sub delete_bucket {
+    my ( $self, $conf ) = @_;
+    my $bucket;
+    if ( eval { $conf->isa("Net::S3::Amazon::Bucket"); } ) {
+        $bucket = $conf->bucket;
+    } else {
+        $bucket = $conf->{bucket};
+    }
+    croak 'must specify bucket' unless $bucket;
+
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Bucket::Delete',
+
+        bucket => $bucket,
+    );
+
+    return unless $response->is_success;
+
+    return 1;
+}
+
+sub list_bucket {
+    my ( $self, $conf ) = @_;
+
+    my $response = $self->_perform_operation (
+        'Net::Amazon::S3::Operation::Objects::List',
+
+        bucket    => $conf->{bucket},
+        delimiter => $conf->{delimiter},
+        max_keys  => $conf->{max_keys},
+        marker    => $conf->{marker},
+        prefix    => $conf->{prefix},
+    );
+
+    return unless $response->is_success;
+
+    my $return = {
+        bucket      => $response->bucket,
+        prefix      => $response->prefix,
+        marker      => $response->marker,
+        next_marker => $response->next_marker,
+        max_keys    => $response->max_keys,
+        is_truncated => $response->is_truncated,
+    };
+
+    my @keys;
+    foreach my $node ($response->contents) {
+        push @keys, {
+            key           => $node->{key},
+            last_modified => $node->{last_modified},
+            etag          => $node->{etag},
+            size          => $node->{size},
+            storage_class => $node->{storage_class},
+            owner_id      => $node->{owner}{id},
+            owner_displayname => $node->{owner}{displayname},
+            };
+    }
+    $return->{keys} = \@keys;
+
+    if ( $conf->{delimiter} ) {
+        $return->{common_prefixes} = [ $response->common_prefixes ];
+    }
+
+    return $return;
+}
+
+sub list_bucket_all {
+    my ( $self, $conf ) = @_;
+    $conf ||= {};
+    my $bucket = $conf->{bucket};
+    croak 'must specify bucket' unless $bucket;
+
+    my $response = $self->list_bucket($conf);
+    return $response unless $response->{is_truncated};
+    my $all = $response;
+
+    while (1) {
+        my $next_marker = $response->{next_marker}
+            || $response->{keys}->[-1]->{key};
+        $conf->{marker} = $next_marker;
+        $conf->{bucket} = $bucket;
+        $response       = $self->list_bucket($conf);
+        push @{ $all->{keys} }, @{ $response->{keys} };
+        last unless $response->{is_truncated};
+    }
+
+    delete $all->{is_truncated};
+    delete $all->{next_marker};
+    return $all;
+}
+
+# compat wrapper; deprecated as of 2005-03-23
+sub add_key {
+    my ( $self, $conf ) = @_;
+    my $bucket = $self->bucket (delete $conf->{bucket});
+    my $key    = delete $conf->{key};
+    my $value  = delete $conf->{value};
+    return $bucket->add_key( $key, $value, $conf );
+}
+
+# compat wrapper; deprecated as of 2005-03-23
+sub get_key {
+    my ( $self, $conf ) = @_;
+    my $bucket = $self->bucket (delete $conf->{bucket});
+    return $bucket->get_key( $conf->{key} );
+}
+
+# compat wrapper; deprecated as of 2005-03-23
+sub head_key {
+    my ( $self, $conf ) = @_;
+    my $bucket = $self->bucket (delete $conf->{bucket});
+    return $bucket->head_key( $conf->{key} );
+}
+
+# compat wrapper; deprecated as of 2005-03-23
+sub delete_key {
+    my ( $self, $conf ) = @_;
+    my $bucket = $self->bucket (delete $conf->{bucket});
+    return $bucket->delete_key( $conf->{key} );
+}
+
+sub _perform_operation {
+	my ($self, $operation, %params) = @_;
+
+	my $error_handler = delete $params{error_handler};
+	$error_handler = $self->error_handler unless defined $error_handler;
+
+    my $request_class  = $operation . '::Request';
+    my $response_class = $operation . '::Response';
+	my $filename = delete $params{filename};
+
+    my $request  = $request_class->new (s3 => $self, %params);
+    my $http_response = $self->ua->request ($request->http_request, $filename);
+    my $response    = $response_class->new (http_response => $http_response);
+
+    $error_handler->handle_error ($response);
+
+    return $response;
+}
+
+sub _urlencode {
+    my ( $self, $unencoded ) = @_;
+    return uri_escape_utf8( $unencoded, '^A-Za-z0-9_\-\.' );
+}
+
+__PACKAGE__->meta->make_immutable;
+
+1;
+
+__END__
+
+=encoding utf8
 
 =head1 SYNOPSIS
 
@@ -111,99 +506,6 @@ Note: This is the legacy interface, please check out
 L<Net::Amazon::S3::Client> instead.
 
 Development of this code happens here: https://github.com/rustyconover/net-amazon-s3
-
-=cut
-
-use Carp;
-use Digest::HMAC_SHA1;
-use Safe::Isa ();
-
-use Net::Amazon::S3::Bucket;
-use Net::Amazon::S3::Client;
-use Net::Amazon::S3::Client::Bucket;
-use Net::Amazon::S3::Client::Object;
-use Net::Amazon::S3::Error::Handler::Legacy;
-use Net::Amazon::S3::HTTPRequest;
-use Net::Amazon::S3::Request;
-use Net::Amazon::S3::Response;
-use Net::Amazon::S3::Operation::Bucket::Acl::Fetch;
-use Net::Amazon::S3::Operation::Bucket::Acl::Set;
-use Net::Amazon::S3::Operation::Bucket::Create;
-use Net::Amazon::S3::Operation::Bucket::Delete;
-use Net::Amazon::S3::Operation::Bucket::Location;
-use Net::Amazon::S3::Operation::Bucket::Tags::Add;
-use Net::Amazon::S3::Operation::Bucket::Tags::Delete;
-use Net::Amazon::S3::Operation::Buckets::List;
-use Net::Amazon::S3::Operation::Object::Acl::Fetch;
-use Net::Amazon::S3::Operation::Object::Acl::Set;
-use Net::Amazon::S3::Operation::Object::Add;
-use Net::Amazon::S3::Operation::Object::Fetch;
-use Net::Amazon::S3::Operation::Object::Delete;
-use Net::Amazon::S3::Operation::Object::Restore;
-use Net::Amazon::S3::Operation::Object::Tags::Add;
-use Net::Amazon::S3::Operation::Object::Tags::Delete;
-use Net::Amazon::S3::Operation::Object::Upload::Abort;
-use Net::Amazon::S3::Operation::Object::Upload::Complete;
-use Net::Amazon::S3::Operation::Object::Upload::Create;
-use Net::Amazon::S3::Operation::Object::Upload::Part;
-use Net::Amazon::S3::Operation::Object::Upload::Parts;
-use Net::Amazon::S3::Operation::Objects::Delete;
-use Net::Amazon::S3::Operation::Objects::List;
-use Net::Amazon::S3::Signature::V2;
-use Net::Amazon::S3::Signature::V4;
-use Net::Amazon::S3::Vendor;
-use Net::Amazon::S3::Vendor::Amazon;
-use LWP::UserAgent::Determined;
-use URI::Escape qw(uri_escape_utf8);
-use XML::LibXML;
-use XML::LibXML::XPathContext;
-
-my $AMAZON_S3_HOST = 's3.amazonaws.com';
-
-has authorization_context => (
-	is => 'ro',
-	isa => 'Net::Amazon::S3::Authorization',
-	required => 0,
-
-	handles => {
-		aws_access_key_id     => 'aws_access_key_id',
-		aws_secret_access_key => 'aws_secret_access_key',
-		aws_session_token     => 'aws_session_token',
-	},
-);
-
-has vendor => (
-	is => 'ro',
-	isa => 'Net::Amazon::S3::Vendor',
-	required => 1,
-
-	handles => {
-		authorization_method => 'authorization_method',
-		host                 => 'host',
-		secure               => 'use_https',
-		use_virtual_host     => 'use_virtual_host',
-	},
-);
-
-has 'timeout' => ( is => 'ro', isa => 'Num',  required => 0, default => 30 );
-has 'retry'   => ( is => 'ro', isa => 'Bool', required => 0, default => 0 );
-has 'libxml' => ( is => 'rw', isa => 'XML::LibXML',    required => 0 );
-has 'ua'     => ( is => 'rw', isa => 'LWP::UserAgent', required => 0 );
-has 'err'    => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
-has 'errstr' => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
-has keep_alive_cache_size => ( is => 'ro', isa => 'Int', required => 0, default => 10 );
-
-has error_handler_class => (
-    is => 'ro',
-    lazy => 1,
-    default => 'Net::Amazon::S3::Error::Handler::Legacy',
-);
-
-has error_handler => (
-    is => 'ro',
-    lazy => 1,
-    default => sub { $_[0]->error_handler_class->new (s3 => $_[0]) },
-);
 
 =head1 METHODS
 
@@ -373,138 +675,9 @@ the L<LWP::ConnCache> in the parent:
     $s3->ua( LWP::UserAgent->new( 
         keep_alive => 0, requests_redirectable => [qw'GET HEAD DELETE PUT POST'] );
 
-=cut
-
-sub _build_arg_authorization_context {
-	my ($args) = @_;
-
-	my $aws_access_key_id     = delete $args->{aws_access_key_id};
-	my $aws_secret_access_key = delete $args->{aws_secret_access_key};
-	my $use_iam_role          = delete $args->{use_iam_role};
-	my $aws_session_token     = delete $args->{aws_session_token};
-
-	if ($args->{authorization_context}) {
-		return $args->{authorization_context};
-	}
-
-	if ($use_iam_role || $aws_session_token) {
-		require Net::Amazon::S3::Authorization::IAM;
-
-		return Net::Amazon::S3::Authorization::IAM->new (
-			aws_access_key_id     => $aws_access_key_id,
-			aws_secret_access_key => $aws_secret_access_key,
-			aws_session_token     => $aws_session_token,
-		)
-	}
-
-	require Net::Amazon::S3::Authorization::Basic;
-
-	return Net::Amazon::S3::Authorization::Basic->new (
-		aws_access_key_id => $aws_access_key_id,
-		aws_secret_access_key => $aws_secret_access_key,
-	);
-}
-
-sub _build_arg_vendor {
-	my ($args) = @_;
-
-	my %backward =
-		map  { $_ => delete $args->{$_} }
-		grep { exists  $args->{$_} }
-		qw[ host secure use_virtual_host authorization_method ]
-		;
-
-	return $args->{vendor}
-		if $args->{vendor};
-
-	$backward{host} = $AMAZON_S3_HOST
-		unless exists $backward{host};
-
-	$backward{use_https} = delete $backward{secure}
-		if exists $backward{secure};
-
-	my $vendor_class = $backward{host} eq $AMAZON_S3_HOST
-		? 'Net::Amazon::S3::Vendor::Amazon'
-		: 'Net::Amazon::S3::Vendor'
-		;
-
-	return $vendor_class->new (%backward);
-}
-
-around BUILDARGS => sub {
-	my ($orig, $class) = (shift, shift);
-	my $args = $class->$orig (@_);
-
-	# support compat authorization arguments
-	$args->{authorization_context} = _build_arg_authorization_context $args;
-	$args->{vendor}                = _build_arg_vendor                $args;
-
-    $args;
-};
-
-
-sub BUILD {
-    my $self = shift;
-
-    my $ua;
-    if ( $self->retry ) {
-        $ua = LWP::UserAgent::Determined->new(
-            keep_alive            => $self->keep_alive_cache_size,
-            requests_redirectable => [qw(GET HEAD DELETE PUT POST)],
-        );
-        $ua->timing('1,2,4,8,16,32');
-    } else {
-        $ua = LWP::UserAgent->new(
-            keep_alive            => $self->keep_alive_cache_size,
-            requests_redirectable => [qw(GET HEAD DELETE PUT POST)],
-        );
-    }
-
-    $ua->timeout( $self->timeout );
-    $ua->env_proxy;
-
-    $self->ua($ua);
-    $self->libxml( XML::LibXML->new );
-}
-
 =head2 buckets
 
 Returns undef on error, else hashref of results
-
-=cut
-
-sub bucket_class {
-    'Net::Amazon::S3::Bucket'
-}
-
-sub buckets {
-    my $self = shift;
-
-    my $response = $self->_perform_operation (
-        'Net::Amazon::S3::Operation::Buckets::List',
-    );
-
-    return unless $response->is_success;
-
-    my $owner_id          = $response->owner_id;;
-    my $owner_displayname = $response->owner_displayname;
-
-    my @buckets;
-    foreach my $bucket ($response->buckets) {
-        push @buckets, $self->bucket_class->new (
-			account       => $self,
-			bucket        => $bucket->{name},
-			creation_date => $bucket->{creation_date},
-		);
-
-    }
-
-    return +{
-        owner_id          => $owner_id,
-        owner_displayname => $owner_displayname,
-        buckets           => \@buckets,
-    };
-}
 
 =head2 add_bucket
 
@@ -543,42 +716,11 @@ to 'EU' for a European data center - note that costs are different.
 
 Returns 0 on failure, Net::Amazon::S3::Bucket object on success
 
-=cut
-
-sub add_bucket {
-    my ($self, $conf) = @_;
-
-    my $response = $self->_perform_operation (
-        'Net::Amazon::S3::Operation::Bucket::Create',
-
-        bucket              => $conf->{bucket},
-        (acl                => $conf->{acl})       x!! defined $conf->{acl},
-        (acl_short          => $conf->{acl_short}) x!! defined $conf->{acl_short},
-        location_constraint => $conf->{location_constraint},
-        ( $conf->{region} ? (region => $conf->{region}) : () ),
-    );
-
-    return unless $response->is_success;
-
-    return $self->bucket ($conf->{bucket});
-}
-
 =head2 bucket BUCKET
 
 Takes a scalar argument, the name of the bucket you're creating
 
 Returns an (unverified) bucket object from an account. Does no network access.
-
-=cut
-
-sub bucket {
-    my ( $self, $bucket ) = @_;
-
-    return $bucket if $bucket->$Safe::Isa::_isa ($self->bucket_class);
-
-    return $self->bucket_class->new(
-        { bucket => $bucket, account => $self } );
-}
 
 =head2 delete_bucket
 
@@ -595,29 +737,6 @@ The name of the bucket to remove
 Returns false (and fails) if the bucket isn't empty.
 
 Returns true if the bucket is successfully deleted.
-
-=cut
-
-sub delete_bucket {
-    my ( $self, $conf ) = @_;
-    my $bucket;
-    if ( eval { $conf->isa("Net::S3::Amazon::Bucket"); } ) {
-        $bucket = $conf->bucket;
-    } else {
-        $bucket = $conf->{bucket};
-    }
-    croak 'must specify bucket' unless $bucket;
-
-    my $response = $self->_perform_operation (
-        'Net::Amazon::S3::Operation::Bucket::Delete',
-
-        bucket => $bucket,
-    );
-
-    return unless $response->is_success;
-
-    return 1;
-}
 
 =head2 list_bucket
 
@@ -753,53 +872,6 @@ Each key is a hashref that looks like this:
         owner_displayname => $owner_name
     }
 
-=cut
-
-sub list_bucket {
-    my ( $self, $conf ) = @_;
-
-    my $response = $self->_perform_operation (
-        'Net::Amazon::S3::Operation::Objects::List',
-
-        bucket    => $conf->{bucket},
-        delimiter => $conf->{delimiter},
-        max_keys  => $conf->{max_keys},
-        marker    => $conf->{marker},
-        prefix    => $conf->{prefix},
-    );
-
-    return unless $response->is_success;
-
-    my $return = {
-        bucket      => $response->bucket,
-        prefix      => $response->prefix,
-        marker      => $response->marker,
-        next_marker => $response->next_marker,
-        max_keys    => $response->max_keys,
-        is_truncated => $response->is_truncated,
-    };
-
-    my @keys;
-    foreach my $node ($response->contents) {
-        push @keys, {
-            key           => $node->{key},
-            last_modified => $node->{last_modified},
-            etag          => $node->{etag},
-            size          => $node->{size},
-            storage_class => $node->{storage_class},
-            owner_id      => $node->{owner}{id},
-            owner_displayname => $node->{owner}{displayname},
-            };
-    }
-    $return->{keys} = \@keys;
-
-    if ( $conf->{delimiter} ) {
-        $return->{common_prefixes} = [ $response->common_prefixes ];
-    }
-
-    return $return;
-}
-
 =head2 list_bucket_all
 
 List all keys in this bucket without having to worry about
@@ -807,87 +879,6 @@ List all keys in this bucket without having to worry about
 to S3 under the hood.
 
 Takes the same arguments as list_bucket.
-
-=cut
-
-sub list_bucket_all {
-    my ( $self, $conf ) = @_;
-    $conf ||= {};
-    my $bucket = $conf->{bucket};
-    croak 'must specify bucket' unless $bucket;
-
-    my $response = $self->list_bucket($conf);
-    return $response unless $response->{is_truncated};
-    my $all = $response;
-
-    while (1) {
-        my $next_marker = $response->{next_marker}
-            || $response->{keys}->[-1]->{key};
-        $conf->{marker} = $next_marker;
-        $conf->{bucket} = $bucket;
-        $response       = $self->list_bucket($conf);
-        push @{ $all->{keys} }, @{ $response->{keys} };
-        last unless $response->{is_truncated};
-    }
-
-    delete $all->{is_truncated};
-    delete $all->{next_marker};
-    return $all;
-}
-
-=head2 add_key
-
-DEPRECATED. DO NOT USE
-
-=cut
-
-# compat wrapper; deprecated as of 2005-03-23
-sub add_key {
-    my ( $self, $conf ) = @_;
-    my $bucket = $self->bucket (delete $conf->{bucket});
-    my $key    = delete $conf->{key};
-    my $value  = delete $conf->{value};
-    return $bucket->add_key( $key, $value, $conf );
-}
-
-=head2 get_key
-
-DEPRECATED. DO NOT USE
-
-=cut
-
-# compat wrapper; deprecated as of 2005-03-23
-sub get_key {
-    my ( $self, $conf ) = @_;
-    my $bucket = $self->bucket (delete $conf->{bucket});
-    return $bucket->get_key( $conf->{key} );
-}
-
-=head2 head_key
-
-DEPRECATED. DO NOT USE
-
-=cut
-
-# compat wrapper; deprecated as of 2005-03-23
-sub head_key {
-    my ( $self, $conf ) = @_;
-    my $bucket = $self->bucket (delete $conf->{bucket});
-    return $bucket->head_key( $conf->{key} );
-}
-
-=head2 delete_key
-
-DEPRECATED. DO NOT USE
-
-=cut
-
-# compat wrapper; deprecated as of 2005-03-23
-sub delete_key {
-    my ( $self, $conf ) = @_;
-    my $bucket = $self->bucket (delete $conf->{bucket});
-    return $bucket->delete_key( $conf->{key} );
-}
 
 =head2 _perform_operation
 
@@ -903,38 +894,6 @@ Method takes same named parameters as realted Request class.
 Method provides available contextual parameters by default (eg s3, bucket)
 
 Method invokes contextual error handler.
-
-=cut
-
-sub _perform_operation {
-	my ($self, $operation, %params) = @_;
-
-	my $error_handler = delete $params{error_handler};
-	$error_handler = $self->error_handler unless defined $error_handler;
-
-    my $request_class  = $operation . '::Request';
-    my $response_class = $operation . '::Response';
-	my $filename = delete $params{filename};
-
-    my $request  = $request_class->new (s3 => $self, %params);
-    my $http_response = $self->ua->request ($request->http_request, $filename);
-    my $response    = $response_class->new (http_response => $http_response);
-
-    $error_handler->handle_error ($response);
-
-    return $response;
-}
-
-sub _urlencode {
-    my ( $self, $unencoded ) = @_;
-    return uri_escape_utf8( $unencoded, '^A-Za-z0-9_\-\.' );
-}
-
-__PACKAGE__->meta->make_immutable;
-
-1;
-
-__END__
 
 =head1 LICENSE
 
@@ -981,6 +940,8 @@ Leon Brocard <acme@astray.com> and unknown Amazon Digital Services programmers.
 Brad Fitzpatrick <brad@danga.com> - return values, Bucket object
 
 Pedro Figueiredo <me@pedrofigueiredo.org> - since 0.54
+
+Branislav Zahradník <barney@cpan.org> - 
 
 =head1 SEE ALSO
 

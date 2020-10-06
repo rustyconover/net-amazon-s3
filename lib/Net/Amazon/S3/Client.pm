@@ -1,4 +1,5 @@
 package Net::Amazon::S3::Client;
+# ABSTRACT: An easy-to-use Amazon S3 client
 
 use Moose 0.85;
 use HTTP::Status qw(status_message);
@@ -6,8 +7,6 @@ use MooseX::StrictConstructor 0.16;
 use Moose::Util::TypeConstraints;
 
 use Net::Amazon::S3::Error::Handler::Confess;
-
-# ABSTRACT: An easy-to-use Amazon S3 client
 
 type 'Etag' => where { $_ =~ /^[a-z0-9]{32}(?:-\d+)?$/ };
 
@@ -98,22 +97,6 @@ sub bucket {
         %conf,
     );
 }
-
-=head2 _perform_operation
-
-Refer L<Net::Amazon::S3/_perform_operation
-
-Method supports additional parameters
-
-=over
-
-=item filename
-
-Filename callback (see L<LWP::UserAgent> for details) (optional)
-
-=back
-
-=cut
 
 sub _perform_operation {
 	my ($self, $operation, %params) = @_;
