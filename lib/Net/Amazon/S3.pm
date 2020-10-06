@@ -225,7 +225,7 @@ sub add_bucket {
 		bucket              => $conf->{bucket},
 		(acl                => $conf->{acl})       x!! defined $conf->{acl},
 		(acl_short          => $conf->{acl_short}) x!! defined $conf->{acl_short},
-		location_constraint => $conf->{location_constraint},
+		(location_constraint => $conf->{location_constraint}) x!! defined $conf->{location_constraint},
 		( $conf->{region} ? (region => $conf->{region}) : () ),
 	);
 

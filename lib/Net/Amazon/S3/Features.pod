@@ -99,6 +99,8 @@ List of L<"Amazon S3 Operations"|https://docs.aws.amazon.com/AmazonS3/latest/API
  | errors                  | set S3 err                      | confess                           |
  |-------------------------+---------------------------------+-----------------------------------|
  | GetObject               | bucket->get_key                 | bucket->object->get               |
+ | - into file             | ✅, bucket->get_key_filename    | ✅, bucket->object->get_filename  |
+ | - into callback         | ❌                              | ✅, bucket->object->get_callback  |
  | returns                 | struct with value               | value                             |
  |                         | (undef on Not Found)            |                                   |
  | errors                  | set network error               | confess                           |
@@ -161,6 +163,9 @@ List of L<"Amazon S3 Operations"|https://docs.aws.amazon.com/AmazonS3/latest/API
  | errors                  | ❌                              | confess                           |
  |-------------------------+---------------------------------+-----------------------------------|
  | UploadPart              | ❌                              | bucket->object->put_part          |
+ | - from value            | ❌                              | ✅                                |
+ | - from file             | ❌                              | ❌                                |
+ | - from file chunk       | ❌                              | ❌                                |
  | returns                 | ❌                              | http response                     |
  | errors                  | ❌                              | confess                           |
  |-------------------------+---------------------------------+-----------------------------------|

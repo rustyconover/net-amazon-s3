@@ -127,10 +127,8 @@ sub get_callback {
 	my ( $self, $callback ) = @_;
 
 	my $response = $self->_perform_operation (
-		response_class => 'Net::Amazon::S3::Operation::Object::Fetch::Response',
-		request_class  => 'Net::Amazon::S3::Operation::Object::Fetch::Request',
+		'Net::Amazon::S3::Operation::Object::Fetch',
 		filename       => $callback,
-
 		method => 'GET',
 	);
 
@@ -141,10 +139,8 @@ sub get_filename {
 	my ( $self, $filename ) = @_;
 
 	my $response = $self->_perform_operation (
-		response_class => 'Net::Amazon::S3::Operation::Object::Fetch::Response',
-		request_class  => 'Net::Amazon::S3::Operation::Object::Fetch::Request',
+		'Net::Amazon::S3::Operation::Object::Fetch',
 		filename       => $filename,
-
 		method => 'GET',
 	);
 

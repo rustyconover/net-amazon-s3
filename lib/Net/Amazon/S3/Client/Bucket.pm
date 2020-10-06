@@ -32,7 +32,7 @@ sub _create {
 
 		(acl                => $conf{acl})       x!! defined $conf{acl},
 		(acl_short          => $conf{acl_short}) x!! defined $conf{acl_short},
-		location_constraint => $conf{location_constraint},
+		(location_constraint => $conf{location_constraint}) x!! defined $conf{location_constraint},
 	);
 
 	return unless $response->is_success;
