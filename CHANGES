@@ -1,5 +1,9 @@
 Revision history for Perl module Net::Amazon::S3:
 
+0.95 2020-10-06
+	- bugfix release, with new test coverage
+	- small cleanups
+
 0.94 2020-09-27
 	- fix undefined method call in still untested methods (thanks Russell Jenkins)
 
