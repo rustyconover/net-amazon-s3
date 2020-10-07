@@ -17,13 +17,11 @@ behaves_like_net_amazon_s3_request 'delete multi object with empty keys' => (
 
 	expect_request_method   => 'POST',
 	expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/?delete',
-	expect_request_headers  => {
-		'Content-MD5' => 'hWgjGHog2fcu6stNeIAJsw==',
-		'Content-Length' => 76,
+	expect_request_headers  => superhashof ({
 		'Content-Type' => 'application/xml',
-	},
+	}),
 	expect_request_content  => <<'EOXML',
-<Delete>
+<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
 	<Quiet>true</Quiet>
 </Delete>
 EOXML
@@ -36,13 +34,11 @@ behaves_like_net_amazon_s3_request 'delete multi object with some keys' => (
 
 	expect_request_method   => 'POST',
 	expect_request_uri      => 'https://some-bucket.s3.amazonaws.com/?delete',
-	expect_request_headers  => {
-		'Content-MD5' => '+6onPaU8IPGxGhWh0ULBJg==',
-		'Content-Length' => 159,
+	expect_request_headers  => superhashof ({
 		'Content-Type' => 'application/xml',
-	},
+	}),
 	expect_request_content  => <<'EOXML',
-<Delete>
+<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
 	<Quiet>true</Quiet>
 	<Object><Key>some/key</Key></Object>
 	<Object><Key>&lt;another/key&gt;</Key></Object>

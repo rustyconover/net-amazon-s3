@@ -7,7 +7,7 @@ use warnings;
 use Shared::Examples::Net::Amazon::S3::Fixture;
 
 Shared::Examples::Net::Amazon::S3::Fixture::fixture content => <<'XML';
-<CreateBucketConfiguration>
+<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
 	<LocationConstraint>ca-central-1</LocationConstraint>
 </CreateBucketConfiguration>
 XML

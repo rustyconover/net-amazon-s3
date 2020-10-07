@@ -6,6 +6,7 @@ extends 'Net::Amazon::S3::Request::Bucket';
 
 with 'Net::Amazon::S3::Request::Role::HTTP::Header::ACL';
 with 'Net::Amazon::S3::Request::Role::HTTP::Method::PUT';
+with 'Net::Amazon::S3::Request::Role::XML::Content';
 
 has location_constraint => (
 	is => 'ro',
@@ -20,12 +21,12 @@ sub _request_content {
 	my ($self) = @_;
 
 	my $content = '';
-	if (defined $self->location_constraint &&
-		$self->location_constraint ne 'us-east-1') {
-		$content
-			= "<CreateBucketConfiguration><LocationConstraint>"
-			. $self->location_constraint
-			. "</LocationConstraint></CreateBucketConfiguration>";
+	if (defined $self->location_constraint && $self->location_constraint ne 'us-east-1') {
+		$content = $self->_build_xml (
+			CreateBucketConfiguration => [
+				{ LocationConstraint => $self->location_constraint },
+			]
+		);
 	}
 
 	return $content;

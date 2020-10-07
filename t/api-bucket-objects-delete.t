@@ -17,7 +17,7 @@ expect_api_bucket_objects_delete 'delete multiple objects' => (
 	expect_request          => { POST => 'https://some-bucket.s3.amazonaws.com/?delete' },
 	expect_data             => bool (1),
 	expect_request_content  => <<'XML',
-<Delete>
+<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
 	<Quiet>true</Quiet>
 	<Object><Key>key-1</Key></Object>
 	<Object><Key>key-2</Key></Object>
