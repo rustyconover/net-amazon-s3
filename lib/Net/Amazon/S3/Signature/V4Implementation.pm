@@ -172,7 +172,11 @@ sub _canonical_request {
 
 	# Ensure Host header is present as its required
 	if (!$req->header('host')) {
-		$req->header('Host' => $req->uri->host);
+		my $host = $req->uri->port == $req->uri->default_port
+			? $req->uri->host
+			: $req->uri->host_port
+		;
+		$req->header('Host' => $host);
 	}
 	my $creq_payload_hash = $req->header($X_AMZ_CONTENT_SHA256)
 		# Signed uri doesn't have content
