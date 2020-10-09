@@ -8,18 +8,36 @@ use FindBin;
 BEGIN { require "$FindBin::Bin/test-helper-operation.pl" }
 
 expect_operation_object_acl_fetch (
-	'API'     => \& api_object_acl_fetch,
+	'API / legacy'      => \& api_object_acl_fetch_legacy,
+	'API / config hash' => \& api_object_acl_fetch_config_hash,
+	'API / named'       => \& api_object_acl_fetch_named,
 );
 
 had_no_warnings;
 
 done_testing;
 
-sub api_object_acl_fetch {
+sub api_object_acl_fetch_legacy {
 	my (%args) = @_;
-	build_default_api
-		->bucket (delete $args{bucket})
+
+	build_default_api_bucket (%args)
 		->get_acl ($args{key})
+		;
+}
+
+sub api_object_acl_fetch_config_hash {
+	my (%args) = @_;
+
+	build_default_api_bucket (%args)
+		->get_acl ( \%args)
+		;
+}
+
+sub api_object_acl_fetch_named {
+	my (%args) = @_;
+
+	build_default_api_bucket (%args)
+		->get_acl (%args)
 		;
 }
 

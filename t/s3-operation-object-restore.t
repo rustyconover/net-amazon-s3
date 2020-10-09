@@ -18,11 +18,7 @@ done_testing;
 sub client_object_restore {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (
-			key => delete $args{key},
-		)
+	build_default_client_object (%args)
 		->restore (%args)
 		;
 }

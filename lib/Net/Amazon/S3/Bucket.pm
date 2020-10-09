@@ -24,21 +24,25 @@ __PACKAGE__->meta->make_immutable;
 
 # returns bool
 sub add_key {
-	my ( $self, $key, $value, $conf ) = @_;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments (\@_, ['key', 'value']);
+
+	my $key = delete $args{key};
+	my $value = delete $args{value};
 
 	if ( ref($value) eq 'SCALAR' ) {
-		$conf->{'Content-Length'} ||= -s $$value;
+		$args{'Content-Length'} ||= -s $$value;
 		$value = _content_sub($$value);
 	} else {
-		$conf->{'Content-Length'} ||= length $value;
+		$args{'Content-Length'} ||= length $value;
 	}
 
 	my $acl;
-	$acl = delete $conf->{acl_short} if exists $conf->{acl_short};
-	$acl = delete $conf->{acl}       if exists $conf->{acl};
+	$acl = delete $args{acl_short} if exists $args{acl_short};
+	$acl = delete $args{acl}       if exists $args{acl};
 
-	my $encryption = delete $conf->{encryption};
-	my %headers = %$conf;
+	my $encryption = delete $args{encryption};
+	my %headers = %args;
 
 	# we may get a 307 redirect; ask server to signal 100 Continue
 	# before reading the content from CODE reference (_content_sub)
@@ -58,52 +62,66 @@ sub add_key {
 }
 
 sub add_key_filename {
-	my ( $self, $key, $value, $conf ) = @_;
-	return $self->add_key( $key, \$value, $conf );
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments (\@_, ['key', 'value']);
+	$args{value} = \ delete $args{value};
+
+	return $self->add_key (%args);
 }
 
 sub copy_key {
-	my ( $self, $key, $source, $conf ) = @_;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments (\@_, ['key', 'source' ]);
+
+	my $key = delete $args{key};
+	my $source = delete $args{source};
 
 	my $acl_short;
-	if ( defined $conf ) {
-		if ( $conf->{acl_short} ) {
-			$acl_short = $conf->{acl_short};
-			delete $conf->{acl_short};
+	if (%args) {
+		if ( $args{acl_short} ) {
+			$acl_short = $args{acl_short};
+			delete $args{acl_short};
 		}
-		$conf->{Net::Amazon::S3::Constants->HEADER_METADATA_DIRECTIVE} ||= 'REPLACE';
-	} else {
-		$conf = {};
+		$args{Net::Amazon::S3::Constants->HEADER_METADATA_DIRECTIVE} ||= 'REPLACE';
 	}
 
-	$conf->{Net::Amazon::S3::Constants->HEADER_COPY_SOURCE} = $source;
+	$args{Net::Amazon::S3::Constants->HEADER_COPY_SOURCE} = $source;
 
-	my $encryption = delete $conf->{encryption};
+	my $encryption = delete $args{encryption};
 
 	my $acct    = $self->account;
 	my $response = $self->_perform_operation (
 		'Net::Amazon::S3::Operation::Object::Add',
 
-		key       => $key,
 		value     => '',
+		key       => $key,
 		acl_short => $acl_short,
 		(encryption => $encryption) x!! defined $encryption,
-		headers   => $conf,
+		headers   => \%args,
 	);
 
 	return unless $response->is_success;
 }
 
 sub edit_metadata {
-	my ( $self, $key, $conf ) = @_;
-	croak "Need configuration hash" unless defined $conf;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_object (\@_);
 
-	return $self->copy_key( $key, "/" . $self->bucket . "/" . $key, $conf );
+	my $key = delete $args{key};
+	croak "Need some metadata to change" unless %args;
+
+	return $self->copy_key (
+		key    => $key,
+		source => "/" . $self->bucket . "/" . $key,
+		%args,
+	);
 }
 
 sub head_key {
-	my ( $self, $key ) = @_;
-	return $self->get_key( $key, "HEAD" );
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_object (\@_);
+
+	return $self->get_key (%args, method => 'HEAD', filename => undef);
 }
 
 sub query_string_authentication_uri {
@@ -120,16 +138,21 @@ sub query_string_authentication_uri {
 }
 
 sub get_key {
-	my ( $self, $key, $method, $filename ) = @_;
-	$filename = $$filename if ref $filename;
-	my $acct = $self->account;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments (\@_, ['key', 'method', 'filename']);
+
+	$args{filename} = ${ delete $args{filename} }
+		if ref $args{filename};
+
+	$args{method} ||= 'GET';
 
 	my $response = $self->_perform_operation (
 		'Net::Amazon::S3::Operation::Object::Fetch',
-		filename => $filename,
 
-		key    => $key,
-		method => $method || 'GET',
+		filename => $args{filename},
+
+		key    => $args{key},
+		method => $args{method},
 	);
 
 	return unless $response->is_success;
@@ -149,8 +172,11 @@ sub get_key {
 }
 
 sub get_key_filename {
-	my ( $self, $key, $method, $filename ) = @_;
-	return $self->get_key( $key, $method, \$filename );
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments (\@_, ['key', 'method', 'filename']);
+
+	$args{filename} = \ delete $args{filename};
+	return $self->get_key (%args);
 }
 
 # returns bool
@@ -180,13 +206,14 @@ sub delete_multi_object {
 }
 
 sub delete_key {
-	my ( $self, $key ) = @_;
-	croak 'must specify key' unless defined $key && length $key;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_object (\@_);
+
+	croak 'must specify key' unless defined $args{key} && length $args{key};
 
 	my $response = $self->_perform_operation (
 		'Net::Amazon::S3::Operation::Object::Delete',
-
-		key    => $key,
+		%args,
 	);
 
 	return $response->is_success;
@@ -194,37 +221,38 @@ sub delete_key {
 
 sub delete_bucket {
 	my $self = shift;
-	croak "Unexpected arguments" if @_;
-	return $self->account->delete_bucket($self);
+	return $self->account->delete_bucket (bucket => $self, @_);
 }
 
 sub list {
 	my $self = shift;
-	my $conf = shift || {};
-	$conf->{bucket} = $self->bucket;
-	return $self->account->list_bucket($conf);
+	my %args = Net::Amazon::S3::Utils->parse_arguments (\@_);
+
+	return $self->account->list_bucket ($self, %args);
 }
 
 sub list_all {
 	my $self = shift;
-	my $conf = shift || {};
-	$conf->{bucket} = $self->bucket;
-	return $self->account->list_bucket_all($conf);
+	my %args = Net::Amazon::S3::Utils->parse_arguments (\@_);
+
+	return $self->account->list_bucket_all ($self, %args);
 }
 
 sub get_acl {
-	my ($self, $key) = @_;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_object (\@_);
 
 	my $response;
-	if ($key) {
+	if (defined $args{key}) {
 		$response = $self->_perform_operation (
 			'Net::Amazon::S3::Operation::Object::Acl::Fetch',
-
-			key    => $key,
+			%args,
 		);
 	} else {
+		delete $args{key};
 		$response = $self->_perform_operation (
 			'Net::Amazon::S3::Operation::Bucket::Acl::Fetch',
+			%args,
 		);
 	}
 
@@ -233,27 +261,20 @@ sub get_acl {
 }
 
 sub set_acl {
-	my ( $self, $conf ) = @_;
-	$conf ||= {};
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_object (\@_);
 
 	my $response;
-	my $key = $conf->{key};
-	if ($key) {
+	if (defined $args{key}) {
 		$response = $self->_perform_operation (
 			'Net::Amazon::S3::Operation::Object::Acl::Set',
-
-			key       => $key,
-			(acl       => $conf->{acl})       x!! defined $conf->{acl},
-			(acl_short => $conf->{acl_short}) x!! defined $conf->{acl_short},
-			(acl_xml   => $conf->{acl_xml})   x!! defined $conf->{acl_xml},
+			%args,
 		);
 	} else {
+		delete $args{key};
 		$response = $self->_perform_operation (
 			'Net::Amazon::S3::Operation::Bucket::Acl::Set',
-
-			(acl       => $conf->{acl})       x!! defined $conf->{acl},
-			(acl_short => $conf->{acl_short}) x!! defined $conf->{acl_short},
-			(acl_xml   => $conf->{acl_xml})   x!! defined $conf->{acl_xml},
+			%args,
 		);
 	}
 
@@ -262,10 +283,12 @@ sub set_acl {
 }
 
 sub get_location_constraint {
-	my ($self) = @_;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments (\@_);
 
 	my $response = $self->_perform_operation (
 		'Net::Amazon::S3::Operation::Bucket::Location',
+		%args,
 	);
 
 	return unless $response->is_success;
@@ -279,22 +302,20 @@ sub err { $_[0]->account->err }
 sub errstr { $_[0]->account->errstr }
 
 sub add_tags {
-	my ($self, $conf) = @_;
+	my $self = shift;
+	my %args = @_ == 1 ? %{ $_[0] } : @_;
 
 	my $response;
-	if (exists $conf->{key}) {
+	if (defined $args{key}) {
 		$response = $self->_perform_operation (
 			'Net::Amazon::S3::Operation::Object::Tags::Add',
-
-			tags   => $conf->{tags},
-			key    => $conf->{key},
-			(version_id => $conf->{version_id}) x!! defined $conf->{version_id},
+			%args,
 		);
 	} else {
+		delete $args{key};
 		$response = $self->_perform_operation (
 			'Net::Amazon::S3::Operation::Bucket::Tags::Add',
-
-			tags   => $conf->{tags},
+			%args,
 		);
 	}
 
@@ -302,19 +323,20 @@ sub add_tags {
 }
 
 sub delete_tags {
-	my ($self, $conf) = @_;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_object (\@_);
 
 	my $response;
-	if (exists $conf->{key}) {
+	if (defined $args{key}) {
 		$response = $self->_perform_operation (
 			'Net::Amazon::S3::Operation::Object::Tags::Delete',
-
-			key    => $conf->{key},
-			(version_id => $conf->{version_id}) x!! defined $conf->{version_id},
+			%args,
 		);
 	} else {
+		delete $args{key};
 		$response = $self->_perform_operation (
 			'Net::Amazon::S3::Operation::Bucket::Tags::Delete',
+			%args,
 		);
 	}
 

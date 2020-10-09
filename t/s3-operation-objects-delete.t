@@ -21,8 +21,7 @@ done_testing;
 sub api_objects_delete {
 	my (%args) = @_;
 
-	build_default_api
-		->bucket (delete $args{bucket})
+	build_default_api_bucket (%args)
 		->delete_multi_object (@{ $args{keys} })
 		;
 }
@@ -30,8 +29,7 @@ sub api_objects_delete {
 sub client_objects_delete {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
+	build_default_client_bucket (%args)
 		->delete_multi_object (@{ $args{keys} })
 		;
 }

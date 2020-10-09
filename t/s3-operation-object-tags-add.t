@@ -7,10 +7,11 @@ use FindBin;
 
 BEGIN { require "$FindBin::Bin/test-helper-operation.pl" }
 
-plan tests => 5;
+plan tests => 7;
 
 expect_operation_object_tags_set (
-	'API'     => \& api_object_tags_set,
+	'API / legacy'  => \& api_object_tags_set_legacy,
+	'API / named'   => \& api_object_tags_set_named,
 	'Client'  => \& client_object_tags_set,
 );
 
@@ -18,20 +19,26 @@ had_no_warnings;
 
 done_testing;
 
-sub api_object_tags_set {
+sub api_object_tags_set_legacy {
 	my (%args) = @_;
 
-	build_default_api
-		->bucket (delete $args{bucket})
+	build_default_api_bucket (%args)
 		->add_tags (\ %args)
+		;
+}
+
+sub api_object_tags_set_named {
+	my (%args) = @_;
+
+	build_default_api_bucket (%args)
+		->add_tags (%args)
 		;
 }
 
 sub client_object_tags_set {
 	my (%args) = @_;
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (key => delete $args{key})
+
+	build_default_client_object (%args)
 		->add_tags (%args)
 		;
 }

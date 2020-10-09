@@ -41,6 +41,7 @@ use Net::Amazon::S3::Operation::Objects::Delete;
 use Net::Amazon::S3::Operation::Objects::List;
 use Net::Amazon::S3::Signature::V2;
 use Net::Amazon::S3::Signature::V4;
+use Net::Amazon::S3::Utils;
 use Net::Amazon::S3::Vendor;
 use Net::Amazon::S3::Vendor::Amazon;
 use LWP::UserAgent::Determined;
@@ -188,10 +189,11 @@ sub bucket_class {
 }
 
 sub buckets {
-	my $self = shift;
+	my ($self, %args) = @_;
 
 	my $response = $self->_perform_operation (
 		'Net::Amazon::S3::Operation::Buckets::List',
+		%args,
 	);
 
 	return unless $response->is_success;
@@ -217,21 +219,18 @@ sub buckets {
 }
 
 sub add_bucket {
-	my ($self, $conf) = @_;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_bucket (\@_);
 
 	my $response = $self->_perform_operation (
 		'Net::Amazon::S3::Operation::Bucket::Create',
 
-		bucket              => $conf->{bucket},
-		(acl                => $conf->{acl})       x!! defined $conf->{acl},
-		(acl_short          => $conf->{acl_short}) x!! defined $conf->{acl_short},
-		(location_constraint => $conf->{location_constraint}) x!! defined $conf->{location_constraint},
-		( $conf->{region} ? (region => $conf->{region}) : () ),
+		%args,
 	);
 
 	return unless $response->is_success;
 
-	return $self->bucket ($conf->{bucket});
+	return $self->bucket ($args{bucket});
 }
 
 sub bucket {
@@ -244,19 +243,15 @@ sub bucket {
 }
 
 sub delete_bucket {
-	my ( $self, $conf ) = @_;
-	my $bucket;
-	if ( eval { $conf->isa("Net::S3::Amazon::Bucket"); } ) {
-		$bucket = $conf->bucket;
-	} else {
-		$bucket = $conf->{bucket};
-	}
-	croak 'must specify bucket' unless $bucket;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_bucket (\@_);
+
+	croak 'must specify bucket'
+		unless defined $args{bucket};
 
 	my $response = $self->_perform_operation (
 		'Net::Amazon::S3::Operation::Bucket::Delete',
-
-		bucket => $bucket,
+		%args,
 	);
 
 	return unless $response->is_success;
@@ -265,16 +260,12 @@ sub delete_bucket {
 }
 
 sub list_bucket {
-	my ( $self, $conf ) = @_;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_bucket (\@_);
 
 	my $response = $self->_perform_operation (
 		'Net::Amazon::S3::Operation::Objects::List',
-
-		bucket    => $conf->{bucket},
-		delimiter => $conf->{delimiter},
-		max_keys  => $conf->{max_keys},
-		marker    => $conf->{marker},
-		prefix    => $conf->{prefix},
+		%args,
 	);
 
 	return unless $response->is_success;
@@ -302,7 +293,7 @@ sub list_bucket {
 	}
 	$return->{keys} = \@keys;
 
-	if ( $conf->{delimiter} ) {
+	if ( $args{delimiter} ) {
 		$return->{common_prefixes} = [ $response->common_prefixes ];
 	}
 
@@ -310,21 +301,23 @@ sub list_bucket {
 }
 
 sub list_bucket_all {
-	my ( $self, $conf ) = @_;
-	$conf ||= {};
-	my $bucket = $conf->{bucket};
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_bucket (\@_);
+
+	my $bucket = $args{bucket};
 	croak 'must specify bucket' unless $bucket;
 
-	my $response = $self->list_bucket($conf);
+	my $response = $self->list_bucket (%args);
 	return $response unless $response->{is_truncated};
 	my $all = $response;
 
 	while (1) {
 		my $next_marker = $response->{next_marker}
 			|| $response->{keys}->[-1]->{key};
-		$conf->{marker} = $next_marker;
-		$conf->{bucket} = $bucket;
-		$response       = $self->list_bucket($conf);
+		$response       = $self->list_bucket (
+			%args,
+			marker => $next_marker,
+		);
 		push @{ $all->{keys} }, @{ $response->{keys} };
 		last unless $response->{is_truncated};
 	}
@@ -336,18 +329,20 @@ sub list_bucket_all {
 
 # compat wrapper; deprecated as of 2005-03-23
 sub add_key {
-	my ( $self, $conf ) = @_;
-	my $bucket = $self->bucket (delete $conf->{bucket});
-	my $key    = delete $conf->{key};
-	my $value  = delete $conf->{value};
-	return $bucket->add_key( $key, $value, $conf );
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_bucket_and_object (\@_);
+
+	my $bucket = $self->bucket (delete $args{bucket});
+	return $bucket->add_key (%args);
 }
 
 # compat wrapper; deprecated as of 2005-03-23
 sub get_key {
-	my ( $self, $conf ) = @_;
-	my $bucket = $self->bucket (delete $conf->{bucket});
-	return $bucket->get_key( $conf->{key} );
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_bucket_and_object (\@_);
+
+	my $bucket = $self->bucket (delete $args{bucket});
+	return $bucket->get_key (%args);
 }
 
 # compat wrapper; deprecated as of 2005-03-23
@@ -359,9 +354,11 @@ sub head_key {
 
 # compat wrapper; deprecated as of 2005-03-23
 sub delete_key {
-	my ( $self, $conf ) = @_;
-	my $bucket = $self->bucket (delete $conf->{bucket});
-	return $bucket->delete_key( $conf->{key} );
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_bucket_and_object (\@_);
+
+	my $bucket = $self->bucket (delete $args{bucket});
+	return $bucket->delete_key (%args);
 }
 
 sub _perform_operation {
@@ -677,40 +674,75 @@ Returns undef on error, else hashref of results
 
 =head2 add_bucket
 
-Takes a hashref:
+	# Create new bucket with default location
+	my $bucket = $s3->add_bucket ('new-bucket');
+
+	# Create new bucket in another location
+	my $bucket = $s3->add_bucket ('new-bucket', location_constraint => 'eu-west-1');
+	my $bucket = $s3->add_bucket ('new-bucket', { location_constraint => 'eu-west-1' });
+	my $bucket = $s3->add_bucket (bucket => 'new-bucket', location_constraint => 'eu-west-1');
+	my $bucket = $s3->add_bucket ({ bucket => 'new-bucket', location_constraint => 'eu-west-1' });
+
+Method creates and returns new bucket.
+
+In case of error it reports it and returns C<undef> (refer L</"ERROR HANDLING">).
+
+Recognized positional arguments (refer L</"CALLING CONVENTION">)
 
 =over
 
 =item bucket
 
-The name of the bucket you want to add
+Required, recognized as positional.
+
+The name of the bucket you want to add.
+
+=back
+
+Recognized optional arguments
+
+=over
 
 =item acl
 
 	acl => 'private'
-
 	acl => Net::Amazon::S3::ACL::Canned->PRIVATE
+	acl => Net::Amazon::S3::ACL::Set->grant_read (email => 'foo@bar.baz')
 
-	acl => Net::Amazon::S3::ACL::Set
-		->grant_read (email => 'foo@bar.baz')
+I<Available since v0.94>
 
-Set ACL for newly created bucket. Refer L<Net::Amazon::S3::ACL>.
+Set ACL to the newly created bucket. Refer L<Net::Amazon::S3::ACL> for possibilities.
 
-=item acl_short (optional; deprecated)
+=item acl_short (deprecated)
 
-Deprecated. Use C<acl> now.
+I<Deprecated since v0.94>
 
-=item region (optional)
+When specified its value is used to populate C<acl> argument (unless it exists).
 
-=item location_constraint (optional)
+=item location_constraint
+
+Optional.
 
 Sets the location constraint of the new bucket. If left unspecified, the
-default S3 datacenter location will be used. Otherwise, you can set it
-to 'EU' for a European data center - note that costs are different.
+default S3 datacenter location will be used.
+
+This library recognizes regions according Amazon S3 documentation
+
+=over
+
+=item →
+
+L<https://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region>
+
+=item →
+
+L<https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateBucket.html#API_CreateBucket_RequestSyntax>
 
 =back
 
-Returns 0 on failure, Net::Amazon::S3::Bucket object on success
+=back
+
+Provides operation L<CreateBucket|https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateBucket.html>.
 
 =head2 bucket BUCKET
 
@@ -720,19 +752,28 @@ Returns an (unverified) bucket object from an account. Does no network access.
 
 =head2 delete_bucket
 
-Takes either a L<Net::Amazon::S3::Bucket> object or a hashref containing
+	$s3->delete_bucket ($bucket);
+	$s3->delete_bucket (bucket => $bucket);
+
+Deletes bucket from account.
+
+Returns C<true> if the bucket is successfully deleted.
+
+Returns C<false> and reports an error otherwise (refer L</"ERROR HANDLING">)
+
+Positional arguments (refer L</"CALLING CONVENTION">)
 
 =over
 
 =item bucket
 
-The name of the bucket to remove
+Required.
+
+The name of the bucket or L<Net::Amazon::S3::Bucket> instance you want to delete.
 
 =back
 
-Returns false (and fails) if the bucket isn't empty.
-
-Returns true if the bucket is successfully deleted.
+Provides operation L<"DeleteBucket"|https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteBucket.html>
 
 =head2 list_bucket
 
@@ -891,6 +932,56 @@ Method provides available contextual parameters by default (eg s3, bucket)
 
 Method invokes contextual error handler.
 
+=head1 CALLING CONVENTION
+
+I<Available since v0.97> - calling convention extentend
+
+In order to make method calls somehow consistent, backward compatible,
+and extendable, API's methods support multiple ways how to provide their arguments
+
+=over
+
+=item plain named arguments (preferred)
+
+	method (named => 'argument', another => 'argument');
+
+=item trailing configuration hash
+
+	method ({ named => 'argument', another => 'argument' });
+	method (positional, { named => 'argument', another => 'argument' } );
+
+Last argument of every method can be configuration hash, treated as additional
+named arguments. Can be combined with named arguments.
+
+=item positional arguments with optional named arguments
+
+	method (positional, named => 'argument', another => 'argument');
+	method (positional, { named => 'argument', another => 'argument' } );
+
+For methods supporting mandatory positional arguments additional named
+arguments and/or configuration hash is supported.
+
+Named arguments or configuration hash can specify value of positional
+arguments as well removing it from list of required positional arguments
+for given call (see example)
+
+	$s3->bucket->add_key ('key', 'value', acl => $acl);
+	$s3->bucket->add_key ('value', key => 'key', acl => $acl);
+	$s3->bucket->add_key (key => 'key', value => 'value', acl => $acl);
+
+=back
+
+=head1 ERROR HANDLING
+
+L<Net::Amazon::S3> supports pluggable error handling via
+L<Net::Amazon::S3::Error::Handler>.
+
+When response ends up with an error, every method reports it, and in case it
+receives control back (no exception), it returns C<undef>.
+
+Default error handling for L<Net::Amazon::S3> is L<Net::Amazon::S3::Error::Handler::Legacy>
+which (mostly) sets C<err> and C<errstr>.
+
 =head1 LICENSE
 
 This module contains code modified from Amazon that contains the
@@ -937,7 +1028,7 @@ Brad Fitzpatrick <brad@danga.com> - return values, Bucket object
 
 Pedro Figueiredo <me@pedrofigueiredo.org> - since 0.54
 
-Branislav Zahradník <barney@cpan.org> - 
+Branislav Zahradník <barney@cpan.org> - since v0.81
 
 =head1 SEE ALSO
 

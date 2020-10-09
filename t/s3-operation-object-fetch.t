@@ -8,8 +8,17 @@ use FindBin;
 BEGIN { require "$FindBin::Bin/test-helper-operation.pl" }
 
 expect_operation_object_fetch (
-	'API / fetch into variable' => \& api_object_fetch,
-	'API / fetch into file'     => \& api_object_fetch_file,
+	'API / fetch'                             => \& api_object_fetch,
+	'API / fetch into file'                   => \& api_object_fetch_file,
+	'API / fetch / named arguments'           => \& api_object_fetch_named,
+	'API / fetch into file / named arguments' => \& api_object_fetch_file_named,
+	'API / S3->get_key'                       => \& api_object_s3_fetch,
+	'API / S3->get_key / named arguments'     => \& api_object_s3_fetch_named,
+);
+
+expect_operation_object_head (
+	'API / head key legacy'                 => \& api_object_head_legacy,
+	'API / head key named arguments'        => \& api_object_head_named,
 );
 
 expect_operation_object_fetch_content (
@@ -30,11 +39,26 @@ had_no_warnings;
 
 done_testing;
 
-sub api_object_fetch {
+sub api_object_s3_fetch {
 	my (%args) = @_;
 
 	build_default_api
-		->bucket (delete $args{bucket})
+		->get_key (\ %args)
+		;
+}
+
+sub api_object_s3_fetch_named {
+	my (%args) = @_;
+
+	build_default_api
+		->get_key (%args)
+		;
+}
+
+sub api_object_fetch {
+	my (%args) = @_;
+
+	build_default_api_bucket (%args)
 		->get_key (
 			$args{key},
 			$args{method},
@@ -43,11 +67,18 @@ sub api_object_fetch {
 		;
 }
 
+sub api_object_fetch_named {
+	my (%args) = @_;
+
+	build_default_api_bucket (%args)
+		->get_key (%args)
+		;
+}
+
 sub api_object_fetch_file {
 	my (%args) = @_;
 
-	build_default_api
-		->bucket (delete $args{bucket})
+	build_default_api_bucket (%args)
 		->get_key (
 			$args{key},
 			$args{method},
@@ -56,11 +87,20 @@ sub api_object_fetch_file {
 		;
 }
 
+sub api_object_fetch_file_named {
+	my (%args) = @_;
+
+	$args{filename} = \ delete $args{filename};
+
+	build_default_api_bucket (%args)
+		->get_key (%args)
+		;
+}
+
 sub api_object_fetch_filename {
 	my (%args) = @_;
 
-	build_default_api
-		->bucket (delete $args{bucket})
+	build_default_api_bucket (%args)
 		->get_key_filename (
 			$args{key},
 			$args{method},
@@ -72,9 +112,7 @@ sub api_object_fetch_filename {
 sub client_object_fetch_content {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (key => delete $args{key})
+	build_default_client_object (%args)
 		->get
 		;
 }
@@ -82,9 +120,7 @@ sub client_object_fetch_content {
 sub client_object_fetch_decoded_content {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (key => delete $args{key})
+	build_default_client_object (%args)
 		->get_decoded
 		;
 }
@@ -92,9 +128,7 @@ sub client_object_fetch_decoded_content {
 sub client_object_fetch_filename {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (key => delete $args{key})
+	build_default_client_object (%args)
 		->get_filename ($args{filename})
 		;
 }
@@ -102,10 +136,26 @@ sub client_object_fetch_filename {
 sub client_object_fetch_callback {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (key => delete $args{key})
+	build_default_client_object (%args)
 		->get_callback ($args{filename})
+		;
+}
+
+sub api_object_head_legacy {
+	my (%args) = @_;
+
+	build_default_api_bucket (%args)
+		->head_key (
+			$args{key},
+		)
+		;
+}
+
+sub api_object_head_named {
+	my (%args) = @_;
+
+	build_default_api_bucket (%args)
+		->head_key (%args)
 		;
 }
 
@@ -181,3 +231,25 @@ sub expect_operation_object_fetch_callback {
 			},
 		}
 }
+
+sub expect_operation_object_head {
+	expect_operation_plan
+		implementations => +{ @_ },
+		expect_operation => 'Net::Amazon::S3::Operation::Object::Fetch',
+		plan => {
+			"head key" => {
+				act_arguments => [
+					bucket => 'bucket-name',
+					key    => 'key-name',
+					method => 'HEAD',
+				],
+				expect_arguments => {
+					bucket => 'bucket-name',
+					key    => 'key-name',
+					method => 'HEAD',
+					filename => undef,
+				},
+			},
+		}
+}
+

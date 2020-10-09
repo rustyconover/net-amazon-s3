@@ -17,8 +17,26 @@ sub build_default_api {
 	Shared::Examples::Net::Amazon::S3::API->_default_with_api({});
 }
 
+sub build_default_api_bucket (\%) {
+	my ($args) = @_;
+
+	build_default_api->bucket (delete $args->{bucket});
+}
+
 sub build_default_client  {
 	Shared::Examples::Net::Amazon::S3::Client->_default_with_api({});
+}
+
+sub build_default_client_bucket (\%) {
+	my ($args) = @_;
+
+	build_default_client->bucket (name => delete $args->{bucket});
+}
+
+sub build_default_client_object (\%) {
+	my ($args) = @_;
+
+	build_default_client_bucket (%$args)->object (key => delete $args->{key});
 }
 
 sub expect_operation {
@@ -90,6 +108,32 @@ sub expect_operation_plan {
 				;
 		}
 	}
+}
+
+sub _api_expand_headers {
+	my (%args) = @_;
+
+	%args = (%args, %{ $args{headers} });
+	delete $args{headers};
+
+	%args;
+}
+
+sub _api_expand_metadata {
+	my (%args) = @_;
+
+	%args = (
+		%args,
+		map +( "x_amz_meta_$_" => $args{metadata}{$_} ), keys %{ $args{metadata} }
+	);
+
+	delete $args{metadata};
+
+	%args;
+}
+
+sub _api_expand_header_arguments {
+	_api_expand_headers _api_expand_metadata @_;
 }
 
 1;

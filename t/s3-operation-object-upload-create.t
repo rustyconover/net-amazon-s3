@@ -19,8 +19,7 @@ done_testing;
 sub client_object_upload_create_named_arguments {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
+	build_default_client_bucket (%args)
 		->object (
 			key => delete $args{key},
 			(exists $args{encryption} ? (encryption => delete $args{encryption}) : ()),
@@ -33,8 +32,7 @@ sub client_object_upload_create_named_arguments {
 sub client_object_upload_create_configuration_hash {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
+	build_default_client_bucket (%args)
 		->object (
 			key => delete $args{key},
 			(exists $args{encryption} ? (encryption => delete $args{encryption}) : ()),

@@ -8,27 +8,35 @@ use FindBin;
 BEGIN { require "$FindBin::Bin/test-helper-operation.pl" }
 
 expect_operation_bucket_acl_set (
-	'API'     => \& api_bucket_acl_set,
-	'Client'  => \& client_bucket_acl_set,
+	'API / legacy'          => \& api_bucket_acl_set_legacy,
+	'API / named arguments' => \& api_bucket_acl_set_named,
+	'Client'                => \& client_bucket_acl_set,
 );
 
 had_no_warnings;
 
 done_testing;
 
-sub api_bucket_acl_set {
+sub api_bucket_acl_set_legacy {
 	my (%args) = @_;
 
-	build_default_api
-		->bucket (delete $args{bucket})
+	build_default_api_bucket (%args)
 		->set_acl (\ %args)
+		;
+}
+
+sub api_bucket_acl_set_named {
+	my (%args) = @_;
+
+	build_default_api_bucket (%args)
+		->set_acl (%args)
 		;
 }
 
 sub client_bucket_acl_set {
 	my (%args) = @_;
-	build_default_client
-		->bucket (name => delete $args{bucket})
+
+	build_default_client_bucket (%args)
 		->set_acl (%args)
 		;
 }

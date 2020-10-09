@@ -7,11 +7,11 @@ use FindBin;
 
 BEGIN { require "$FindBin::Bin/test-helper-operation.pl" }
 
-plan tests => 4;
-
 expect_operation_object_delete (
-	'API / Bucket->delete_key' => \& api_delete_object_via_bucket,
-	'API / S3->delete_key'     => \& api_delete_object_via_s3,
+	'API / Bucket->delete_key / legacy' => \& api_delete_object_via_bucket,
+	'API / S3->delete_key / legacy'     => \& api_delete_object_via_s3,
+	'API / Bucket->delete_key / named arguments' => \& api_delete_object_via_bucket_named,
+	'API / S3->delete_key / named arguments'     => \& api_delete_object_via_s3_named,
 	'Client'                   => \& client_delete_object,
 );
 
@@ -22,9 +22,16 @@ done_testing;
 sub api_delete_object_via_bucket {
 	my (%args) = @_;
 
-	build_default_api
-		->bucket (delete $args{bucket})
+	build_default_api_bucket (%args)
 		->delete_key ($args{key})
+		;
+}
+
+sub api_delete_object_via_bucket_named {
+	my (%args) = @_;
+
+	build_default_api_bucket (%args)
+		->delete_key (%args)
 		;
 }
 
@@ -36,12 +43,18 @@ sub api_delete_object_via_s3 {
 		;
 }
 
+sub api_delete_object_via_s3_named {
+	my (%args) = @_;
+
+	build_default_api
+		->delete_key (%args)
+		;
+}
+
 sub client_delete_object {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (key => delete $args{key})
+	build_default_client_object (%args)
 		->delete
 		;
 }

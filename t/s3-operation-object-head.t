@@ -23,8 +23,7 @@ done_testing;
 sub api_object_head_key_via_bucket {
 	my (%args) = @_;
 
-	build_default_api
-		->bucket (delete $args{bucket})
+	build_default_api_bucket (%args)
 		->head_key (delete $args{key})
 		;
 }
@@ -40,9 +39,7 @@ sub api_object_head_key_via_s3 {
 sub client_object_exists {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (key => delete $args{key})
+	build_default_client_object (%args)
 		->exists
 		;
 }

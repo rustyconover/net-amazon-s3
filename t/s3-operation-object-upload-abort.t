@@ -19,11 +19,7 @@ done_testing;
 sub client_object_upload_abort_named_arguments {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (
-			key => delete $args{key},
-		)
+	build_default_client_object (%args)
 		->abort_multipart_upload (%args)
 		;
 }
@@ -31,11 +27,7 @@ sub client_object_upload_abort_named_arguments {
 sub client_object_upload_abort_configuration_hash {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (
-			key => delete $args{key},
-		)
+	build_default_client_object (%args)
 		->abort_multipart_upload (\ %args)
 		;
 }

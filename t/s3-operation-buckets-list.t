@@ -7,8 +7,6 @@ use FindBin;
 
 BEGIN { require "$FindBin::Bin/test-helper-operation.pl" }
 
-plan tests => 3;
-
 expect_operation_buckets_list (
 	"API" => \& api_buckets_list,
 	"Client" => \& client_buckets_list,

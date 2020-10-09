@@ -19,18 +19,14 @@ done_testing;
 sub client_object_upload_part_named_arguments {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (key => delete $args{key})
+	build_default_client_object (%args)
 		->put_part (%args);
 }
 
 sub client_object_upload_part_configuration_hash {
 	my (%args) = @_;
 
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (key => delete $args{key})
+	build_default_client_object (%args)
 		->put_part (\ %args);
 }
 

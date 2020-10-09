@@ -7,11 +7,12 @@ use FindBin;
 
 BEGIN { require "$FindBin::Bin/test-helper-operation.pl" }
 
-plan tests => 3;
-
 expect_operation_object_acl_set (
-	'API'     => \& api_object_acl_set,
-	'Client'  => \& client_object_acl_set,
+	'API / legacy'                      => \& api_object_acl_set,
+	'API / legacy with key'             => \& api_object_acl_set_key,
+	'API / named arguments'             => \& api_object_acl_set_named,
+	'API / named arguments with key'    => \& api_object_acl_set_named_key,
+	'Client'                            => \& client_object_acl_set,
 );
 
 had_no_warnings;
@@ -21,17 +22,39 @@ done_testing;
 sub api_object_acl_set {
 	my (%args) = @_;
 
-	build_default_api
-		->bucket (delete $args{bucket})
+	build_default_api_bucket (%args)
 		->set_acl (\ %args)
+		;
+}
+
+sub api_object_acl_set_key {
+	my (%args) = @_;
+
+	build_default_api_bucket (%args)
+		->set_acl (delete $args{key}, \ %args)
+		;
+}
+
+sub api_object_acl_set_named {
+	my (%args) = @_;
+
+	build_default_api_bucket (%args)
+		->set_acl (%args)
+		;
+}
+
+sub api_object_acl_set_named_key {
+	my (%args) = @_;
+
+	build_default_api_bucket (%args)
+		->set_acl (delete $args{key}, %args)
 		;
 }
 
 sub client_object_acl_set {
 	my (%args) = @_;
-	build_default_client
-		->bucket (name => delete $args{bucket})
-		->object (key => delete $args{key})
+
+	build_default_client_object (%args)
 		->set_acl (%args)
 		;
 }

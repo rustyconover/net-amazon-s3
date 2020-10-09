@@ -12,11 +12,14 @@ note "Client and API capabilities differs a lot";
 expect_operation_object_add_scalar (
 	'API / via Bucket' => \& api_object_add_scalar_via_bucket,
 	'API / via S3'     => \& api_object_add_scalar_via_s3,
+	'API / via Bucket / named arguments' => \& api_object_add_scalar_via_bucket_named,
+	'API / via S3 / named arguments'     => \& api_object_add_scalar_via_s3_named,
 );
 
 expect_operation_object_add_file (
-	'API / add key filename wrapper' => \& api_object_add_filename,
-	'API / add key'                  => \& api_object_add_file,
+	'API / add key wrapper' => \& api_object_add_filename,
+	'API / add key'         => \& api_object_add_file,
+	'API / add key wrapper / named arguments' => \& api_object_add_filename_named,
 );
 
 expect_operation_object_client_add_scalar (
@@ -32,19 +35,9 @@ had_no_warnings;
 done_testing;
 
 sub api_object_add_scalar_via_bucket {
-	my (%args) = @_;
+	my (%args) = _api_expand_header_arguments @_;
 
-	%args = (
-		%args,
-		%{ $args{headers} },
-		map +( "x_amz_meta_$_" => $args{metadata}{$_} ), keys %{ $args{metadata} }
-	);
-
-	delete $args{headers};
-	delete $args{metadata};
-
-	build_default_api
-		->bucket (delete $args{bucket})
+	build_default_api_bucket (%args)
 		->add_key (
 			delete $args{key},
 			delete $args{value},
@@ -53,16 +46,7 @@ sub api_object_add_scalar_via_bucket {
 }
 
 sub api_object_add_scalar_via_s3 {
-	my (%args) = @_;
-
-	%args = (
-		%args,
-		%{ $args{headers} },
-		map +( "x_amz_meta_$_" => $args{metadata}{$_} ), keys %{ $args{metadata} }
-	);
-
-	delete $args{headers};
-	delete $args{metadata};
+	my (%args) = _api_expand_header_arguments @_;
 
 	build_default_api
 		->add_key (
@@ -70,20 +54,26 @@ sub api_object_add_scalar_via_s3 {
 		);
 }
 
-sub api_object_add_file {
-	my (%args) = @_;
+sub api_object_add_scalar_via_bucket_named {
+	my (%args) = _api_expand_header_arguments @_;
 
-	%args = (
-		%args,
-		%{ $args{headers} },
-		map +( "x_amz_meta_$_" => $args{metadata}{$_} ), keys %{ $args{metadata} }
-	);
+	build_default_api_bucket (%args)
+		->add_key (%args)
+		;
+}
 
-	delete $args{headers};
-	delete $args{metadata};
+sub api_object_add_scalar_via_s3_named {
+	my (%args) = _api_expand_header_arguments @_;
 
 	build_default_api
-		->bucket (delete $args{bucket})
+		->add_key (%args)
+		;
+}
+
+sub api_object_add_file {
+	my (%args) = _api_expand_header_arguments @_;
+
+	build_default_api_bucket (%args)
 		->add_key (
 			delete $args{key},
 			\ delete $args{value},
@@ -92,19 +82,20 @@ sub api_object_add_file {
 }
 
 sub api_object_add_filename {
-	my (%args) = @_;
+	my (%args) = _api_expand_header_arguments @_;
 
-	%args = (
-		%args,
-		%{ $args{headers} },
-		map +( "x_amz_meta_$_" => $args{metadata}{$_} ), keys %{ $args{metadata} }
-	);
+	build_default_api_bucket (%args)
+		->add_key_filename (
+			delete $args{key},
+			delete $args{value},
+			\ %args
+		);
+}
 
-	delete $args{headers};
-	delete $args{metadata};
+sub api_object_add_filename_named {
+	my (%args) = _api_expand_header_arguments @_;
 
-	build_default_api
-		->bucket (delete $args{bucket})
+	build_default_api_bucket (%args)
 		->add_key_filename (
 			delete $args{key},
 			delete $args{value},
@@ -115,8 +106,7 @@ sub api_object_add_filename {
 sub client_object_add_scalar {
 	my (%args) = @_;
 	my $headers = delete $args{headers};
-	build_default_client
-		->bucket (name => delete $args{bucket})
+	build_default_client_bucket (%args)
 		->object (
 			key => $args{key},
 			expires => 2_345_567_890,
@@ -134,8 +124,7 @@ sub client_object_add_scalar {
 sub client_object_add_filename {
 	my (%args) = @_;
 	my $headers = delete $args{headers};
-	build_default_client
-		->bucket (name => delete $args{bucket})
+	build_default_client_bucket (%args)
 		->object (
 			key => $args{key},
 			expires => 2_345_567_890,
