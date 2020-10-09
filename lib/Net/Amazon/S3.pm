@@ -93,6 +93,13 @@ has error_handler => (
 	default => sub { $_[0]->error_handler_class->new (s3 => $_[0]) },
 );
 
+has bucket_class => (
+	is          => 'ro',
+	init_arg    => undef,
+	lazy        => 1,
+	default     => 'Net::Amazon::S3::Bucket',
+);
+
 sub _build_arg_authorization_context {
 	my ($args) = @_;
 
@@ -182,10 +189,6 @@ sub BUILD {
 	$ua->env_proxy;
 
 	$self->ua($ua);
-}
-
-sub bucket_class {
-	'Net::Amazon::S3::Bucket'
 }
 
 sub buckets {

@@ -31,6 +31,13 @@ has error_handler => (
 	default => sub { $_[0]->error_handler_class->new (s3 => $_[0]->s3) },
 );
 
+has bucket_class => (
+	is          => 'ro',
+	init_arg    => undef,
+	lazy        => 1,
+	default     => 'Net::Amazon::S3::Client::Bucket',
+);
+
 around BUILDARGS => sub {
 	my ($orig, $class) = (shift, shift);
 	my $args = $class->$orig (@_);
@@ -49,8 +56,6 @@ around BUILDARGS => sub {
 };
 
 __PACKAGE__->meta->make_immutable;
-
-sub bucket_class { 'Net::Amazon::S3::Client::Bucket' }
 
 sub buckets {
 	my $self = shift;
