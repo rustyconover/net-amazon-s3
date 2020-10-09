@@ -172,9 +172,9 @@ sub _canonical_request {
 
 	# Ensure Host header is present as its required
 	if (!$req->header('host')) {
-		my $host = $req->uri->port == $req->uri->default_port
-			? $req->uri->host
-			: $req->uri->host_port
+		my $host = $req->uri->_port
+			? $req->uri->host_port
+			: $req->uri->host
 		;
 		$req->header('Host' => $host);
 	}
