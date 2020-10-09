@@ -173,7 +173,23 @@ sub expect_net_amazon_s3_feature {
 	};
 }
 
-sub _keys_operation {
+sub _operation_parameters {
+	my ($params, @names) = @_;
+	my $map = {};
+	$map = shift @names if Ref::Util::is_plain_hashref ($names[0]);
+
+	return
+		map +( ($map->{$_} || $_) => $params->{"with_$_"} ),
+		grep exists $params->{"with_$_"},
+		@names
+		;
+}
+
+sub _with_keys {
+	map "with_$_", @_;
+}
+
+sub _keys_operation () {
 	return (
 		qw[ -shared_examples ],
 		qw[ with_s3 ],
@@ -317,264 +333,110 @@ sub _expect_operation {
 	}
 }
 
-sub expect_operation_list_all_my_buckets {
-	my ($title, %params) = @_;
+sub _generate_operation_expectation {
+	my ($name, @parameters) = @_;
 
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
+	my @on = (
+		('bucket') x!! ($name =~ m/^ ( bucket | object )/x),
+		('key')    x!! ($name =~ m/^ ( object )/x),
+	);
 
-	Hash::Util::lock_keys %params,
-		_keys_operation,
-		;
+	my $on = "qw[ ${ \ join ' ', @on } ]";
 
-	_expect_operation $title, %params, -operation => 'operation_list_all_my_buckets';
+	eval <<"OPERATION_DECLARATION";
+		sub parameters_$name {
+			qw[ ${ \ join ' ', @parameters } ]
+		}
+
+		sub expect_operation_$name {
+			my (\$title, \%params) = \@_;
+			local \$Test::Builder::Level = \$Test::Builder::Level + 1;
+			Hash::Util::lock_keys \%params, _with_keys ($on, parameters_$name), _keys_operation;
+			_expect_operation \$title, \%params, -operation => 'operation_$name';
+		}
+OPERATION_DECLARATION
 }
 
-sub expect_operation_bucket_acl_get {
-	my ($title, %params) = @_;
+_generate_operation_expectation list_all_my_buckets =>
+	;
+
+_generate_operation_expectation bucket_acl_get =>
+	;
+
+_generate_operation_expectation bucket_acl_set =>
+	qw[ acl ],
+	qw[ acl_xml ],
+	qw[ acl_short ],
+	;
+
+_generate_operation_expectation bucket_create =>
+	qw[ acl ],
+	qw[ acl_short ],
+	qw[ region ],
+	;
+
+_generate_operation_expectation bucket_delete =>
+	;
+
+_generate_operation_expectation bucket_objects_list =>
+	qw[ delimiter ],
+	qw[ max_keys ],
+	qw[ marker ],
+	qw[ prefix ],
+	;
+
+_generate_operation_expectation bucket_objects_delete =>
+	qw[ keys ],
+	;
+
+_generate_operation_expectation object_acl_get =>
+	;
+
+_generate_operation_expectation object_acl_set =>
+	qw[ acl ],
+	qw[ acl_xml ],
+	qw[ acl_short ],
+	;
+
+_generate_operation_expectation object_create =>
+	qw[ headers ],
+	qw[ value ],
+	qw[ cache_control  ],
+	qw[ content_disposition  ],
+	qw[ content_encoding  ],
+	qw[ content_type  ],
+	qw[ encryption ],
+	qw[ expires ],
+	qw[ storage_class  ],
+	qw[ user_metadata ],
+	qw[ acl ],
+	qw[ acl_short ],
+	;
+
+_generate_operation_expectation object_delete =>
+	;
+
+_generate_operation_expectation object_fetch =>
+	;
+
+_generate_operation_expectation object_head =>
+	;
+
+_generate_operation_expectation bucket_tags_add =>
+	qw[ tags ],
+	;
+
+_generate_operation_expectation object_tags_add =>
+	qw[ tags ],
+	qw[ version_id ],
+	;
+
+_generate_operation_expectation bucket_tags_delete =>
+	;
+
+_generate_operation_expectation object_tags_delete =>
+	qw[ version_id ],
+	;
 
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_bucket_acl_get';
-}
-
-sub expect_operation_bucket_acl_set {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_acl ],
-		qw[ with_acl_xml ],
-		qw[ with_acl_short ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_bucket_acl_set';
-}
-
-sub expect_operation_bucket_create {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_acl ],
-		qw[ with_acl_short ],
-		qw[ with_region ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_bucket_create';
-}
-
-sub expect_operation_bucket_delete {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_bucket_delete';
-}
-
-sub expect_operation_bucket_objects_list {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_delimiter ],
-		qw[ with_max_keys ],
-		qw[ with_marker ],
-		qw[ with_prefix ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_bucket_objects_list';
-}
-
-sub expect_operation_bucket_objects_delete {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_keys ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_bucket_objects_delete';
-}
-
-sub expect_operation_object_acl_get {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_key ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_object_acl_get';
-}
-
-sub expect_operation_object_acl_set {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_key ],
-		qw[ with_acl ],
-		qw[ with_acl_xml ],
-		qw[ with_acl_short ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_object_acl_set';
-}
-
-sub expect_operation_object_create {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_headers ],
-		qw[ with_key ],
-		qw[ with_value ],
-		qw[ with_cache_control  ],
-		qw[ with_content_disposition  ],
-		qw[ with_content_encoding  ],
-		qw[ with_content_type  ],
-		qw[ with_encryption ],
-		qw[ with_expires ],
-		qw[ with_storage_class  ],
-		qw[ with_user_metadata ],
-		qw[ with_acl ],
-		qw[ with_acl_short ],
-
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_object_create';
-}
-
-sub expect_operation_object_delete {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_key ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_object_delete';
-}
-
-sub expect_operation_object_fetch {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_key ],
-
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_object_fetch';
-}
-
-sub expect_operation_object_head {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_key ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_object_head';
-}
-
-sub expect_operation_bucket_tags_add {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_tags ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_bucket_tags_add';
-}
-
-sub expect_operation_object_tags_add {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_key ],
-		qw[ with_tags ],
-		qw[ with_version_id ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_object_tags_add';
-}
-
-sub expect_operation_bucket_tags_delete {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_bucket_tags_delete';
-}
-
-sub expect_operation_object_tags_delete {
-	my ($title, %params) = @_;
-
-	local $Test::Builder::Level = $Test::Builder::Level + 1;
-
-	Hash::Util::lock_keys %params,
-		qw[ with_bucket ],
-		qw[ with_key ],
-		qw[ with_version_id ],
-		_keys_operation,
-		;
-
-	_expect_operation $title, %params, -operation => 'operation_object_tags_delete';
-}
 
 1;
