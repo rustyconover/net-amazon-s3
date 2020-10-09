@@ -91,9 +91,7 @@ expect_api_bucket_create 'S3 error - Access Denied' => (
 	with_response_fixture ('error::access_denied'),
 	expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
 	expect_request_content  => '',
-	expect_data             => bool (0),
-	expect_s3_err           => 'AccessDenied',
-	expect_s3_errstr        => 'Access denied error message',
+	expect_s3_error_access_denied,
 );
 
 expect_api_bucket_create 'S3 error - Bucket Already Exists' => (
@@ -101,9 +99,7 @@ expect_api_bucket_create 'S3 error - Bucket Already Exists' => (
 	with_response_fixture ('error::bucket_already_exists'),
 	expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
 	expect_request_content  => '',
-	expect_data             => bool (0),
-	expect_s3_err           => 'BucketAlreadyExists',
-	expect_s3_errstr        => 'Bucket already exists error message',
+	expect_s3_error_bucket_exists,
 );
 
 expect_api_bucket_create 'S3 error - Invalid Bucket Name' => (
@@ -111,18 +107,14 @@ expect_api_bucket_create 'S3 error - Invalid Bucket Name' => (
 	with_response_fixture ('error::invalid_bucket_name'),
 	expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
 	expect_request_content  => '',
-	expect_data             => bool (0),
-	expect_s3_err           => 'InvalidBucketName',
-	expect_s3_errstr        => 'Invalid bucket name error message',
+	expect_s3_error_invalid_bucket_name,
 );
 
 expect_api_bucket_create 'HTTP error - 400 Bad Request' => (
 	with_bucket             => 'some-bucket',
 	with_response_fixture ('error::http_bad_request'),
 	expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/' },
-	expect_data             => bool (0),
-	expect_s3_err           => '400',
-	expect_s3_errstr        => 'Bad Request',
+	expect_http_error_bad_request,
 );
 
 had_no_warnings;

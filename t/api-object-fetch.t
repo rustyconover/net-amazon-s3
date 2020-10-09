@@ -5,10 +5,11 @@ use warnings;
 use FindBin;
 
 BEGIN { require "$FindBin::Bin/test-helper-s3-api.pl" }
-
-plan tests => 7;
+BEGIN { require "$FindBin::Bin/test-helper-s3-api-error-confess.pl" }
 
 use Shared::Examples::Net::Amazon::S3::API qw[ expect_api_object_fetch ];
+
+plan tests => 7;
 
 expect_api_object_fetch 'fetch existing object' => (
 	with_bucket             => 'some-bucket',
@@ -39,54 +40,43 @@ expect_api_object_fetch 'fetch existing object' => (
 expect_api_object_fetch 'S3 error - Access Denied' => (
 	with_bucket             => 'some-bucket',
 	with_key                => 'some-key',
-	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/some-key' },
 	with_response_fixture ('error::access_denied'),
-	throws                  => qr/^Net::Amazon::S3: Amazon responded with 403 Forbidden/i,
-	expect_s3_err           => 'network_error',
-	expect_s3_errstr        => '403 Forbidden',
+	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/some-key' },
+	expect_s3_error_access_denied,
 );
 
 expect_api_object_fetch 'S3 error - No Such Bucket' => (
 	with_bucket             => 'some-bucket',
 	with_key                => 'some-key',
-	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/some-key' },
 	with_response_fixture ('error::no_such_bucket'),
-	expect_data             => undef,
-	expect_s3_err           => undef,
-	expect_s3_errstr        => undef,
+	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/some-key' },
+	expect_s3_error_bucket_not_found,
 );
 
 expect_api_object_fetch 'S3 error - No Such Object' => (
 	with_bucket             => 'some-bucket',
 	with_key                => 'some-key',
-	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/some-key' },
 	with_response_fixture ('error::no_such_key'),
-	expect_data             => undef,
-	expect_s3_err           => undef,
-	expect_s3_errstr        => undef,
+	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/some-key' },
+	expect_s3_error_object_not_found,
 );
 
 expect_api_object_fetch 'S3 error - Invalid Object State (object archived in glacier)' => (
 	with_bucket             => 'some-bucket',
 	with_key                => 'some-key',
-	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/some-key' },
 	with_response_fixture ('error::invalid_object_state'),
-	throws                  => qr/Net::Amazon::S3: Amazon responded with 403 Forbidden/,
-	expect_data             => undef,
-	expect_s3_err           => 'network_error',
-	expect_s3_errstr        => '403 Forbidden',
+	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/some-key' },
+	expect_s3_error_invalid_object_state,
 );
 
 expect_api_object_fetch 'HTTP error - 400 Bad Request' => (
 	with_bucket             => 'some-bucket',
 	with_key                => 'some-key',
-	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/some-key' },
 	with_response_fixture ('error::http_bad_request'),
-	throws                  => qr/Net::Amazon::S3: Amazon responded with 400 Bad Request/,
-	expect_data             => undef,
-	expect_s3_err           => 'network_error',
-	expect_s3_errstr        => '400 Bad Request',
+	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/some-key' },
+	expect_http_error_bad_request,
 );
 
-
 had_no_warnings;
+
+done_testing;

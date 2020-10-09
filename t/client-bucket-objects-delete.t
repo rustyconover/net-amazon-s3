@@ -6,9 +6,9 @@ use FindBin;
 
 BEGIN { require "$FindBin::Bin/test-helper-s3-client.pl" }
 
-plan tests => 5;
-
 use Shared::Examples::Net::Amazon::S3::Client qw[ expect_client_bucket_objects_delete ];
+
+plan tests => 5;
 
 expect_client_bucket_objects_delete 'delete multiple objects' => (
 	with_bucket             => 'some-bucket',
@@ -33,7 +33,7 @@ expect_client_bucket_objects_delete 'S3 error - Access Denied' => (
 	with_keys               => [qw[ key-1 key-2 ]],
 	with_response_fixture ('error::access_denied'),
 	expect_request          => { POST => 'https://some-bucket.s3.amazonaws.com/?delete' },
-	throws                  => qr/^AccessDenied: Access denied error message/,
+	expect_s3_error_access_denied,
 );
 
 expect_client_bucket_objects_delete 'S3 error - No Such Bucket' => (
@@ -41,7 +41,7 @@ expect_client_bucket_objects_delete 'S3 error - No Such Bucket' => (
 	with_keys               => [qw[ key-1 key-2 ]],
 	with_response_fixture ('error::no_such_bucket'),
 	expect_request          => { POST => 'https://some-bucket.s3.amazonaws.com/?delete' },
-	throws                  => qr/^NoSuchBucket: No such bucket error message/,
+	expect_s3_error_bucket_not_found,
 );
 
 expect_client_bucket_objects_delete 'HTTP error - 400 Bad Request' => (
@@ -49,7 +49,7 @@ expect_client_bucket_objects_delete 'HTTP error - 400 Bad Request' => (
 	with_keys               => [qw[ key-1 key-2 ]],
 	with_response_fixture ('error::http_bad_request'),
 	expect_request          => { POST => 'https://some-bucket.s3.amazonaws.com/?delete' },
-	throws                  => qr/^400: Bad Request/,
+	expect_http_error_bad_request,
 );
 
 had_no_warnings;

@@ -5,6 +5,7 @@ use warnings;
 use FindBin;
 
 BEGIN { require "$FindBin::Bin/test-helper-s3-api.pl" }
+BEGIN { require "$FindBin::Bin/test-helper-s3-api-error-confess.pl" }
 
 use Shared::Examples::Net::Amazon::S3::API qw[ expect_api_bucket_acl_get ];
 
@@ -21,28 +22,21 @@ expect_api_bucket_acl_get 'S3 error - Access Denied' => (
 	with_bucket             => 'some-bucket',
 	with_response_fixture ('error::access_denied'),
 	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/?acl' },
-	throws                  => qr/^Net::Amazon::S3: Amazon responded with 403 Forbidden/i,
-	expect_s3_err           => 'network_error',
-	expect_s3_errstr        => '403 Forbidden',
+	expect_s3_error_access_denied,
 );
 
 expect_api_bucket_acl_get 'S3 error - Bucket Not Found' => (
 	with_bucket             => 'some-bucket',
 	with_response_fixture ('error::no_such_bucket'),
 	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/?acl' },
-	expect_data             => undef,
-	expect_s3_err           => undef,
-	expect_s3_errstr        => undef,
+	expect_s3_error_bucket_not_found,
 );
 
 expect_api_bucket_acl_get 'HTTP error - 400 Bad Request' => (
 	with_bucket             => 'some-bucket',
 	with_response_fixture ('error::http_bad_request'),
 	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/?acl' },
-	throws                  => qr/^Net::Amazon::S3: Amazon responded with 400 Bad Request/i,
-	expect_data             => bool (0),
-	expect_s3_err           => 'network_error',
-	expect_s3_errstr        => '400 Bad Request',
+	expect_http_error_bad_request,
 );
 
 had_no_warnings;

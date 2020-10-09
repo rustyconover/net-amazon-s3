@@ -6,9 +6,9 @@ use FindBin;
 
 BEGIN { require "$FindBin::Bin/test-helper-s3-client.pl" }
 
-plan tests => 8;
-
 use Shared::Examples::Net::Amazon::S3::Client qw[ expect_client_bucket_objects_list ];
+
+plan tests => 8;
 
 expect_client_bucket_objects_list 'list objects (version 1)' => (
 	with_bucket             => 'some-bucket',

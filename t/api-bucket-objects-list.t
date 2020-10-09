@@ -6,9 +6,9 @@ use FindBin;
 
 BEGIN { require "$FindBin::Bin/test-helper-s3-api.pl" }
 
-plan tests => 9;
-
 use Shared::Examples::Net::Amazon::S3::API qw[ expect_api_bucket_objects_list ];
+
+plan tests => 9;
 
 expect_api_bucket_objects_list 'list objects (version 1)' => (
 	with_bucket             => 'some-bucket',
@@ -159,27 +159,21 @@ expect_api_bucket_objects_list 'S3 error - Access Denied' => (
 	with_bucket             => 'some-bucket',
 	with_response_fixture ('error::access_denied'),
 	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/' },
-	expect_data             => bool (0),
-	expect_s3_err           => 'AccessDenied',
-	expect_s3_errstr        => 'Access denied error message',
+	expect_s3_error_access_denied,
 );
 
 expect_api_bucket_objects_list 'S3 error - No Such Bucket' => (
 	with_bucket             => 'some-bucket',
 	with_response_fixture ('error::no_such_bucket'),
 	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/' },
-	expect_data             => bool (0),
-	expect_s3_err           => 'NoSuchBucket',
-	expect_s3_errstr        => 'No such bucket error message',
+	expect_s3_error_bucket_not_found,
 );
 
 expect_api_bucket_objects_list 'HTTP error - 400 Bad Request' => (
 	with_bucket             => 'some-bucket',
 	with_response_fixture ('error::http_bad_request'),
 	expect_request          => { GET => 'https://some-bucket.s3.amazonaws.com/' },
-	expect_data             => bool (0),
-	expect_s3_err           => '400',
-	expect_s3_errstr        => 'Bad Request',
+	expect_http_error_bad_request,
 );
 
 had_no_warnings;

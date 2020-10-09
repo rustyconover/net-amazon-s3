@@ -78,9 +78,7 @@ expect_api_bucket_acl_set 'S3 error - Access Denied' => (
 	with_acl                => 'private',
 	with_response_fixture ('error::access_denied'),
 	expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/?acl' },
-	expect_data             => bool (0),
-	expect_s3_err           => 'AccessDenied',
-	expect_s3_errstr        => 'Access denied error message',
+	expect_s3_error_access_denied,
 );
 
 expect_api_bucket_acl_set 'S3 error - Bucket Not Found' => (
@@ -88,9 +86,7 @@ expect_api_bucket_acl_set 'S3 error - Bucket Not Found' => (
 	with_acl                => 'private',
 	with_response_fixture ('error::no_such_bucket'),
 	expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/?acl' },
-	expect_data             => bool (0),
-	expect_s3_err           => 'NoSuchBucket',
-	expect_s3_errstr        => 'No such bucket error message',
+	expect_s3_error_bucket_not_found,
 );
 
 expect_api_bucket_acl_set 'HTTP error - 400 Bad Request' => (
@@ -98,9 +94,7 @@ expect_api_bucket_acl_set 'HTTP error - 400 Bad Request' => (
 	with_acl                => 'private',
 	with_response_fixture ('error::http_bad_request'),
 	expect_request          => { PUT => 'https://some-bucket.s3.amazonaws.com/?acl' },
-	expect_data             => bool (0),
-	expect_s3_err           => '400',
-	expect_s3_errstr        => 'Bad Request',
+	expect_http_error_bad_request,
 );
 
 had_no_warnings;
