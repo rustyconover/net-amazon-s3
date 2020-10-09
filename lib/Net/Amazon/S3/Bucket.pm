@@ -7,7 +7,12 @@ use Carp;
 use File::stat;
 use IO::File 1.14;
 
-has 'account' => ( is => 'ro', isa => 'Net::Amazon::S3', required => 1 );
+has 'account' => (
+	is => 'ro',
+	isa => 'Net::Amazon::S3',
+	required => 1,
+	handles => [qw[ err errstr ]],
+);
 has 'bucket'  => ( is => 'ro', isa => 'Str',             required => 1 );
 has 'creation_date' => ( is => 'ro', isa => 'Maybe[Str]', required => 0 );
 
@@ -297,12 +302,6 @@ sub get_location_constraint {
 	return unless $response->is_success;
 	return $response->location;
 }
-
-# proxy up the err requests
-
-sub err { $_[0]->account->err }
-
-sub errstr { $_[0]->account->errstr }
 
 sub add_tags {
 	my $self = shift;
