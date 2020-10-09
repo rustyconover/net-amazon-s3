@@ -125,16 +125,19 @@ sub head_key {
 }
 
 sub query_string_authentication_uri {
-	my ( $self, $key, $expires_at ) = @_;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments (\@_, ['key', 'expires_at']);
+
+	$args{method} = 'GET' unless exists $args{method};
 
 	my $request = Net::Amazon::S3::Operation::Object::Fetch::Request->new (
 		s3     => $self->account,
 		bucket => $self,
-		key    => $key,
-		method => 'GET',
+		key    => $args{key},
+		method => $args{method},
 	);
 
-	return $request->query_string_authentication_uri ($expires_at);
+	return $request->query_string_authentication_uri ($args{expires_at});
 }
 
 sub get_key {
@@ -598,8 +601,53 @@ Takes the name of a key in this bucket and returns its configuration hash
 
 =head2 query_string_authentication_uri KEY, EXPIRES_AT
 
-Takes key and expiration time (epoch time) and returns uri signed
-with query parameter
+	my $uri = $bucket->query_string_authentication_uri (
+		key => 'foo',
+		expires_at => time + 3_600, # valid for one hour
+	);
+
+	my $uri = $bucket->query_string_authentication_uri (
+		key => 'foo',
+		expires_at => time + 3_600,
+		method => 'PUT',
+	);
+
+Returns uri presigned with your credentials.
+
+When used with Signature V4 you have to specify also HTTP method this
+presigned uri will be used for (default: C<GET>)
+
+Method provides authenticated uri only for direct object operations.
+
+Method follows API's L</"CALLING CONVENTION">.
+
+Recognized positional arguments (mandatory).
+
+=over
+
+=item key
+
+=item expires_at
+
+Expiration time (epoch time).
+
+=back
+
+Optional arguments
+
+=over
+
+=item method
+
+Default: C<GET>
+
+Intended HTTP method this uri will be presigned for.
+
+Signature V2 doesn't use it but Signature V4 does.
+
+See L<https://docs.aws.amazon.com/AmazonS3/latest/dev/PresignedUrlUploadObject.html>
+
+=back
 
 =head2 get_key $key_name [$method]
 

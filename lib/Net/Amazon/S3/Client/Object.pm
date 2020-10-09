@@ -375,11 +375,16 @@ sub uri {
 
 sub query_string_authentication_uri {
 	my ($self, $query_form) = @_;
+	return $self->query_string_authentication_uri_for_method (GET => $query_form);
+}
+
+sub query_string_authentication_uri_for_method {
+	my ($self, $method, $query_form) = @_;
 	return Net::Amazon::S3::Operation::Object::Fetch::Request->new (
 		s3     => $self->client->s3,
 		bucket => $self->bucket->name,
 		key    => $self->key,
-		method => 'GET',
+		method => $method,
 	)->query_string_authentication_uri ($self->expires->epoch, $query_form);
 }
 
@@ -612,12 +617,19 @@ no strict 'vars'
   my $object = $bucket->object( key => 'images/my_hat.jpg' );
   $object->get_filename('hat_backup.jpg');
 
-  # use query string authentication
+  # use query string authentication for object fetch
   my $object = $bucket->object(
     key          => 'images/my_hat.jpg',
     expires      => '2009-03-01',
   );
   my $uri = $object->query_string_authentication_uri();
+
+	# use query string authentication for object upload
+	my $object = $bucket->object(
+		key          => 'images/my_hat.jpg',
+		expires      => '2009-03-01',
+	);
+	my $uri = $object->query_string_authentication_uri_for_method('PUT');
 
 =head1 DESCRIPTION
 
@@ -764,6 +776,17 @@ C<user_metadata>.
   my $uri = $object->query_string_authentication_uri({
     'response-content-disposition' => 'attachment; filename=abc.doc',
   });
+
+=head2 query_string_authentication_uri_for_method
+
+	my $uri = $object->query_string_authentication_uri_for_method ('PUT');
+
+Similar to L</query_string_authentication_uri> but creates presigned uri
+for specified HTTP method (Signature V4 uses also HTTP method).
+
+Methods providee authenticated uri only for direct object operations.
+
+See L<https://docs.aws.amazon.com/AmazonS3/latest/dev/PresignedUrlUploadObject.html>
 
 =head2 size
 

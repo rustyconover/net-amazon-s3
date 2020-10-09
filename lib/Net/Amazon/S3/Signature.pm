@@ -80,7 +80,7 @@ required parameter via this instance
 Signature class should return authenticated request based on given parameter.
 Parameter can be modified.
 
-=method sign_uri( $request, $expires_at? )
+=method sign_uri( $request, $expires_at?, $method? )
 
 Signature class should return authenticated uri based on given request.
 
@@ -90,3 +90,4 @@ Default and maximal allowed value may depend on signature version.
 Default request date is current time.
 Signature class should accept provided C<< X-Amz-Date >> header instead (if signing request)
 or query parameter (if signing uri)
+

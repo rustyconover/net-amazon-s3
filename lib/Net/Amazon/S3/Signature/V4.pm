@@ -85,7 +85,7 @@ sub sign_uri {
     my $sign = $self->_sign;
     $self->_host_to_region_host( $sign, $request );
 
-    return $sign->sign_uri( $request->uri, $expires_at - time );
+    return $sign->sign_uri( $request->uri, $expires_at - time, $request->method );
 }
 
 1;

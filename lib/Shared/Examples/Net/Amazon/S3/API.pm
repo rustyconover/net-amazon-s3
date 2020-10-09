@@ -77,6 +77,7 @@ sub expect_signed_uri {
 		qw[ with_region ],
 		qw[ with_key ],
 		qw[ with_expire_at ],
+		qw[ with_method ],
 		qw[ expect_uri ],
 		;
 
@@ -88,7 +89,8 @@ sub expect_signed_uri {
 		})
 		->query_string_authentication_uri (
 			$params{with_key},
-			$params{with_expire_at}
+			$params{with_expire_at},
+			(method => $params{with_method}) x!! exists $params{with_method},
 		);
 
 	cmp_deeply $got, $params{expect_uri}, $title;
