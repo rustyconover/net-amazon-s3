@@ -503,6 +503,28 @@ L<Net::Amazon::S3::Client> instead.
 
 Development of this code happens here: https://github.com/rustyconover/net-amazon-s3
 
+=head2 Bucket names with dots, HTTPS, and Signature V4
+
+At the moment Amazon S3 doesn't play well with HTTPS and virtual bucket hosts
+if bucket name contains dots.
+
+Due the current implementation of Signature V4 handling you should use workaround
+consisting of usage of region hostnames
+
+	my $bucket_region = $global_s3->bucket ($bucket)->_head_region;
+
+	my $region_s3 = Net::Amazon:S3->new (
+		...,
+		vendor => Net::Amazon::S3::Vendor::Amazon->new (
+			host => "s3-$bucket_region.amazonaws.com",
+			use_virtual_host => 0,
+		),
+	);
+
+	my $bucket = $region_s3->bucket ($bucket);
+
+And use bucket instance / region s3 connection.
+
 =head1 METHODS
 
 =head2 new
