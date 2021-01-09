@@ -39,6 +39,11 @@ has default_region          => (
 	required    => 0,
 );
 
+has enforce_empty_content_length => (
+	is          => 'ro',
+	default     => sub { 1 },
+);
+
 sub guess_bucket_region {
 	my ($self, $bucket) = @_;
 

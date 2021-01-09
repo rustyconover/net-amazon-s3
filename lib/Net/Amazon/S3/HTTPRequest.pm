@@ -89,7 +89,10 @@ sub _build_request {
 	my $uri          = $self->request_uri;
 
 	my $http_request = HTTP::Request->new( $method, $uri, $http_headers, $content );
-	$http_request->content_length (0) unless $http_request->content_length;
+	$http_request->content_length (0)
+		if $self->s3->vendor->enforce_empty_content_length
+		&& ! $http_request->content_length
+		;
 
 	return $http_request;
 }
