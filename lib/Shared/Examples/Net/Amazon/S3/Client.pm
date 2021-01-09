@@ -31,6 +31,7 @@ our @EXPORT_OK = (
 	qw[ expect_client_object_create ],
 	qw[ expect_client_object_delete ],
 	qw[ expect_client_object_fetch ],
+	qw[ expect_client_object_head ],
 	qw[ expect_client_object_tags_add],
 	qw[ expect_client_object_tags_delete],
 );
@@ -204,6 +205,16 @@ sub operation_object_fetch {
 		->bucket (name => $params{with_bucket})
 		->object (key => $params{with_key})
 		->get
+		;
+}
+
+sub operation_object_head {
+	my ($self, %params) = @_;
+
+	$self
+		->bucket (name => $params{with_bucket})
+		->object (key => $params{with_key})
+		->exists
 		;
 }
 

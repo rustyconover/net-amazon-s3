@@ -84,9 +84,7 @@ sub exists {
 	my $self = shift;
 
 	my $response = $self->_perform_operation (
-		'Net::Amazon::S3::Operation::Object::Fetch',
-
-		method => 'HEAD',
+		'Net::Amazon::S3::Operation::Object::Head',
 	);
 
 	return $response->is_success;
