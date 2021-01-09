@@ -18,7 +18,7 @@ sub http_request {
 	my $self    = shift;
 	return $self->_build_http_request (
 		use_virtual_host => 0,
-		region => 'us-east-1',
+		region => $self->s3->vendor->default_region,
 	);
 }
 

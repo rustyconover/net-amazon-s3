@@ -37,6 +37,7 @@ has use_virtual_host        => (
 has default_region          => (
 	is          => 'ro',
 	required    => 0,
+	default     => sub { 'us-east-1' },
 );
 
 has enforce_empty_content_length => (
