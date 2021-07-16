@@ -15,6 +15,7 @@ use Ref::Util ();
 # ABSTRACT: An easy-to-use Amazon S3 client object
 
 use Net::Amazon::S3::Constraint::ACL::Canned;
+use Net::Amazon::S3::Constraint::Etag;
 
 with 'Net::Amazon::S3::Role::ACL';
 
@@ -27,7 +28,7 @@ has 'client' =>
 has 'bucket' =>
 	( is => 'ro', isa => 'Net::Amazon::S3::Client::Bucket', required => 1 );
 has 'key'  => ( is => 'ro', isa => 'Str',  required => 1 );
-has 'etag' => ( is => 'ro', isa => 'Etag', required => 0 );
+has 'etag' => ( is => 'ro', isa => 'Net::Amazon::S3::Constraint::Etag', required => 0 );
 has 'size' => ( is => 'ro', isa => 'Int',  required => 0 );
 has 'last_modified' =>
 	( is => 'ro', isa => DateTime, coerce => 1, required => 0, default => sub { shift->last_modified_raw }, lazy => 1 );

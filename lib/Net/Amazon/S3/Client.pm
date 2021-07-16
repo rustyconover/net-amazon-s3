@@ -7,8 +7,7 @@ use MooseX::StrictConstructor 0.16;
 use Moose::Util::TypeConstraints;
 
 use Net::Amazon::S3::Error::Handler::Confess;
-
-type 'Etag' => where { $_ =~ /^[a-z0-9]{32}(?:-\d+)?$/ };
+use Net::Amazon::S3::Constraint::Etag;
 
 has 's3' => (
 	is => 'ro',
