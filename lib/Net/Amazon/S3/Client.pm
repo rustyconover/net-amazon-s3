@@ -6,8 +6,9 @@ use HTTP::Status qw(status_message);
 use MooseX::StrictConstructor 0.16;
 use Moose::Util::TypeConstraints;
 
-use Net::Amazon::S3::Error::Handler::Confess;
+use Net::Amazon::S3;
 use Net::Amazon::S3::Constraint::Etag;
+use Net::Amazon::S3::Error::Handler::Confess;
 
 has 's3' => (
 	is => 'ro',
