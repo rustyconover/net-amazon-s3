@@ -17,6 +17,9 @@ my %return_false = (
 	NoSuchBucket => {
 		'Net::Amazon::S3::Operation::Object::Head::Response' => 1,
 	},
+	'404' => {
+                'Net::Amazon::S3::Operation::Object::Head::Response' => 1,
+        },
 );
 
 sub handle_error {
