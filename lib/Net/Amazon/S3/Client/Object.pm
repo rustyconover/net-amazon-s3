@@ -553,7 +553,7 @@ no strict 'vars'
   my $object = $bucket->object( key => 'this is the key' );
   $object->put('this is the value');
 
-  # to get the vaue of an object
+  # to get the value of an object
   my $value = $object->get;
 
   # to get the metadata of an object
