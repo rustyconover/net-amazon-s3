@@ -28,9 +28,9 @@ Instance of L<< Net::Amazon::S3 >>
 
 =head1 METHODS
 
-=head2 handler_error ($response)
+=head2 handle_error ($response)
 
-=head2 handler_error ($response, $request)
+=head2 handle_error ($response, $request)
 
 Method will recieve instance of L<< Net::Amazon::S3::Response >> sub-class.
 
