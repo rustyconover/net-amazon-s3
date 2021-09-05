@@ -75,7 +75,7 @@ Exact ACL set provides interface to C<x-amz-grant-*> header fields.
 
 See L<Net::Amazon::S3::ACL::Set> for implementation details.
 
-=over
+=back
 
 =head1 AUTHOR
 

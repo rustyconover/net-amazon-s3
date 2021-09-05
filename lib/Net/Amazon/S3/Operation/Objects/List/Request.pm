@@ -35,7 +35,7 @@ no strict 'vars'
 
 This module lists a bucket.
 
-Implements operation L<< ListObjects|https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjects.html >.
+Implements operation L<< ListObjects|https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjects.html >>.
 
 =head1 METHODS
 

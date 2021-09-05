@@ -26,6 +26,8 @@ __END__
 
 Instance of L<< Net::Amazon::S3 >>
 
+=back
+
 =head1 METHODS
 
 =head2 handle_error ($response)

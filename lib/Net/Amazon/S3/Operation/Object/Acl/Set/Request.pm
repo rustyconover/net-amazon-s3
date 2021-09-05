@@ -51,7 +51,7 @@ no strict 'vars'
 
 =head1 DESCRIPTION
 
-Implements operation L<< PutObjectAcl|https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectAcl.html>.
+Implements operation L<< PutObjectAcl|https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObjectAcl.html >>.
 
 This module sets an object's access control.
 
