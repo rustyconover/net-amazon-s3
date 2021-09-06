@@ -26,13 +26,15 @@ __END__
 
 Instance of L<< Net::Amazon::S3 >>
 
+=back
+
 =head1 METHODS
 
 =head2 handle_error ($response)
 
 =head2 handle_error ($response, $request)
 
-Method will recieve instance of L<< Net::Amazon::S3::Response >> sub-class.
+Method will receive instance of L<< Net::Amazon::S3::Response >> sub-class.
 
 Method should return false (or throw exception) in case of error, true otherwise.
 

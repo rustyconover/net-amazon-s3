@@ -536,7 +536,7 @@ Create a new S3 client object. Takes some arguments:
 
 =item authorization_context
 
-Class that provides authorization informations.
+Class that provides authorization information.
 
 See one of available implementations for more
 

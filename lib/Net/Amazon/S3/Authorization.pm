@@ -24,5 +24,5 @@ __END__
 
 =head1 DESCRIPTION
 
-Authorization context provides an access to authorization informations
+Authorization context provides an access to authorization information
 

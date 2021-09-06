@@ -190,7 +190,7 @@ instance of C<Net::Amazon::S3::ACL::Grantee::*>.
 		Net::Amazon::S3::ACL::Grantee::Email->new ('foo@bar.baz'),
 	);
 
-=over
+=back
 
 =head1 AUTHOR
 

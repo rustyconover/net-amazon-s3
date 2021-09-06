@@ -187,6 +187,8 @@ Default: L<< Net::Amazon::S3::Error::Handler::Confess >>
 
 Instance of error handler class.
 
+=back
+
 =head1 METHODS
 
 =head2 new
