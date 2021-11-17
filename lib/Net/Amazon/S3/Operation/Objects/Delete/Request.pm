@@ -8,6 +8,7 @@ extends 'Net::Amazon::S3::Request::Bucket';
 
 has 'keys'      => ( is => 'ro', isa => 'ArrayRef',   required => 1 );
 
+with 'Net::Amazon::S3::Request::Role::HTTP::Header::Content_md5';
 with 'Net::Amazon::S3::Request::Role::HTTP::Method::POST';
 with 'Net::Amazon::S3::Request::Role::Query::Action::Delete';
 with 'Net::Amazon::S3::Request::Role::XML::Content';
