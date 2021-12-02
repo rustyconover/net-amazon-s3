@@ -390,15 +390,9 @@ sub query_string_authentication_uri_for_method {
 sub head {
 	my $self = shift;
 
-	my $http_request = Net::Amazon::S3::Operation::Object::Fetch::Request->new(
-		s3     => $self->client->s3,
-		bucket => $self->bucket->name,
-		key    => $self->key,
-
-		method => 'HEAD',
+	my $http_response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Object::Head',
 	);
-
-	my $http_response = $self->client->_send_request ($http_request)->http_response;
 
 	confess 'Error head-object ' . $http_response->as_string
 		unless $http_response->is_success;
