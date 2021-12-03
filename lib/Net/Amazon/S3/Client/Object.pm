@@ -103,10 +103,12 @@ sub _get {
 	$self->_load_user_metadata ($response->http_response);
 
 	my $etag = $self->etag || $response->etag;
-	unless ($self->_is_multipart_etag ($etag)) {
-		my $content = $response->content;
-		my $md5_hex = md5_hex ($content);
-		confess 'Corrupted download' if $etag ne $md5_hex;
+	if ( defined $response->header('Content-Range') ) {
+	        $self->client->s3->ua->default_headers->header('Range' => undef);
+	} elsif (!$self->_is_multipart_etag ($etag)) {
+                my $content = $response->content;
+                my $md5_hex = md5_hex ($content);
+                confess 'Corrupted download' if $etag ne $md5_hex;
 	}
 
 	return $response;
@@ -114,6 +116,12 @@ sub _get {
 
 sub get {
 	my $self = shift;
+	return $self->_get->content;
+}
+
+sub get_range {
+	my ( $self, $start_byte, $stop_byte ) = @_;
+	$self->client->s3->ua->default_headers->header('Range' => "bytes=$start_byte-$stop_byte");
 	return $self->_get->content;
 }
 
@@ -673,6 +681,13 @@ This module represents objects in buckets.
   # download the value of the object into a file
   my $object = $bucket->object( key => 'images/my_hat.jpg' );
   $object->get_filename('hat_backup.jpg');
+
+=head2 get_range
+
+  # download the first 1000 bytes of an object (byte 0-999 inclusive)
+  my $chunk1 = $object->get_range(0,999);
+  # download bytes 1000-1999
+  my $chunk2 = $object->get_range(1000,1999);
 
 =head2 last_modified, last_modified_raw
 
