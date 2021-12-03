@@ -394,7 +394,7 @@ sub head {
 		'Net::Amazon::S3::Operation::Object::Head',
 	);
 
-	confess 'Error head-object ' . $http_response->as_string
+	confess 'Error head-object ' . $http_response->status_line
 		unless $http_response->is_success;
 
 	my %metadata;
