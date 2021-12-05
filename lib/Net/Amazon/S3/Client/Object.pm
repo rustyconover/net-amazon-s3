@@ -102,13 +102,6 @@ sub _get {
 
 	$self->_load_user_metadata ($response->http_response);
 
-	my $etag = $self->etag || $response->etag;
-	unless ($self->_is_multipart_etag ($etag)) {
-		my $content = $response->content;
-		my $md5_hex = md5_hex ($content);
-		confess 'Corrupted download' if $etag ne $md5_hex;
-	}
-
 	return $response;
 }
 
@@ -144,12 +137,6 @@ sub get_filename {
 	);
 
 	$self->_load_user_metadata($response->http_response);
-
-	my $etag = $self->etag || $response->etag;
-	unless ($self->_is_multipart_etag($etag)) {
-		my $md5_hex = file_md5_hex($filename);
-		confess 'Corrupted download' if $etag ne $md5_hex;
-	}
 }
 
 sub _load_user_metadata {
