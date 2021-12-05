@@ -211,10 +211,12 @@ sub operation_object_fetch {
 sub operation_object_head {
 	my ($self, %params) = @_;
 
+	my $method = $params{-method} // 'exists';
+
 	$self
 		->bucket (name => $params{with_bucket})
 		->object (key => $params{with_key})
-		->exists
+		->$method
 		;
 }
 

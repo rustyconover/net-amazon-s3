@@ -2,6 +2,7 @@ Revision history for Perl module Net::Amazon::S3:
 
 0.99
 	- Client API doesn't check corrupted download anymore (using ETag == MD5)
+	- fix broken Client::Object->head method (#112) (thanks Mortivor and  fkoyer)
 
 0.98 2021-03-22
 	- document how to use buckets with dots, Signature V4, and HTTPS together

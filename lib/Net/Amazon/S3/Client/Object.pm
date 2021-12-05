@@ -377,25 +377,22 @@ sub query_string_authentication_uri_for_method {
 sub head {
 	my $self = shift;
 
-	my $http_request = Net::Amazon::S3::Operation::Object::Fetch::Request->new(
-		s3     => $self->client->s3,
-		bucket => $self->bucket->name,
-		key    => $self->key,
+	my $response = $self->_perform_operation (
+		'Net::Amazon::S3::Operation::Object::Fetch',
 
+		key    => $self->key,
 		method => 'HEAD',
 	);
 
-	my $http_response = $self->client->_send_request ($http_request)->http_response;
-
-	confess 'Error head-object ' . $http_response->as_string
-		unless $http_response->is_success;
+	return unless $
+		response->is_success;
+	my $http_response = $response->http_response;
 
 	my %metadata;
-	my $headers = $http_response->headers;
-	foreach my $name ($headers->header_field_names) {
-		if ($self->_is_metadata_header ($name)) {
-			my $metadata_name = $self->_format_metadata_name ($name);
-			$metadata{$metadata_name} = $http_response->header ($name);
+	for my $header_name ($http_response->header_field_names) {
+		if ($self->_is_metadata_header ($header_name)) {
+			my $metadata_name = $self->_format_metadata_name ($header_name);
+			$metadata{$metadata_name} = $http_response->header ($header_name);
 		}
 	}
 
@@ -639,6 +636,8 @@ This module represents objects in buckets.
   # to see if an object exists
   if ($object->exists) { ... }
 
+Method doesn't report error when bucket or key doesn't exist.
+
 =head2 get
 
   # to get the vaue of an object
@@ -648,6 +647,8 @@ This module represents objects in buckets.
 
   # to get the metadata of an object
   my %metadata = %{$object->head};
+
+Unlike C<exists> this method does report error.
 
 =head2 get_decoded
 
