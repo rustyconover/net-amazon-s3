@@ -1,5 +1,5 @@
 package Net::Amazon::S3::Constants;
-# Abstract: Misc constants used by S3
+# ABSTRACT: Misc constants used by S3
 
 use constant {
 	HEADER_BUCKET_REGION        => 'x-amz-bucket-region',

@@ -1,5 +1,5 @@
 package Net::Amazon::S3::ACL::Set;
-# Abstract: Representation of explicit ACL
+# ABSTRACT: Representation of explicit ACL
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;

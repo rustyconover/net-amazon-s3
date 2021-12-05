@@ -8,6 +8,20 @@ extends 'Net::Amazon::S3::Request::Object';
 
 with 'Net::Amazon::S3::Request::Role::HTTP::Method';
 
+has 'range'
+	=> is       => 'ro'
+	=> isa      => 'Str'
+	;
+
+override _request_headers => sub {
+	my ($self) = @_;
+
+	return (
+		super,
+		(Range => $self->range) x defined $self->range,
+	);
+};
+
 __PACKAGE__->meta->make_immutable;
 
 sub query_string_authentication_uri {

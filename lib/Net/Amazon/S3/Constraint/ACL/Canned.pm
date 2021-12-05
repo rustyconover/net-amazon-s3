@@ -1,5 +1,5 @@
 package Net::Amazon::S3::Constraint::ACL::Canned;
-# Abstract: Moose constraint - valid Canned ACL constants
+# ABSTRACT: Moose constraint - valid Canned ACL constants
 
 use Moose::Util::TypeConstraints;
 

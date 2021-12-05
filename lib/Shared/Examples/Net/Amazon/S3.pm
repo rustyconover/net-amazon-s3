@@ -192,6 +192,7 @@ sub _with_keys {
 sub _keys_operation () {
 	return (
 		qw[ -shared_examples ],
+		qw[ -method ],
 		qw[ with_s3 ],
 		qw[ with_client ],
 		qw[ shared_examples ],
@@ -417,6 +418,7 @@ _generate_operation_expectation object_delete =>
 	;
 
 _generate_operation_expectation object_fetch =>
+	qw[ range ],
 	;
 
 _generate_operation_expectation object_head =>
