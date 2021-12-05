@@ -1,5 +1,5 @@
 package Net::Amazon::S3::ACL::Canned;
-# Abstract: Representation of canned ACL
+# ABSTRACT: Representation of canned ACL
 
 use Moose 0.85;
 use MooseX::StrictConstructor 0.16;

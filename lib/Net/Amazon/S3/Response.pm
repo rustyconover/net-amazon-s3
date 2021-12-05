@@ -1,5 +1,5 @@
 package Net::Amazon::S3::Response;
-# Abstract: Behaviour common to most S3 responses.
+# ABSTRACT: Behaviour common to most S3 responses.
 
 use Moose;
 

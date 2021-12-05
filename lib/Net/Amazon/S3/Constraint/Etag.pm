@@ -1,5 +1,5 @@
 package Net::Amazon::S3::Constraint::Etag;
-# Abstract: Moose constraint - Etag format
+# ABSTRACT: Moose constraint - Etag format
 
 use Moose::Util::TypeConstraints;
 
