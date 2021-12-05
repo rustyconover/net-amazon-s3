@@ -158,6 +158,7 @@ sub get_key {
 		'Net::Amazon::S3::Operation::Object::Fetch',
 
 		filename => $args{filename},
+		(range   => $args{range}) x defined $args{range},
 
 		key    => $args{key},
 		method => $args{method},
@@ -469,6 +470,9 @@ __END__
   is( $val->{content_type},        'text/html' );
   is( $val->{etag},                'b9ece18c950afbfa6b0fdbfa4ff731d3' );
   is( $val->{'x-amz-meta-colour'}, 'orange' );
+
+  # fetch a part of the key
+  $val = $bucket->get_key("key", { range => "bytes=1024-10240" });
 
   # returns undef on missing or on error (check $bucket->err)
   is(undef, $bucket->get_key("non-existing-key"));

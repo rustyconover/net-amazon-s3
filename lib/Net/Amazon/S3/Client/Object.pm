@@ -16,6 +16,7 @@ use Ref::Util ();
 
 use Net::Amazon::S3::Constraint::ACL::Canned;
 use Net::Amazon::S3::Constraint::Etag;
+use Net::Amazon::S3::Client::Object::Range;
 
 with 'Net::Amazon::S3::Role::ACL';
 
@@ -80,6 +81,15 @@ has 'encryption' => (
 );
 
 __PACKAGE__->meta->make_immutable;
+
+sub range {
+	my ($self, $range) = @_;
+
+	return Net::Amazon::S3::Client::Object::Range->new (
+		object  => $self,
+		range   => $range,
+	);
+}
 
 sub exists {
 	my $self = shift;
@@ -619,6 +629,12 @@ no strict 'vars'
 This module represents objects in buckets.
 
 =head1 METHODS
+
+=head2 range
+
+	my $value = $object->range ('bytes=1024-10240')->get;
+
+Provides simple interface to ranged download. See also L<Net::Amazon::S3::Client::Object::Range>.
 
 =head2 etag
 

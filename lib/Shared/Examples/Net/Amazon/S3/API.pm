@@ -241,7 +241,11 @@ sub operation_object_fetch {
 
 	$self
 		->bucket ($params{with_bucket})
-		->get_key ($params{with_key}, 'GET')
+		->get_key (
+			$params{with_key},
+			'GET',
+			({ range => $params{with_range} }) x exists $params{with_range},
+		)
 		;
 }
 

@@ -418,6 +418,7 @@ _generate_operation_expectation object_delete =>
 	;
 
 _generate_operation_expectation object_fetch =>
+	qw[ range ],
 	;
 
 _generate_operation_expectation object_head =>

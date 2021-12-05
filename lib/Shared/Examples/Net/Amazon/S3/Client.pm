@@ -201,11 +201,15 @@ sub operation_object_delete {
 sub operation_object_fetch {
 	my ($self, %params) = @_;
 
-	$self
+	my $object = $self
 		->bucket (name => $params{with_bucket})
 		->object (key => $params{with_key})
-		->get
 		;
+
+	$object = $object->range ($params{with_range})
+		if $params{with_range};
+
+	$object->get;
 }
 
 sub operation_object_head {
