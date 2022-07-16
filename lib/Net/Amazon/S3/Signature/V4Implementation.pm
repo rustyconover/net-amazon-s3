@@ -169,7 +169,12 @@ sub _canonical_request {
 		? ( $1, $2 )
 		: ( $req->uri, '' );
 	$creq_canonical_uri =~ s@^https?://[^/]*/?@/@;
-	$creq_canonical_uri = _simplify_uri( $creq_canonical_uri );
+
+	# Documentation says "do not normalize URI paths for requests to Amazon S3"
+	# https://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html
+
+	#$creq_canonical_uri = _simplify_uri( $creq_canonical_uri );
+
 	$creq_canonical_query_string = $self->_sort_query_string( $creq_canonical_query_string );
 
 	# Ensure Host header is present as its required

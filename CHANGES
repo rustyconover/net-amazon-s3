@@ -3,6 +3,7 @@ Revision history for Perl module Net::Amazon::S3:
 {{$NEXT}}
 	- Fix Signature V4 when uri contains tilde (issue #119, thanks marcusclip)
 	- API->bucket now accepts optional region (issue #117)
+	- Disable Signature V4 uri simplification for S3 service (issue #96)
 	- Build user agent lazily
 
 0.99 2021-12-05
