@@ -77,7 +77,13 @@ has vendor => (
 
 has 'timeout' => ( is => 'ro', isa => 'Num',  required => 0, default => 30 );
 has 'retry'   => ( is => 'ro', isa => 'Bool', required => 0, default => 0 );
-has 'ua'     => ( is => 'rw', isa => 'LWP::UserAgent', required => 0 );
+has 'ua'
+	=> is => 'rw'
+	=> isa => 'LWP::UserAgent'
+	=> required => 0
+	=> lazy => 1
+	=> builder => '_build_ua'
+;
 has 'err'    => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
 has 'errstr' => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
 has keep_alive_cache_size => ( is => 'ro', isa => 'Int', required => 0, default => 10 );
@@ -169,7 +175,7 @@ around BUILDARGS => sub {
 };
 
 
-sub BUILD {
+sub _build_ua {
 	my $self = shift;
 
 	my $ua;
@@ -189,7 +195,7 @@ sub BUILD {
 	$ua->timeout( $self->timeout );
 	$ua->env_proxy;
 
-	$self->ua($ua);
+	return $ua;
 }
 
 sub buckets {
@@ -238,12 +244,17 @@ sub add_bucket {
 }
 
 sub bucket {
-	my ( $self, $bucket ) = @_;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_bucket (\@_);
 
-	return $bucket if $bucket->$Safe::Isa::_isa ($self->bucket_class);
+	return $args{bucket}
+		if $args{bucket}->$Safe::Isa::_isa ($self->bucket_class);
 
-	return $self->bucket_class->new(
-		{ bucket => $bucket, account => $self } );
+	return $self->bucket_class->new ({
+		account => $self,
+		bucket => $args{bucket},
+		(region => $args{region}) x defined $args{region},
+	});
 }
 
 sub delete_bucket {
@@ -386,7 +397,7 @@ sub _perform_operation {
 
 sub _urlencode {
 	my ( $self, $unencoded ) = @_;
-	return uri_escape_utf8( $unencoded, '^A-Za-z0-9_\-\.' );
+	return uri_escape_utf8( $unencoded, '^A-Za-z0-9_~\-\.' );
 }
 
 __PACKAGE__->meta->make_immutable;
@@ -772,9 +783,21 @@ Provides operation L<CreateBucket|https://docs.aws.amazon.com/AmazonS3/latest/AP
 
 =head2 bucket BUCKET
 
-Takes a scalar argument, the name of the bucket you're creating
+	# build bucket with guessed region
+	$s3->bucket ('foo');
+	$s3->bucket (bucket => 'foo');
+	$s3->bucket (name   => 'foo');
+
+	# build with explicit region
+	$s3->bucket ('foo', region => 'bar');
 
 Returns an (unverified) bucket object from an account. Does no network access.
+
+However, when guessing region, C<HeadRegion> operation may be called before
+first network access.
+
+Region is mandatory when using Signature V4 authorization, which is default
+for AWS. AWS limits number of HTTP requests, see L<https://aws.amazon.com/premiumsupport/knowledge-center/s3-request-limit-avoid-throttling/>
 
 =head2 delete_bucket
 
