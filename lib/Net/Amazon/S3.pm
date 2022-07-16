@@ -238,12 +238,17 @@ sub add_bucket {
 }
 
 sub bucket {
-	my ( $self, $bucket ) = @_;
+	my $self = shift;
+	my %args = Net::Amazon::S3::Utils->parse_arguments_with_bucket (\@_);
 
-	return $bucket if $bucket->$Safe::Isa::_isa ($self->bucket_class);
+	return $args{bucket}
+		if $args{bucket}->$Safe::Isa::_isa ($self->bucket_class);
 
-	return $self->bucket_class->new(
-		{ bucket => $bucket, account => $self } );
+	return $self->bucket_class->new ({
+		account => $self,
+		bucket => $args{bucket},
+		(region => $args{region}) x defined $args{region},
+	});
 }
 
 sub delete_bucket {
@@ -772,9 +777,21 @@ Provides operation L<CreateBucket|https://docs.aws.amazon.com/AmazonS3/latest/AP
 
 =head2 bucket BUCKET
 
-Takes a scalar argument, the name of the bucket you're creating
+	# build bucket with guessed region
+	$s3->bucket ('foo');
+	$s3->bucket (bucket => 'foo');
+	$s3->bucket (name   => 'foo');
+
+	# build with explicit region
+	$s3->bucket ('foo', region => 'bar');
 
 Returns an (unverified) bucket object from an account. Does no network access.
+
+However, when guessing region, C<HeadRegion> operation may be called before
+first network access.
+
+Region is mandatory when using Signature V4 authorization, which is default
+for AWS. AWS limits number of HTTP requests, see L<https://aws.amazon.com/premiumsupport/knowledge-center/s3-request-limit-avoid-throttling/>
 
 =head2 delete_bucket
 
