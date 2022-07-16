@@ -77,7 +77,13 @@ has vendor => (
 
 has 'timeout' => ( is => 'ro', isa => 'Num',  required => 0, default => 30 );
 has 'retry'   => ( is => 'ro', isa => 'Bool', required => 0, default => 0 );
-has 'ua'     => ( is => 'rw', isa => 'LWP::UserAgent', required => 0 );
+has 'ua'
+	=> is => 'rw'
+	=> isa => 'LWP::UserAgent'
+	=> required => 0
+	=> lazy => 1
+	=> builder => '_build_ua'
+;
 has 'err'    => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
 has 'errstr' => ( is => 'rw', isa => 'Maybe[Str]',     required => 0 );
 has keep_alive_cache_size => ( is => 'ro', isa => 'Int', required => 0, default => 10 );
@@ -169,7 +175,7 @@ around BUILDARGS => sub {
 };
 
 
-sub BUILD {
+sub _build_ua {
 	my $self = shift;
 
 	my $ua;
@@ -189,7 +195,7 @@ sub BUILD {
 	$ua->timeout( $self->timeout );
 	$ua->env_proxy;
 
-	$self->ua($ua);
+	return $ua;
 }
 
 sub buckets {
