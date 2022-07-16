@@ -1,6 +1,7 @@
 Revision history for Perl module Net::Amazon::S3:
 
 {{$NEXT}}
+	- Fix Signature V4 when uri contains tilde (issue #119, thanks marcusclip)
 
 0.99 2021-12-05
 	- Client API doesn't check corrupted download anymore (using ETag == MD5)

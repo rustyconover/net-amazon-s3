@@ -386,7 +386,7 @@ sub _perform_operation {
 
 sub _urlencode {
 	my ( $self, $unencoded ) = @_;
-	return uri_escape_utf8( $unencoded, '^A-Za-z0-9_\-\.' );
+	return uri_escape_utf8( $unencoded, '^A-Za-z0-9_~\-\.' );
 }
 
 __PACKAGE__->meta->make_immutable;
