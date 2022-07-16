@@ -650,6 +650,25 @@ If this library should retry upon errors. This option is recommended.
 This uses exponential backoff with retries after 1, 2, 4, 8, 16, 32 seconds,
 as recommended by Amazon. Defaults to off.
 
+When retry is on, request will be automatically retried when one of following
+HTTP statuses happens
+
+=over
+
+=item 408 - Request Timeout
+
+=item 500 - Internal Server Error
+
+=item 502 - Bad Gateway
+
+=item 503 - Service Unavailable
+
+=item 504 - Gateway Timeout
+
+=back
+
+For more details see L<LWP::UserAgent::Determined>.
+
 =item host
 
 Deprecated.
