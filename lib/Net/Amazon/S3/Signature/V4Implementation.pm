@@ -4,7 +4,6 @@ package Net::Amazon::S3::Signature::V4Implementation;
 
 use strict;
 use warnings;
-use sort 'stable';
 
 use Digest::SHA qw/sha256_hex hmac_sha256 hmac_sha256_hex/;
 use Time::Piece ();
