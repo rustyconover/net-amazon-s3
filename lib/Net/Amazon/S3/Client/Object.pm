@@ -363,7 +363,7 @@ sub uri {
 	my $self = shift;
 	return Net::Amazon::S3::Operation::Object::Fetch::Request->new (
 		s3     => $self->client->s3,
-		bucket => $self->bucket->name,
+		bucket => $self->bucket,
 		key    => $self->key,
 		method => 'GET',
 	)->http_request->uri;
@@ -378,7 +378,7 @@ sub query_string_authentication_uri_for_method {
 	my ($self, $method, $query_form) = @_;
 	return Net::Amazon::S3::Operation::Object::Fetch::Request->new (
 		s3     => $self->client->s3,
-		bucket => $self->bucket->name,
+		bucket => $self->bucket,
 		key    => $self->key,
 		method => $method,
 	)->query_string_authentication_uri ($self->expires->epoch, $query_form);
