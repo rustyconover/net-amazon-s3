@@ -122,7 +122,12 @@ sub version_id {
 sub is_xml_content {
 	my ($self) = @_;
 
-	return $self->content_type =~ m:[/+]xml\b: && $self->decoded_content;
+	my $decoded_content = $self->decoded_content;
+	my $content_type = $self->content_type;
+
+	return $content_type =~ m{[/+]xml\b} && $decoded_content if $content_type;
+	return 1 if $decoded_content && $decoded_content =~ /^<\?xml\b/;
+	return 0;
 }
 
 sub is_error {
