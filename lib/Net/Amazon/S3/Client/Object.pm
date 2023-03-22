@@ -344,8 +344,6 @@ sub put_part {
 
 		upload_id   => $args{upload_id},
 		part_number => $args{part_number},
-		acl_short   => $args{acl_short},
-		copy_source => $args{copy_source},
 		headers     => $args{headers},
 		value       => $args{value},
 	);
