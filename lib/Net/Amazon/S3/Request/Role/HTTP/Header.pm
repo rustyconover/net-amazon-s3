@@ -42,7 +42,7 @@ role {
 	has $name => (
 		is => 'ro',
 		isa => $params->constraint,
-		(init_arg => undef) x!! $name =~ m/^_/,
+		(init_arg => undef) x!! ($name =~ m/^_/),
 		required => $params->required,
 		(default => $params->default) x!! defined $params->default,
 	);
